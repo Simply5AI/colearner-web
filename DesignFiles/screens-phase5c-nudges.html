@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoLearner — Phase 5C: Notification Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #C4621A; --primary-h: #D87430; --primary-d: #A85316;
+  --primary-bg: #FDF0E8; --primary-bg2: #FEF8F3; --primary-glow: rgba(196,98,26,0.12);
+  --explore: #1A7070; --explore-bg: #E8F5F5;
+  --learn: #1E4FA3; --learn-bg: #E8EFF9;
+  --grow: #6B3FA0; --grow-bg: #F2ECFB;
+  --excel: #2E6B3E; --excel-bg: #EAF2ED;
+  --ok: #16A34A; --ok-bg: #F0FDF4; --err: #DC2626; --err-bg: #FEF2F2;
+  --warn: #D97706; --warn-bg: #FFFBEB; --info: #2563EB; --info-bg: #EFF6FF;
+  --bg: #FAFAF8; --bg2: #F5F3EF; --surface: #FFFFFF;
+  --border: #E5E2DC; --border-lt: #F0EDE8;
+  --t1: #1A1714; --t2: #57534E; --t3: #A8A29E; --t4: #D6D3CD;
+  --font: 'Inter', -apple-system, sans-serif; --mono: 'JetBrains Mono', monospace;
+  --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-full: 999px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --sidebar-w: 220px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { font-family: var(--font); background: #0C0A09; color: var(--t1); -webkit-font-smoothing: antialiased; }
+
+.page-header { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(12,10,9,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.page-header-inner { max-width: 1440px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; height: 48px; gap: 8px; }
+.ph-logo { font-weight: 800; font-size: 14px; color: #fff; }
+.ph-logo span { color: var(--primary-h); }
+.ph-badge { font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary-h); background: rgba(196,98,26,0.12); padding: 3px 8px; border-radius: 99px; }
+
+.main { max-width: 1440px; margin: 0 auto; padding: 68px 24px 80px; }
+.sec-head { margin-bottom: 32px; }
+.sec-num { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--primary-h); }
+.sec-title { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.5px; margin: 2px 0; }
+.sec-desc { font-size: 13px; color: rgba(255,255,255,0.3); max-width: 600px; }
+.frame-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.2); margin-bottom: 10px; text-align: center; }
+.browser-frame { background: #1C1917; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 30px 60px rgba(0,0,0,0.4); margin-bottom: 28px; }
+.browser-bar { background: #292524; padding: 8px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.browser-dots { display: flex; gap: 5px; }
+.browser-dots span { width: 9px; height: 9px; border-radius: 50%; }
+.browser-dots span:nth-child(1) { background: #EF4444; }
+.browser-dots span:nth-child(2) { background: #F59E0B; }
+.browser-dots span:nth-child(3) { background: #22C55E; }
+.browser-url { flex: 1; background: rgba(255,255,255,0.06); border-radius: 5px; padding: 4px 10px; font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.3); }
+.browser-url .lock { color: var(--ok); }
+.browser-body { background: var(--bg); min-height: 720px; }
+
+/* Settings layout reuse */
+.settings-layout { display: flex; min-height: 720px; }
+.settings-sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; flex-shrink: 0; }
+.ss-logo { font-size: 17px; font-weight: 800; color: var(--t1); letter-spacing: -0.4px; padding: 0 20px 20px; border-bottom: 1px solid var(--border-lt); margin-bottom: 12px; }
+.ss-logo span { color: var(--primary); }
+.ss-nav-label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--t3); padding: 12px 20px 6px; }
+.ss-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; cursor: pointer; transition: 150ms var(--ease); font-size: 13px; font-weight: 500; color: var(--t2); }
+.ss-item:hover { background: var(--bg); }
+.ss-item.active { background: var(--primary-bg); color: var(--primary); font-weight: 700; border-right: 3px solid var(--primary); }
+.ss-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+.settings-main { flex: 1; overflow-y: auto; }
+.settings-topbar { padding: 20px 32px; border-bottom: 1px solid var(--border-lt); background: var(--surface); }
+.settings-topbar h1 { font-size: 18px; font-weight: 800; color: var(--t1); }
+.settings-topbar p { font-size: 11px; color: var(--t3); }
+.settings-body { padding: 28px 32px; max-width: 720px; }
+
+/* Nudge master toggle */
+.nudge-master { display: flex; align-items: center; gap: 16px; padding: 20px 24px; background: var(--surface); border: 2px solid var(--border); border-radius: var(--r-md); margin-bottom: 24px; }
+.nudge-master.enabled { border-color: var(--primary); background: var(--primary-bg2); }
+.nm-icon { width: 48px; height: 48px; border-radius: var(--r-md); background: var(--primary-bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.nm-icon svg { width: 24px; height: 24px; color: var(--primary); }
+.nm-info { flex: 1; }
+.nm-info h3 { font-size: 16px; font-weight: 800; color: var(--t1); margin-bottom: 2px; }
+.nm-info p { font-size: 12px; color: var(--t3); }
+.toggle { width: 48px; height: 26px; background: var(--border); border-radius: 13px; position: relative; cursor: pointer; transition: 200ms var(--ease); flex-shrink: 0; }
+.toggle.on { background: var(--primary); }
+.toggle-knob { width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; box-shadow: var(--shadow-sm); transition: 200ms var(--ease); }
+.toggle.on .toggle-knob { left: 24px; }
+
+/* Nudge type cards */
+.nudge-types { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+.nudge-type { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
+.nt-header { display: flex; align-items: center; gap: 14px; padding: 18px 20px; cursor: pointer; }
+.nt-icon { width: 40px; height: 40px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.nt-icon svg { width: 20px; height: 20px; }
+.nt-info { flex: 1; }
+.nt-info h4 { font-size: 14px; font-weight: 700; color: var(--t1); margin-bottom: 2px; }
+.nt-info p { font-size: 11px; color: var(--t3); line-height: 1.5; }
+.nt-toggle { flex-shrink: 0; }
+.nt-body { padding: 0 20px 18px; border-top: 1px solid var(--border-lt); margin-top: 0; }
+.nt-setting { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-lt); }
+.nt-setting:last-child { border-bottom: none; }
+.nts-label { font-size: 12px; font-weight: 600; color: var(--t2); }
+.nts-desc { font-size: 10px; color: var(--t3); }
+.setting-select { font-family: var(--font); font-size: 12px; font-weight: 500; padding: 7px 28px 7px 10px; border: 1.5px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--t1); cursor: pointer; outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+.setting-input-sm { font-family: var(--font); font-size: 12px; padding: 7px 10px; border: 1.5px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--t1); outline: none; width: 80px; text-align: center; }
+.toggle-sm { width: 40px; height: 22px; background: var(--border); border-radius: 11px; position: relative; cursor: pointer; transition: 200ms var(--ease); }
+.toggle-sm.on { background: var(--primary); }
+.toggle-sm .toggle-knob { width: 18px; height: 18px; top: 2px; left: 2px; }
+.toggle-sm.on .toggle-knob { left: 20px; }
+
+/* Quiet hours visual */
+.quiet-hours { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r-md); padding: 20px; margin-bottom: 24px; }
+.qh-title { font-size: 14px; font-weight: 700; color: var(--t1); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.qh-title svg { width: 18px; height: 18px; color: var(--grow); }
+.qh-desc { font-size: 11px; color: var(--t3); margin-bottom: 16px; }
+.qh-visual { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.qh-bar { flex: 1; height: 32px; background: var(--bg2); border-radius: var(--r-sm); position: relative; overflow: hidden; }
+.qh-active { position: absolute; height: 100%; background: linear-gradient(90deg, var(--primary-bg), var(--primary-bg)); border-left: 3px solid var(--primary); border-right: 3px solid var(--primary); }
+.qh-quiet { position: absolute; height: 100%; background: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(107,63,160,0.06) 4px, rgba(107,63,160,0.06) 8px); }
+.qh-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--t3); font-family: var(--mono); }
+.qh-time-row { display: flex; align-items: center; gap: 12px; }
+.qh-time-label { font-size: 12px; font-weight: 600; color: var(--t2); width: 80px; }
+.qh-time-input { font-family: var(--mono); font-size: 14px; font-weight: 600; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--t1); outline: none; width: 100px; text-align: center; }
+.qh-time-input:focus { border-color: var(--primary); }
+
+/* Preview notification */
+.preview-section { margin-bottom: 24px; }
+.preview-title { font-size: 14px; font-weight: 700; color: var(--t1); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.preview-title svg { width: 18px; height: 18px; color: var(--info); }
+.notif-preview { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r-md); padding: 16px 20px; display: flex; align-items: flex-start; gap: 12px; box-shadow: var(--shadow-md); max-width: 400px; }
+.np-icon { width: 40px; height: 40px; border-radius: var(--r-sm); background: var(--primary-bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.np-icon svg { width: 20px; height: 20px; color: var(--primary); }
+.np-body h4 { font-size: 13px; font-weight: 700; color: var(--t1); margin-bottom: 2px; }
+.np-body p { font-size: 11px; color: var(--t3); line-height: 1.5; }
+.np-time { font-size: 9px; color: var(--t4); margin-top: 4px; font-family: var(--mono); }
+.np-actions { display: flex; gap: 6px; margin-top: 8px; }
+.np-btn { font-family: var(--font); font-size: 10px; font-weight: 700; padding: 4px 12px; border-radius: var(--r-xs); cursor: pointer; border: none; }
+.np-btn.primary { background: var(--primary); color: white; }
+.np-btn.secondary { background: var(--bg2); color: var(--t2); }
+
+/* Save */
+.btn-save { display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px; background: var(--primary); color: white; border: none; border-radius: var(--r-sm); font-family: var(--font); font-size: 13px; font-weight: 700; cursor: pointer; transition: 200ms var(--ease); }
+.btn-save:hover { background: var(--primary-d); }
+.btn-save svg { width: 16px; height: 16px; }
+
+.dev-notes { margin-top: 20px; }
+.dev-note { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r-md); padding: 16px 20px; margin-bottom: 8px; }
+.dev-note-title { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); margin-bottom: 4px; }
+.dev-note-body { font-size: 10px; color: rgba(255,255,255,0.25); line-height: 1.7; }
+.dev-note-body code { font-family: var(--mono); background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 3px; font-size: 9px; color: var(--primary-h); }
+</style>
+</head>
+<body>
+
+<nav class="page-header">
+  <div class="page-header-inner">
+    <div class="ph-logo">Co<span>Learner</span></div>
+    <span class="ph-badge">Phase 5C · Notifications</span>
+  </div>
+</nav>
+
+<div class="main">
+
+<section>
+  <div class="sec-head">
+    <div class="sec-num">Screen 03 · Notification Settings</div>
+    <div class="sec-title">Notifications</div>
+    <div class="sec-desc">Configure the 3 notification types (Interval, SM-2 Due, Contextual), quiet hours, and preview how notifications appear.</div>
+  </div>
+
+  <div class="frame-label">Settings — Notifications Tab</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/settings/notifications</div>
+    </div>
+    <div class="browser-body">
+      <div class="settings-layout">
+        <!-- Settings Sidebar -->
+        <div class="settings-sidebar">
+          <div class="ss-logo">Co<span>Learner</span></div>
+          <div class="ss-nav-label">Settings</div>
+          <div class="ss-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4"/></svg> General</div>
+          <div class="ss-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Learning</div>
+          <div class="ss-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Notifications</div>
+          <div class="ss-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Privacy</div>
+          <div class="ss-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Security</div>
+          <div class="ss-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Data Export</div>
+        </div>
+
+        <!-- Nudge Settings Content -->
+        <div class="settings-main">
+          <div class="settings-topbar">
+            <h1>Notification Settings</h1>
+            <p>Control when and how CoLearner reminds you to practice</p>
+          </div>
+
+          <div class="settings-body">
+            <!-- Master toggle -->
+            <div class="nudge-master enabled">
+              <div class="nm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+              <div class="nm-info"><h3>Notifications</h3><p>Enable smart reminders to keep your learning streak alive</p></div>
+              <div class="toggle on"><div class="toggle-knob"></div></div>
+            </div>
+
+            <!-- Nudge Types -->
+            <div class="nudge-types">
+              <!-- 1: Interval Notification -->
+              <div class="nudge-type">
+                <div class="nt-header">
+                  <div class="nt-icon" style="background:var(--primary-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                  <div class="nt-info">
+                    <h4>Interval Notification</h4>
+                    <p>"You consumed X pieces today — ready for recall?" Fires at your chosen interval after new captures.</p>
+                  </div>
+                  <div class="nt-toggle"><div class="toggle on"><div class="toggle-knob"></div></div></div>
+                </div>
+                <div class="nt-body" style="padding-top:14px">
+                  <div class="nt-setting">
+                    <div><div class="nts-label">Notification Interval</div><div class="nts-desc">How often after captures</div></div>
+                    <select class="setting-select"><option>30 minutes</option><option selected>1 hour</option><option>2 hours</option><option>4 hours</option><option>Daily</option></select>
+                  </div>
+                  <div class="nt-setting">
+                    <div><div class="nts-label">Minimum Captures</div><div class="nts-desc">Only notify after this many new captures</div></div>
+                    <input class="setting-input-sm" value="2" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2: SM-2 Due Notification -->
+              <div class="nudge-type">
+                <div class="nt-header">
+                  <div class="nt-icon" style="background:var(--warn-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                  <div class="nt-info">
+                    <h4>SM-2 Due Notification</h4>
+                    <p>Fires when the daemon detects items with sm2_due_date &le; today. "You have X items due for recall!"</p>
+                  </div>
+                  <div class="nt-toggle"><div class="toggle on"><div class="toggle-knob"></div></div></div>
+                </div>
+                <div class="nt-body" style="padding-top:14px">
+                  <div class="nt-setting">
+                    <div><div class="nts-label">Check Frequency</div><div class="nts-desc">How often to check for due items</div></div>
+                    <select class="setting-select"><option>Every 30 min</option><option selected>Every hour</option><option>Every 2 hours</option><option>Once daily (9 AM)</option></select>
+                  </div>
+                  <div class="nt-setting">
+                    <div><div class="nts-label">Include Failed Items</div><div class="nts-desc">Also count failed items needing retry</div></div>
+                    <div class="toggle-sm on"><div class="toggle-knob"></div></div>
+                  </div>
+                  <div class="nt-setting">
+                    <div><div class="nts-label">Minimum Due Count</div><div class="nts-desc">Only notify when at least this many are due</div></div>
+                    <input class="setting-input-sm" value="3" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3: Contextual Notification (Phase 2) -->
+              <div class="nudge-type" style="opacity:0.55">
+                <div class="nt-header">
+                  <div class="nt-icon" style="background:var(--grow-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--grow)" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+                  <div class="nt-info">
+                    <h4>Contextual Notification <span style="font-size:9px;background:var(--grow-bg);color:var(--grow);padding:2px 6px;border-radius:99px;margin-left:6px">COMING SOON</span></h4>
+                    <p>Detect concept overlap between new captures and existing recall_attempts. Smart connections between what you're learning now and what you've studied before.</p>
+                  </div>
+                  <div class="nt-toggle"><div class="toggle"><div class="toggle-knob"></div></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quiet Hours -->
+            <div class="quiet-hours">
+              <div class="qh-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg> Quiet Hours</div>
+              <div class="qh-desc">No notifications will be sent during quiet hours. Default: 10:00 PM – 8:00 AM.</div>
+
+              <div class="qh-visual">
+                <div class="qh-bar">
+                  <!-- Active hours: 8AM to 10PM = 33% to 92% -->
+                  <div class="qh-active" style="left:33.3%;right:8.3%"></div>
+                  <!-- Quiet hours: 10PM to 8AM = 92% to 100% and 0% to 33% -->
+                  <div class="qh-quiet" style="left:0;width:33.3%"></div>
+                  <div class="qh-quiet" style="left:91.7%;right:0"></div>
+                </div>
+              </div>
+              <div class="qh-labels">
+                <span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span>
+              </div>
+
+              <div style="display:flex;gap:24px;margin-top:16px">
+                <div class="qh-time-row">
+                  <div class="qh-time-label">Quiet Start</div>
+                  <input class="qh-time-input" type="time" value="22:00" />
+                </div>
+                <div class="qh-time-row">
+                  <div class="qh-time-label">Quiet End</div>
+                  <input class="qh-time-input" type="time" value="08:00" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Notification Preview -->
+            <div class="preview-section">
+              <div class="preview-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Notification Preview</div>
+
+              <div style="display:flex;gap:16px;flex-wrap:wrap">
+                <!-- Interval nudge preview -->
+                <div class="notif-preview">
+                  <div class="np-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                  <div class="np-body">
+                    <h4>Time to Recall!</h4>
+                    <p>You captured 3 new pieces today. Ready to test your knowledge?</p>
+                    <div class="np-time">Just now</div>
+                    <div class="np-actions">
+                      <button class="np-btn primary">Start Recall</button>
+                      <button class="np-btn secondary">Later</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SM-2 due nudge preview -->
+                <div class="notif-preview">
+                  <div class="np-icon" style="background:var(--warn-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg></div>
+                  <div class="np-body">
+                    <h4>5 Items Due Today</h4>
+                    <p>Your SM-2 schedule has 3 reviews + 2 failed items ready for retry.</p>
+                    <div class="np-time">9:00 AM</div>
+                    <div class="np-actions">
+                      <button class="np-btn primary">Review Now</button>
+                      <button class="np-btn secondary">Snooze 1h</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Notification Settings</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dev Notes -->
+  <div class="dev-notes">
+    <div class="dev-note">
+      <div class="dev-note-title">Next.js Route</div>
+      <div class="dev-note-body">
+        <code>app/(dashboard)/settings/nudges/page.tsx</code> — <code>'use client'</code> component.<br>
+        Shares settings layout from <code>app/(dashboard)/settings/layout.tsx</code>.
+      </div>
+    </div>
+    <div class="dev-note">
+      <div class="dev-note-title">NestJS Endpoints</div>
+      <div class="dev-note-body">
+        <code>GET /api/settings/nudges</code> — Returns all nudge config: enabled, interval, quiet hours, per-type settings.<br>
+        <code>PUT /api/settings/nudges</code> — Partial update for any nudge setting.<br>
+        <code>POST /api/nudges/test</code> — Send a test notification to verify delivery works.
+      </div>
+    </div>
+    <div class="dev-note">
+      <div class="dev-note-title">Nudge Architecture (from Context Anchor)</div>
+      <div class="dev-note-body">
+        3 nudge types defined in CL-021:<br>
+        <code>interval</code>: Fires at user-configured interval (30m/1h/2h/4h/daily) after new captures.<br>
+        <code>sm2_due</code>: Fires when daemon detects <code>sm2_due_date &lt;= today</code> items exist.<br>
+        <code>contextual</code>: Phase 2 stretch goal — detect concept overlap between new capture and existing recall_attempts.<br>
+        Quiet hours: session state keys already scaffolded as <code>nudge_quiet_start</code> / <code>nudge_quiet_end</code>.<br>
+        Delivery: <code>plyer</code> or <code>playsound</code> + platform-native (notify-send / osascript / Windows toast).<br>
+        Web app: use <code>Web Push API</code> + service worker for browser notifications.
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

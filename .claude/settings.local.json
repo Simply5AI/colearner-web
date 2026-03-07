@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --version)",
+      "Bash(pnpm --version)",
+      "WebFetch(domain:ui.shadcn.com)",
+      "Bash(pnpm create next-app colearner-web-temp --ts --eslint --tailwind --app --use-pnpm --skip-install --import-alias \"@/*\")",
+      "Bash(pnpm init)",
+      "Bash(pnpm add next@latest react@latest react-dom@latest)",
+      "Bash(pnpm add -D typescript @types/react @types/node @types/react-dom @eslint/eslintrc)",
+      "Bash(pnpm add tailwindcss@latest @tailwindcss/postcss@latest zustand @tanstack/react-query @tanstack/react-query-devtools react-hook-form @hookform/resolvers zod framer-motion recharts next-auth@beta next-themes date-fns)",
+      "Bash(pnpm add -D vitest @vitejs/plugin-react @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom @playwright/test eslint-config-next)",
+      "Bash(pnpm approve-builds esbuild sharp unrs-resolver)",
+      "Bash(npx -y pnpm-approve-builds@latest --approve=esbuild,sharp,unrs-resolver)",
+      "Bash(pnpm install)",
+      "Bash(pnpm dlx shadcn@latest init -d --style new-york --base-color slate)",
+      "Bash(pnpm dlx shadcn@latest init -d)"
+    ]
+  }
+}

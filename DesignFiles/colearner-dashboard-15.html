@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoLearner — Dashboard v14</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F3EF;--surface:#FFFFFF;--border:#E2DDD6;--border-lt:#EDE9E2;
+  --text:#1A1714;--text-2:#5C5650;--text-3:#9B948C;
+  --green:#2E6B3E;--gl:#EAF2ED;
+  --orange:#C4621A;--ol:#FDF0E8;
+  --blue:#1E4FA3;--bl:#E8EFF9;
+  --red:#B83232;--rl:#FBECEC;
+  --amber:#9B6F00;--al:#FEF7E0;
+  --purple:#6B3FA0;--pl:#F2ECFB;
+  --teal:#1A7070;--tl:#E8F5F5;
+  --bar-track:#E8E4DC;--r:6px;
+  --font:'Nunito',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:13px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.5;padding:32px 20px 64px}
+.page{max-width:980px;margin:0 auto}
+
+/* ── HEADER ── */
+.header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px}
+.eyebrow{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:6px}
+.logo{font-size:28px;font-weight:800;color:var(--text);letter-spacing:-.5px;line-height:1}
+.logo span{color:var(--orange)}
+.tagline{font-size:10.5px;color:var(--text-3);margin-top:5px}
+.tagline span{color:var(--text-2)}
+.header-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:3px;border:1.5px solid}
+.badge-orange{color:var(--orange);border-color:var(--orange);background:var(--ol)}
+.badge-blue{color:var(--blue);border-color:var(--blue);background:var(--bl)}
+.badge-green{color:var(--green);border-color:var(--green);background:var(--gl)}
+.badge-teal{color:var(--teal);border-color:var(--teal);background:var(--tl)}
+.badge-gray{color:var(--text-3);border-color:var(--border);background:var(--surface)}
+
+/* ── SECTION ── */
+.section{margin-bottom:24px}
+.section-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:14px}
+
+/* ── HEALTH GRID ── */
+.health-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.health-cell{background:var(--surface);padding:12px 10px}
+.health-label{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:4px}
+.health-value{font-size:24px;font-weight:800;line-height:1}
+.hv-green{color:var(--green)}.hv-orange{color:var(--orange)}.hv-blue{color:var(--blue)}.hv-teal{color:var(--teal)}
+.health-sub{font-size:8.5px;color:var(--text-3);margin-top:3px}
+
+/* ── VISION BANNER ── */
+.vision-banner{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--orange);border-radius:var(--r);padding:14px 18px;display:grid;grid-template-columns:28px 1fr;gap:14px;align-items:start}
+.vision-icon{font-size:22px;line-height:1;padding-top:1px}
+.vision-title{font-size:12px;font-weight:800;color:var(--text);margin-bottom:4px}
+.vision-body{font-size:10px;color:var(--text-2);line-height:1.7}
+.vision-body strong{color:var(--text);font-weight:700}
+
+/* ── RING TABLE ── */
+.ring-table{width:100%;border-collapse:collapse}
+.ring-table th{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);text-align:left;padding:0 10px 8px;border-bottom:2px solid var(--text)}
+.ring-table th:first-child{padding-left:0}
+.ring-table td{padding:9px 10px;border-bottom:1px solid var(--border-lt);vertical-align:middle;font-size:10px}
+.ring-table td:first-child{padding-left:0}
+.ring-table tr:last-child td{border-bottom:none}
+.ring-table tr.r-live td{background:var(--gl)}
+.ring-table tr.r-dim td{opacity:.45}
+.rn{font-family:var(--mono);font-size:9px;color:var(--text-3);display:block;margin-bottom:1px}
+.rname{font-weight:800;color:var(--text);white-space:nowrap}
+.rtrust{font-size:9.5px;color:var(--blue)}
+.pill{display:inline-block;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:10px}
+.p-live{background:var(--gl);color:var(--green)}
+.p-coming{background:var(--tl);color:var(--teal)}
+.p-planned{background:var(--border-lt);color:var(--text-3)}
+
+/* ── SPLIT ROW ── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* ── ADOPTION CURVE ── */
+.curve{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:8px}
+.cs{background:var(--surface);padding:12px 8px;text-align:center}
+.cs.c-live{background:var(--gl)}
+.cs.c-next{background:var(--bl)}
+.cs-icon{font-size:16px;margin-bottom:5px}
+.cs-ring{font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:2px}
+.cs-name{font-size:10.5px;font-weight:800;color:var(--text)}
+.cs-when{font-size:9px;color:var(--text-3);margin-top:2px}
+.curve-note{font-size:9.5px;color:var(--text-3);font-style:italic;line-height:1.6}
+
+/* ── ARCH BOXES ── */
+.arch-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+.arch-box:last-child{margin-bottom:0}
+.arch-hdr{padding:8px 14px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.arch-box.daemon .arch-hdr{background:var(--ol);color:var(--orange)}
+.arch-box.ui     .arch-hdr{background:var(--bl);color:var(--blue)}
+.arch-row{display:flex;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border-lt);align-items:flex-start}
+.arch-row:last-child{border-bottom:none}
+.arch-ico{font-size:13px;margin-top:1px;flex-shrink:0}
+.arch-t{font-size:10.5px;font-weight:700;color:var(--text)}
+.arch-s{font-size:9.5px;color:var(--text-3)}
+
+/* ── NUDGE STRIP ── */
+.nudge-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.nudge-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.nudge-type{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.nudge-card:nth-child(1) .nudge-type{color:var(--green)}
+.nudge-card:nth-child(2) .nudge-type{color:var(--blue)}
+.nudge-card:nth-child(3) .nudge-type{color:var(--orange)}
+.nudge-title{font-size:11px;font-weight:800;color:var(--text);margin-bottom:4px}
+.nudge-desc{font-size:9.5px;color:var(--text-2);line-height:1.55}
+
+/* ── 4-STATE CARDS ── */
+.state-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.state-card{border-radius:var(--r);padding:13px 14px;border:2px solid;position:relative}
+.state-card.explore{background:var(--tl);border-color:var(--teal)}
+.state-card.learn  {background:var(--bl);border-color:var(--blue)}
+.state-card.grow   {background:var(--gl);border-color:var(--green)}
+.state-card.excel  {background:var(--ol);border-color:var(--orange)}
+.state-label{font-size:18px;font-weight:800;margin-bottom:2px}
+.state-card.explore .state-label{color:var(--teal)}
+.state-card.learn   .state-label{color:var(--blue)}
+.state-card.grow    .state-label{color:var(--green)}
+.state-card.excel   .state-label{color:var(--orange)}
+.state-persona{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.6;margin-bottom:7px}
+.state-logic{font-size:9.5px;color:var(--text-2);line-height:1.5;margin-bottom:8px}
+.state-mult{font-size:9px;font-weight:700;padding:3px 8px;border-radius:2px;display:inline-block}
+.state-card.explore .state-mult{background:rgba(26,112,112,.1);color:var(--teal)}
+.state-card.learn   .state-mult{background:rgba(30,79,163,.1);color:var(--blue)}
+.state-card.grow    .state-mult{background:rgba(46,107,62,.1);color:var(--green)}
+.state-card.excel   .state-mult{background:rgba(196,98,26,.1);color:var(--orange)}
+
+/* ── KANBAN ── */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kanban-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.kanban-header{padding:9px 12px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.kanban-header.done {background:var(--gl);color:var(--green)}
+.kanban-header.next {background:var(--al);color:var(--amber)}
+.kanban-header.ph2  {background:var(--bl);color:var(--blue)}
+.kanban-header.ph3  {background:var(--bg);color:var(--text-3)}
+.kanban-count{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;font-size:9px;font-weight:700}
+.cnt-green{background:var(--green);color:#fff}.cnt-amber{background:var(--amber);color:#fff}.cnt-blue{background:var(--blue);color:#fff}.cnt-gray{background:var(--border);color:var(--text-2)}
+.kanban-body{padding:10px;display:flex;flex-direction:column;gap:7px}
+.kcard{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:9px 10px}
+.kcard-id{font-family:var(--mono);font-size:8px;color:var(--text-3);margin-bottom:4px}
+.kcard-text{font-size:10px;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:5px}
+.kcard-note{font-size:9.5px;color:var(--text-2);line-height:1.4;margin-bottom:5px}
+.kcard-tags{display:flex;gap:4px;flex-wrap:wrap}
+.tag{font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 5px;border-radius:2px}
+.tag-ux{background:var(--bl);color:var(--blue)}.tag-feat{background:var(--gl);color:var(--green)}.tag-infra{background:var(--pl);color:var(--purple)}.tag-ai{background:var(--ol);color:var(--orange)}.tag-gtm{background:var(--al);color:var(--amber)}
+
+/* ── BUG + DECISIONS ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.card-title{font-size:11px;font-weight:800;color:var(--text);margin-bottom:10px}
+.bug-table{width:100%;border-collapse:collapse}
+.bug-table td{padding:6px 8px;font-size:9.5px;border-bottom:1px solid var(--border-lt);color:var(--text);vertical-align:top;line-height:1.45}
+.bug-table td:first-child{font-family:var(--mono);font-size:8.5px;color:var(--text-3);width:58px;white-space:nowrap}
+.bug-table tr:last-child td{border-bottom:none}
+.pill-green {background:var(--gl);color:var(--green)}
+.pill-amber {background:var(--al);color:var(--amber)}
+.pill-red   {background:var(--rl);color:var(--red)}
+.pill-teal  {background:var(--tl);color:var(--teal)}
+code{font-family:var(--mono);font-size:8.5px;background:var(--bg);border:1px solid var(--border-lt);padding:1px 5px;border-radius:3px;color:var(--purple)}
+
+/* ── SESSION LOG ── */
+.session-log{display:flex;flex-direction:column;gap:8px}
+.session-entry{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.session-entry.active{border-color:var(--orange)}
+.session-header{display:flex;gap:16px;align-items:baseline;padding:10px 14px;border-bottom:1px solid var(--border-lt)}
+.session-entry.active .session-header{background:var(--ol);border-bottom-color:var(--orange)}
+.session-num{font-size:10px;font-weight:700;color:var(--text-3);white-space:nowrap}
+.session-entry.active .session-num{color:var(--orange)}
+.session-date{font-size:9px;color:var(--text-3);white-space:nowrap}
+.session-title{font-size:11px;font-weight:700;color:var(--text)}
+.session-body{padding:10px 14px}
+.session-item{display:flex;gap:8px;font-size:10px;color:var(--text-2);margin-bottom:4px;line-height:1.4;align-items:flex-start}
+.session-item:last-child{margin-bottom:0}
+.session-dash{color:var(--text-3);flex-shrink:0}
+
+/* ── FOOTER ── */
+.footer{display:flex;justify-content:space-between;align-items:flex-start;margin-top:28px;padding-top:16px;border-top:1px solid var(--border);gap:20px}
+.footer-left{font-size:9px;color:var(--text-3);line-height:1.7}
+.footer-left strong{color:var(--orange)}
+.footer-right{background:var(--ol);border:1px solid var(--orange);border-radius:var(--r);padding:12px 14px;max-width:300px;flex-shrink:0}
+.footer-right .how-title{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);margin-bottom:5px}
+.footer-right p{font-size:9.5px;color:var(--text-2);line-height:1.55}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="eyebrow">Project Intelligence File v15 · First Live End-to-End Test · Session 8 · 22 Feb 2026</div>
+    <div class="logo"><span>Co</span>Learner</div>
+    <div class="tagline">
+      <span>Ambient Learning</span> · <span>7 Capture Sources</span> · <span>4 Engagement States</span> · <span>SM-2 Spaced Repetition</span> · <span>Local AI</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="badge badge-orange">Build v0.10.0</span>
+    <span class="badge badge-green">MVP Live + Tested ✓</span>
+    <span class="badge badge-teal">Ambient Vision Defined</span>
+    <span class="badge badge-blue">Phase 1 · B2C + B2B</span>
+    <span class="badge badge-gray">Session 8</span>
+  </div>
+</div>
+
+<!-- HEALTH -->
+<div class="section">
+  <div class="section-label">Project Health — Session 8 · End-to-End Test Passed · 3 Recall Types Verified Live · 0 Blockers</div>
+  <div class="health-grid">
+    <div class="health-cell"><div class="health-label">Lines of Code</div><div class="health-value hv-orange">2,455</div><div class="health-sub">38 functions · schema v3</div></div>
+    <div class="health-cell"><div class="health-label">Tickets Done</div><div class="health-value hv-green">14</div><div class="health-sub">CL-001 → CL-018</div></div>
+    <div class="health-cell"><div class="health-label">Capture Sources</div><div class="health-value hv-teal">7</div><div class="health-sub">1 live · 4 coming · 2 planned</div></div>
+    <div class="health-cell"><div class="health-label">Cards in Anki</div><div class="health-value hv-green">23</div><div class="health-sub">growing with each recall</div></div>
+    <div class="health-cell"><div class="health-label">Feasibility</div><div class="health-value hv-orange">6.9</div><div class="health-sub">Viability 6.4 · Target 8.0</div></div>
+    <div class="health-cell"><div class="health-label">Phase 1 Gate</div><div class="health-value hv-blue">10</div><div class="health-sub">paying users needed</div></div>
+  </div>
+</div>
+
+<!-- VISION -->
+<div class="section">
+  <div class="section-label">Strategic Pivot — Session 8 · Ambient Monitoring Without Surveillance</div>
+  <div class="vision-banner">
+    <div class="vision-icon">🧠</div>
+    <div>
+      <div class="vision-title">From tool to ambient companion — captures everything, asks nothing</div>
+      <div class="vision-body">
+        CoLearner's original scope was YouTube-by-URL. Session 8 reframes it entirely:
+        <strong>an ambient system covering all digital consumption throughout the day</strong> — not surveillance, but silent cognitive enrichment.
+        The user never opens the app. It observes, batches, and <strong>sends notifications at user-configured intervals</strong>.
+        Trust is earned source by source. Each unlock shows exactly what's captured, stored, and never touched.
+        <strong>Streamlit survives as the review surface.</strong> A Python background daemon handles capture, scheduling, and notifications across all 7 sources.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIVE TEST RESULTS -->
+<div class="section">
+  <div class="section-label">Live Test Results — 22 Feb 2026 · First End-to-End Run · Video: Ibrahimi Courage (Islamic content)</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:11px 13px">
+      <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:4px">Extraction ✓</div>
+      <div style="font-size:10.5px;font-weight:800;color:var(--text);margin-bottom:3px">Pass 1 + 2 succeeded</div>
+      <div style="font-size:9px;color:var(--text-2);line-height:1.55">1/1 chunks · 3 concepts · 3 recall + 2 MCQ + 2 cloze generated · elapsed 481s (CPU)</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:var(--r);padding:11px 13px">
+      <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:4px">Open Answer ✓</div>
+      <div style="font-size:10.5px;font-weight:800;color:var(--text);margin-bottom:3px">Score 8/10 — Passed</div>
+      <div style="font-size:9px;color:var(--text-2);line-height:1.55">Concept: Ibrahimi courage · type=factual · SM-2 saved · next review 2026-02-23 (1d interval)</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--teal);border-radius:var(--r);padding:11px 13px">
+      <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:4px">MCQ ✓</div>
+      <div style="font-size:10.5px;font-weight:800;color:var(--text);margin-bottom:3px">Score 10/10 — Passed</div>
+      <div style="font-size:9px;color:var(--text-2);line-height:1.55">Q: "Which best describes Ibrahimi courage?" · Answer B correct · SM-2 next review 2026-02-28 (6d interval)</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--orange);border-radius:var(--r);padding:11px 13px">
+      <div style="font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);margin-bottom:4px">Cloze ✓</div>
+      <div style="font-size:10.5px;font-weight:800;color:var(--text);margin-bottom:3px">Score 8/10 — Passed</div>
+      <div style="font-size:9px;color:var(--text-2);line-height:1.55">"To maintain faith it takes ___ to resist temptation" → answered: courage · ideal: courage · next review 2026-03-10 (16d)</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div style="background:var(--gl);border:1px solid #C2DBC8;border-radius:var(--r);padding:10px 14px;font-size:9.5px;color:var(--text-2);line-height:1.65">
+      <strong style="color:var(--green)">✓ All three recall modes working end-to-end:</strong> Extraction → MCQ + Cloze generation → judge scoring → SM-2 save → Anki export (21 → 22 → 23 cards as each recall was scored). The full pipeline validated on first real content run.
+    </div>
+    <div style="background:var(--al);border:1px solid #D4C070;border-radius:var(--r);padding:10px 14px;font-size:9.5px;color:var(--text-2);line-height:1.65">
+      <strong style="color:var(--amber)">⚠ UX observation:</strong> Capture tab ring cards use dark backgrounds — visually heavy against Streamlit's white. Coming rings show "COMING" badge in yellow — readable but consider whether the card darkness fits final brand aesthetic. Low priority — not a bug.
+    </div>
+  </div>
+</div>
+
+<!-- CAPTURE SOURCES -->
+<div class="section">
+  <div class="section-label">Capture Sources — Full Architecture Scaffolded in CL-018 · R0 Live · R1–R4 Coming · R5–R6 Planned</div>
+  <table class="ring-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Source</th>
+        <th>Description</th>
+        <th>Capture Method</th>
+        <th>Trust Ask</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="r-live">
+        <td><span class="rn">R0</span></td>
+        <td><span class="rname">▶ YouTube</span></td>
+        <td style="color:var(--text-2);font-size:9.5px">Extract nutrients from any video by URL.</td>
+        <td style="font-size:9.5px;color:var(--text-2)">YouTube Transcript API</td>
+        <td class="rtrust">URL only — no account access</td>
+        <td><span class="pill p-live">Live</span></td>
+      </tr>
+      <tr>
+        <td><span class="rn">R1</span></td>
+        <td><span class="rname">🌐 Web Articles</span></td>
+        <td style="color:var(--text-2);font-size:9.5px">Articles, docs, newsletters you read in browser.</td>
+        <td style="font-size:9.5px;color:var(--text-2)">Browser ext · dwell 2+ min</td>
+        <td class="rtrust">Text only — never URLs or history</td>
+        <td><span class="pill p-coming">Coming</span></td>
+      </tr>
+      <tr>
+        <td><span class="rn">R2</span></td>
+        <td><span class="rname">📄 Local Docs</span></td>
+        <td style="color:var(--text-2);font-size:9.5px">PDFs and Word docs opened locally.</td>
+        <td style="font-size:9.5px;color:var(--text-2)">File watcher · selected folders</td>
+        <td class="rtrust">Folders you choose — files untouched</td>
+        <td><span class="pill p-coming">Coming</span></td>
+      </tr>
+      <tr>
+        <td><span class="rn">R3</span></td>
+        <td><span class="rname">🎙 Audio & Podcasts</span></td>
+        <td style="color:var(--text-2);font-size:9.5px">Podcasts, lectures, recorded talks.</td>
+        <td style="font-size:9.5px;color:var(--text-2)">Local Whisper · fully offline</td>
+        <td class="rtrust">Audio files in folders you select</td>
+        <td><span class="pill p-coming">Coming</span></td>
+      </tr>
+      <tr>
+        <td><span class="rn">R4</span></td>
+        <td><span class="rname">🎬 Local Video</span></td>
+        <td style="color:var(--text-2);font-size:9.5px">Course recordings, downloaded content.</td>
+        <td style="font-size:9.5px;color:var(--text-2)">Local Whisper · fully offline</td>
+        <td class="rtrust">Video files in folders you select</td>
+        <td><span class="pill p-coming">Coming</span></td>
+      </tr>
+      <tr class="r-dim">
+        <td><span class="rn">R5</span></td>
+        <td><span class="rname">🤝 Meetings</span></td>
+        <td style="color:var(--text-2);font-size:9.5px">Zoom/Teams recordings → learning records.</td>
+        <td style="font-size:9.5px;color:var(--text-2)">Recording files · local Whisper</td>
+        <td class="rtrust">Recordings you explicitly point to</td>
+        <td><span class="pill p-planned">Planned</span></td>
+      </tr>
+      <tr class="r-dim">
+        <td><span class="rn">R6</span></td>
+        <td><span class="rname">🖥 Screen Content</span></td>
+        <td style="color:var(--text-2);font-size:9.5px">Anything on screen. Highest trust level.</td>
+        <td style="font-size:9.5px;color:var(--text-2)">OS Accessibility API · no screenshots</td>
+        <td class="rtrust">Active window text only</td>
+        <td><span class="pill p-planned">Planned</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ADOPTION CURVE + ARCHITECTURE (side by side) -->
+<div class="section">
+  <div class="split">
+    <div>
+      <div class="section-label">Change Adoption Curve — Trust-Gated Unlock</div>
+      <div class="curve">
+        <div class="cs c-live"><div class="cs-icon">▶</div><div class="cs-ring">Source 0</div><div class="cs-name">YouTube</div><div class="cs-when">Live now</div></div>
+        <div class="cs c-next"><div class="cs-icon">🌐📄</div><div class="cs-ring">Sources 1–2</div><div class="cs-name">Web + Docs</div><div class="cs-when">Next session</div></div>
+        <div class="cs"><div class="cs-icon">🎙🎬</div><div class="cs-ring">Sources 3–4</div><div class="cs-name">Audio + Video</div><div class="cs-when">Phase 2</div></div>
+        <div class="cs"><div class="cs-icon">🤝</div><div class="cs-ring">Source 5</div><div class="cs-name">Meetings</div><div class="cs-when">Phase 2</div></div>
+        <div class="cs"><div class="cs-icon">🖥</div><div class="cs-ring">Source 6</div><div class="cs-name">Screen</div><div class="cs-when">Phase 3</div></div>
+      </div>
+      <p class="curve-note">Each unlock preceded by a transparent permission dialog — what's captured, stored, never touched. Setbacks expected early; value accumulates with breadth.</p>
+    </div>
+    <div>
+      <div class="section-label">Target Architecture — Daemon + Streamlit</div>
+      <div class="arch-box daemon">
+        <div class="arch-hdr">Background Daemon (always running)</div>
+        <div class="arch-row"><div class="arch-ico">⟳</div><div><div class="arch-t">Capture orchestrator</div><div class="arch-s">All source events · feeds SQLite</div></div></div>
+        <div class="arch-row"><div class="arch-ico">📅</div><div><div class="arch-t">SM-2 scheduler</div><div class="arch-s">Calculates due items · triggers review notifications</div></div></div>
+        <div class="arch-row"><div class="arch-ico">🔔</div><div><div class="arch-t">Notification layer</div><div class="arch-s">Interval · contextual · SM-2 due · quiet hours</div></div></div>
+      </div>
+      <div class="arch-box ui">
+        <div class="arch-hdr">Streamlit Review Interface (survives)</div>
+        <div class="arch-row"><div class="arch-ico">📡</div><div><div class="arch-t">Capture tab</div><div class="arch-s">Source cards · YouTube entry · unlock UI</div></div></div>
+        <div class="arch-row"><div class="arch-ico">🎯</div><div><div class="arch-t">Recall tab</div><div class="arch-s">Open · MCQ · Cloze · all 4 states</div></div></div>
+        <div class="arch-row"><div class="arch-ico">📊</div><div><div class="arch-t">Mastery tab</div><div class="arch-s">Ledger · analytics · SM-2 schedule · export</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION TYPES -->
+<div class="section">
+  <div class="section-label">Notification Types — Three Triggers, User Controls All</div>
+  <div class="nudge-strip">
+    <div class="nudge-card">
+      <div class="nudge-type">Interval</div>
+      <div class="nudge-title">Consumption digest</div>
+      <div class="nudge-desc">"You consumed 4 pieces today — ready for a recall test?" Fires at cadence you configure. Respects quiet hours.</div>
+    </div>
+    <div class="nudge-card">
+      <div class="nudge-type">Contextual</div>
+      <div class="nudge-title">Similarity trigger</div>
+      <div class="nudge-desc">"You read about X yesterday — still remember?" Fires when new content overlaps a previously learned concept.</div>
+    </div>
+    <div class="nudge-card">
+      <div class="nudge-type">SM-2 Due</div>
+      <div class="nudge-title">Review queue alert</div>
+      <div class="nudge-desc">Existing SM-2 due items surfaced as a system notification — no need to open the app to know items are waiting.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 4-STATE MODEL -->
+<div class="section">
+  <div class="section-label">4-State Engagement Model — CL-014 Delivered · Personas Locked · 12 Judge Prompts Live</div>
+  <div class="state-grid">
+    <div class="state-card explore">
+      <div class="state-label">Explore</div>
+      <div class="state-persona">The Guide</div>
+      <div class="state-logic">Broad awareness. Rewards curiosity and direction of thinking, not just accuracy. First-encounter framing.</div>
+      <span class="state-mult">1× NCU · Phase 2+</span>
+    </div>
+    <div class="state-card learn">
+      <div class="state-label">Learn</div>
+      <div class="state-persona">The Train</div>
+      <div class="state-logic">Precise definition and mechanism checks. Constructive, structured. Closes gaps explicitly without ambiguity.</div>
+      <span class="state-mult">2.5× NCU · Phase 2+</span>
+    </div>
+    <div class="state-card grow">
+      <div class="state-label">Grow</div>
+      <div class="state-persona">The Mentor</div>
+      <div class="state-logic">Scenario and synthesis questions. Connects misses to broader implications. Extends logic beyond what was stated.</div>
+      <span class="state-mult">5× NCU · Phase 2+</span>
+    </div>
+    <div class="state-card excel">
+      <div class="state-label">Excel</div>
+      <div class="state-persona">The Coach</div>
+      <div class="state-logic">Find the error. Stress-test understanding. Exacting precision. The adversarial moat cloud competitors can't replicate cheaply.</div>
+      <span class="state-mult">10× NCU · Phase 2+</span>
+    </div>
+  </div>
+</div>
+
+<!-- KANBAN -->
+<div class="section">
+  <div class="section-label">Build Queue</div>
+  <div class="kanban">
+    <div class="kanban-col">
+      <div class="kanban-header done">Delivered <span class="kanban-count cnt-green">4</span></div>
+      <div class="kanban-body">
+        <div class="kcard"><div class="kcard-id">CL-001–013</div><div class="kcard-text">Core MVP</div><div class="kcard-note">Two-pass extraction · SM-2 · Open/MCQ/Cloze · analytics · export · retry · cache</div><div class="kcard-tags"><span class="tag tag-feat">Feature</span><span class="tag tag-infra">Infra</span></div></div>
+        <div class="kcard"><div class="kcard-id">CL-014</div><div class="kcard-text">4-State Prompt Engine</div><div class="kcard-note">Explore/Learn/Grow/Excel · 4 personas · 12 judge prompts · DB scaffold</div><div class="kcard-tags"><span class="tag tag-ai">AI</span><span class="tag tag-ux">UX</span></div></div>
+        <div class="kcard"><div class="kcard-id">CL-015–016</div><div class="kcard-text">Judge Hardening</div><div class="kcard-note">JSON-first architecture · cloze retry · BUG-006/007/008 fixed · DEBUG logging</div><div class="kcard-tags"><span class="tag tag-ai">AI</span></div></div>
+        <div class="kcard"><div class="kcard-id">CL-018</div><div class="kcard-text">UI Restructure + Source Scaffold</div><div class="kcard-note">3-tab layout · CAPTURE_SOURCES config · sidebar source list · notification session state</div><div class="kcard-tags"><span class="tag tag-ux">UX</span><span class="tag tag-feat">Feature</span></div></div>
+      </div>
+    </div>
+    <div class="kanban-col">
+      <div class="kanban-header next">Next Session <span class="kanban-count cnt-amber">3</span></div>
+      <div class="kanban-body">
+        <div class="kcard"><div class="kcard-id">CL-019 · NEXT</div><div class="kcard-text">Source 1 — Browser Extension</div><div class="kcard-note">Chrome ext · dwell detection · tab text extraction · daemon handshake</div><div class="kcard-tags"><span class="tag tag-ux">UX</span><span class="tag tag-feat">Feature</span></div></div>
+        <div class="kcard"><div class="kcard-id">CL-020</div><div class="kcard-text">Background Daemon v1</div><div class="kcard-note">Python daemon · capture queue · SQLite feed · SM-2 scheduler</div><div class="kcard-tags"><span class="tag tag-infra">Infra</span></div></div>
+        <div class="kcard"><div class="kcard-id">CL-021</div><div class="kcard-text">Notification Layer v1</div><div class="kcard-note">System notification · interval · quiet hours · SM-2 due alerts</div><div class="kcard-tags"><span class="tag tag-feat">Feature</span></div></div>
+      </div>
+    </div>
+    <div class="kanban-col">
+      <div class="kanban-header ph2">Phase 2 <span class="kanban-count cnt-blue">4</span></div>
+      <div class="kanban-body">
+        <div class="kcard"><div class="kcard-id">CL-022</div><div class="kcard-text">Source 2 — File Watcher</div><div class="kcard-note">PDF/Word · folder selection · open-event trigger</div></div>
+        <div class="kcard"><div class="kcard-id">CL-023</div><div class="kcard-text">Sources 3/4 — Whisper</div><div class="kcard-note">Local audio/video transcription pipeline</div></div>
+        <div class="kcard"><div class="kcard-id">NCU</div><div class="kcard-text">Neural Credit Units</div><div class="kcard-note">1×/2.5×/5×/10× multipliers · <code>active_state</code> DB scaffold already live</div></div>
+        <div class="kcard"><div class="kcard-id">ICP-001</div><div class="kcard-text">L&D Validation</div><div class="kcard-note">3–5 conversations with L&D managers in regulated industries</div><div class="kcard-tags"><span class="tag tag-gtm">GTM</span></div></div>
+      </div>
+    </div>
+    <div class="kanban-col">
+      <div class="kanban-header ph3">Phase 3+ <span class="kanban-count cnt-gray">3</span></div>
+      <div class="kanban-body">
+        <div class="kcard"><div class="kcard-id">CL-02x</div><div class="kcard-text">Source 5 — Meetings</div><div class="kcard-note">Zoom/Teams recording pipeline · local Whisper</div></div>
+        <div class="kcard"><div class="kcard-id">CL-02x</div><div class="kcard-text">Source 6 — Screen</div><div class="kcard-note">OS Accessibility API · no screenshots captured</div></div>
+        <div class="kcard"><div class="kcard-id">PROD</div><div class="kcard-text">Separate Products</div><div class="kcard-note">CoTraining · CoMentoring · CoCoaching split out</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BUGS + DECISIONS -->
+<div class="section">
+  <div class="section-label">Bugs Fixed · Architecture Decisions Locked</div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">8 Bugs — All Resolved</div>
+      <table class="bug-table">
+        <tr><td>BUG-001</td><td>genanki warning on every rerun <span class="pill pill-green">Fixed S6</span></td></tr>
+        <tr><td>BUG-002</td><td>Pass 2 returns 0 questions — empty array as failure <span class="pill pill-green">Fixed S6</span></td></tr>
+        <tr><td>BUG-003</td><td>UI frozen — <code>st.rerun()</code> in finally raised RerunException <span class="pill pill-green">Fixed S6</span></td></tr>
+        <tr><td>BUG-004</td><td>JSON fails on possessives — llama3.2:3b outputs <code>\'</code> <span class="pill pill-green">Fixed S6</span></td></tr>
+        <tr><td>BUG-005</td><td>Concatenated JSON — strategy 7 regex field extraction <span class="pill pill-green">Fixed S6</span></td></tr>
+        <tr><td>BUG-006</td><td>Persona-led prompts broke judge JSON output <span class="pill pill-green">Fixed S7</span></td></tr>
+        <tr><td>BUG-007</td><td>Cloze judge had no retry — 2-attempt pattern added <span class="pill pill-green">Fixed S7</span></td></tr>
+        <tr><td>BUG-008</td><td>Persona names wrong — 20 occurrences updated <span class="pill pill-green">Fixed S7</span></td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Architecture Decisions</div>
+      <table class="bug-table">
+        <tr><td>Prompt arch</td><td>JSON constraint leads — persona is trailing style note only <span class="pill pill-green">Locked</span></td></tr>
+        <tr><td>4 states</td><td>Explore / Learn / Grow / Excel — permanent nomenclature <span class="pill pill-green">Locked</span></td></tr>
+        <tr><td>Privacy</td><td>DB never holds transcript — all tiers, all rings <span class="pill pill-green">Locked</span></td></tr>
+        <tr><td>NCU scaffold</td><td><code>active_state</code> in DB, multipliers silent until Phase 2 <span class="pill pill-green">Locked</span></td></tr>
+        <tr><td>SM-2</td><td>Never swap for proprietary algorithm <span class="pill pill-green">Locked</span></td></tr>
+        <tr><td>Inference</td><td>Free=Ollama · Pro=hosted API · Enterprise=private VPC <span class="pill pill-green">Locked</span></td></tr>
+        <tr><td>Parallelism</td><td>Deferred — CPU Ollama is compute-bound, not I/O-bound <span class="pill pill-amber">Deferred</span></td></tr>
+        <tr><td>Pro pricing</td><td>Not set until COGS model pinned (Excel token cost TBD) <span class="pill pill-amber">TBD</span></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION LOG -->
+<div class="section">
+  <div class="section-label">Session Log</div>
+  <div class="session-log">
+
+    <div class="session-entry active">
+      <div class="session-header">
+        <div class="session-num">Session 8</div>
+        <div class="session-date">22 Feb 2026</div>
+        <div class="session-title">Ambient Vision Defined + CL-018 UI Restructure Shipped</div>
+      </div>
+      <div class="session-body">
+        <div class="session-item"><div class="session-dash">—</div>Strategic pivot: CoLearner becomes ambient monitoring across all digital consumption. 7 capture sources scaffolded. Change adoption curve model adopted — users unlock sources as trust builds.</div>
+        <div class="session-item"><div class="session-dash">—</div>CL-018 shipped: 3-tab layout (Capture/Recall/Mastery), CAPTURE_SOURCES config constant, sidebar source list with live/coming/planned indicators, notification toggle + interval slider in session state.</div>
+        <div class="session-item"><div class="session-dash">—</div>Target architecture finalised: Python background daemon handles all capture, SM-2 scheduling, and notifications. Streamlit survives as the review and analytics surface only.</div>
+        <div class="session-item"><div class="session-dash">—</div><strong style="color:var(--green)">End-to-end live test passed:</strong> Video on Ibrahimi courage extracted (481s CPU), 3 concepts. Open answer 8/10, MCQ 10/10, Cloze 8/10 — all three recall modes scored, SM-2 intervals saved, Anki deck grew 21→23 cards across the session.</div>
+        <div class="session-item"><div class="session-dash">—</div>UX observation: Capture tab ring cards use dark backgrounds — visually heavy; to revisit in a future UX pass (non-blocking).</div>
+        <div class="session-item" style="color:var(--text-3);font-style:italic"><div class="session-dash">—</div>Next: CL-019 (Source 1 browser extension) → CL-020 (daemon v1) → CL-021 (notification layer v1)</div>
+      </div>
+    </div>
+
+    <div class="session-entry">
+      <div class="session-header">
+        <div class="session-num">Session 7</div>
+        <div class="session-date">21 Feb 2026</div>
+        <div class="session-title">CL-014 Complete + Judge Prompt Architecture Fix</div>
+      </div>
+      <div class="session-body">
+        <div class="session-item"><div class="session-dash">—</div>4-state prompt engine shipped. Persona names finalised: Guide / Train / Mentor / Coach. BUG-006/007/008 resolved.</div>
+        <div class="session-item"><div class="session-dash">—</div>Critical insight locked: JSON constraint must lead the system prompt. Persona appended as a single trailing style line prevents all parse failures.</div>
+      </div>
+    </div>
+
+    <div class="session-entry">
+      <div class="session-header">
+        <div class="session-num">Session 6</div>
+        <div class="session-date">21 Feb 2026</div>
+        <div class="session-title">MVP Debug — 5 Bugs Fixed, Parser Hardened</div>
+      </div>
+      <div class="session-body">
+        <div class="session-item"><div class="session-dash">—</div>BUG-001–005 resolved. JSON parser hardened to 7 fallback strategies + pre-clean. Extraction confirmed stable: 4/4 chunks pass on first attempt.</div>
+      </div>
+    </div>
+
+    <div class="session-entry">
+      <div class="session-header">
+        <div class="session-num">Sessions 1–5</div>
+        <div class="session-date">Feb 2026</div>
+        <div class="session-title">Foundation → Strategy → CL-001–013</div>
+      </div>
+      <div class="session-body">
+        <div class="session-item"><div class="session-dash">—</div>Build v0.8 foundation. Three-tier inference locked. B2C flywheel + B2B parallel strategy defined. Feasibility 6.9 / Viability 6.4. All 13 MVP tickets delivered.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-left">
+    <strong>CoLearner</strong> · Build v0.10.0 · Session 8 · Dashboard v15<br>
+    7 rings: YouTube · Web · Docs · Audio · Video · Meetings · Screen<br>
+    4 states: Explore · Learn · Grow · Excel<br>
+    3 inference tiers: Free (Ollama) · Pro (hosted) · Enterprise (private)<br>
+    Python · Streamlit + daemon · SQLite v3 · SM-2
+  </div>
+  <div class="footer-right">
+    <div class="how-title">⚡ How to Update This File</div>
+    <p>At end of each session paste both files to Claude and say:<br>"Update the dashboard — session complete."</p>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

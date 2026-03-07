@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoLearner — Phase 3: Dashboard & Home (Next.js + NestJS)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #C4621A; --primary-h: #D87430; --primary-d: #A85316;
+  --primary-bg: #FDF0E8; --primary-bg2: #FEF8F3; --primary-glow: rgba(196,98,26,0.12);
+  --explore: #1A7070; --explore-bg: #E8F5F5; --explore-l: #2A9494;
+  --learn: #1E4FA3; --learn-bg: #E8EFF9; --learn-l: #3B6FCA;
+  --grow: #6B3FA0; --grow-bg: #F2ECFB; --grow-l: #8B5FC8;
+  --excel: #2E6B3E; --excel-bg: #EAF2ED; --excel-l: #48A05E;
+  --ok: #16A34A; --ok-bg: #F0FDF4; --err: #DC2626; --err-bg: #FEF2F2;
+  --warn: #D97706; --warn-bg: #FFFBEB; --info: #2563EB; --info-bg: #EFF6FF;
+  --bg: #FAFAF8; --bg2: #F5F3EF; --surface: #FFFFFF;
+  --border: #E5E2DC; --border-lt: #F0EDE8;
+  --t1: #1A1714; --t2: #57534E; --t3: #A8A29E; --t4: #D6D3CD;
+  --font: 'Inter', -apple-system, sans-serif; --mono: 'JetBrains Mono', monospace;
+  --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-full: 999px;
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --sidebar-w: 240px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; scroll-behavior: smooth; }
+body { font-family: var(--font); background: #0C0A09; color: var(--t1); -webkit-font-smoothing: antialiased; }
+
+/* ══════ TOP SCREEN NAV ══════ */
+.top-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(12,10,9,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.top-nav-inner { max-width: 1440px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; height: 48px; gap: 6px; overflow-x: auto; }
+.top-nav-inner::-webkit-scrollbar { display: none; }
+.tn-logo { font-weight: 800; font-size: 14px; color: #fff; letter-spacing: -0.3px; margin-right: 10px; white-space: nowrap; flex-shrink: 0; }
+.tn-logo span { color: var(--primary-h); }
+.tn-badge { font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary-h); background: rgba(196,98,26,0.12); padding: 3px 8px; border-radius: 99px; white-space: nowrap; flex-shrink: 0; margin-right: 6px; }
+.tn-btn { font-family: var(--font); font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.35); background: none; border: 1px solid rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 99px; cursor: pointer; white-space: nowrap; transition: 180ms var(--ease); flex-shrink: 0; }
+.tn-btn:hover { color: #fff; background: rgba(255,255,255,0.04); }
+.tn-btn.active { color: #fff; background: var(--primary); border-color: var(--primary); }
+
+/* ══════ BROWSER FRAME ══════ */
+.main { max-width: 1440px; margin: 0 auto; padding: 68px 24px 80px; }
+.screen-section { margin-bottom: 80px; display: none; }
+.screen-section.visible { display: block; }
+.sec-head { margin-bottom: 32px; }
+.sec-num { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--primary-h); }
+.sec-title { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.5px; margin: 2px 0; }
+.sec-desc { font-size: 13px; color: rgba(255,255,255,0.3); max-width: 560px; }
+
+.frame-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.2); margin-bottom: 10px; text-align: center; }
+.browser-frame { background: #1C1917; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 30px 60px rgba(0,0,0,0.4); margin-bottom: 28px; }
+.browser-bar { background: #292524; padding: 8px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.browser-dots { display: flex; gap: 5px; }
+.browser-dots span { width: 9px; height: 9px; border-radius: 50%; }
+.browser-dots span:nth-child(1) { background: #EF4444; }
+.browser-dots span:nth-child(2) { background: #F59E0B; }
+.browser-dots span:nth-child(3) { background: #22C55E; }
+.browser-url { flex: 1; background: rgba(255,255,255,0.06); border-radius: 5px; padding: 4px 10px; font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.3); }
+.browser-url .lock { color: var(--ok); }
+.browser-body { background: var(--bg); }
+
+/* ══════════════════════════════════════════
+   APP SHELL — Sidebar + Main
+   ══════════════════════════════════════════ */
+.app-shell { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 720px; }
+
+/* ── Sidebar ── */
+.sidebar {
+  background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; padding: 0;
+}
+.sb-header { padding: 20px 20px 16px; border-bottom: 1px solid var(--border-lt); }
+.sb-logo { font-size: 17px; font-weight: 800; color: var(--t1); letter-spacing: -0.4px; }
+.sb-logo span { color: var(--primary); }
+
+.sb-nav { flex: 1; padding: 12px 10px; }
+.sb-section-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--t3); padding: 12px 10px 6px; margin-top: 4px;
+}
+.sb-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+  border-radius: var(--r-sm); cursor: pointer; transition: 150ms var(--ease);
+  margin-bottom: 2px; text-decoration: none;
+}
+.sb-item:hover { background: var(--bg2); }
+.sb-item.active { background: var(--primary-bg); }
+.sb-item-icon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--t3); }
+.sb-item.active .sb-item-icon { color: var(--primary); }
+.sb-item-label { font-size: 13px; font-weight: 500; color: var(--t2); }
+.sb-item.active .sb-item-label { color: var(--primary); font-weight: 700; }
+.sb-item-badge {
+  margin-left: auto; font-size: 10px; font-weight: 700; color: white;
+  background: var(--primary); padding: 1px 7px; border-radius: var(--r-full); min-width: 20px; text-align: center;
+}
+
+/* Source progress in sidebar */
+.sb-ring-card {
+  margin: 8px 10px; background: var(--bg2); border-radius: var(--r-md);
+  padding: 14px; border: 1px solid var(--border-lt);
+}
+.sb-ring-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.sb-ring-circle {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--explore), var(--explore-l));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 900; color: white; flex-shrink: 0;
+}
+.sb-ring-info h4 { font-size: 12px; font-weight: 700; color: var(--t1); }
+.sb-ring-info p { font-size: 10px; color: var(--t3); }
+.sb-ring-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.sb-ring-fill { height: 100%; border-radius: 2px; background: var(--explore); transition: 400ms var(--ease); }
+.sb-ring-meta { display: flex; justify-content: space-between; font-size: 9px; color: var(--t3); margin-top: 4px; }
+
+/* Sidebar footer */
+.sb-footer { padding: 12px 10px; border-top: 1px solid var(--border-lt); }
+.sb-user { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--r-sm); cursor: pointer; }
+.sb-user:hover { background: var(--bg2); }
+.sb-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-bg), var(--border));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: var(--primary); flex-shrink: 0;
+}
+.sb-user-name { font-size: 12px; font-weight: 600; color: var(--t1); }
+.sb-user-email { font-size: 10px; color: var(--t3); }
+.sb-user-dots { margin-left: auto; color: var(--t3); font-size: 14px; }
+
+/* ── Main Content Area ── */
+.app-main { background: var(--bg); overflow-y: auto; padding: 0; }
+
+/* Top bar */
+.main-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 28px; border-bottom: 1px solid var(--border-lt);
+  background: var(--surface); position: sticky; top: 0; z-index: 10;
+}
+.mt-left h1 { font-size: 18px; font-weight: 800; color: var(--t1); letter-spacing: -0.3px; }
+.mt-left p { font-size: 11px; color: var(--t3); }
+.mt-right { display: flex; align-items: center; gap: 10px; }
+.mt-search {
+  display: flex; align-items: center; gap: 6px; padding: 7px 14px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm);
+  font-size: 12px; color: var(--t3); cursor: pointer; transition: 150ms var(--ease);
+}
+.mt-search:hover { border-color: var(--t3); }
+.mt-search kbd { font-family: var(--mono); font-size: 9px; background: var(--surface); border: 1px solid var(--border); padding: 1px 4px; border-radius: 3px; }
+.mt-icon-btn {
+  width: 34px; height: 34px; border-radius: var(--r-sm); border: 1px solid var(--border);
+  background: var(--surface); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--t3); font-size: 16px; transition: 150ms var(--ease); position: relative;
+}
+.mt-icon-btn:hover { border-color: var(--t3); color: var(--t2); }
+.mt-notif-dot { position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; background: var(--err); border-radius: 50%; }
+
+/* ── Dashboard Content ── */
+.dash-content { padding: 24px 28px; }
+
+/* Greeting banner */
+.greeting-banner {
+  background: linear-gradient(135deg, #1C1410, #261A10);
+  border-radius: var(--r-lg); padding: 28px 32px; margin-bottom: 24px;
+  color: white; position: relative; overflow: hidden;
+}
+.greeting-banner::after {
+  content: ''; position: absolute; top: -40px; right: -40px; width: 200px; height: 200px;
+  border-radius: 50%; border: 1px solid rgba(196,98,26,0.15);
+}
+.greeting-banner::before {
+  content: ''; position: absolute; top: 20px; right: 20px; width: 120px; height: 120px;
+  border-radius: 50%; border: 1px solid rgba(196,98,26,0.08);
+}
+.gb-row { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+.gb-left h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 4px; }
+.gb-left h2 span { color: var(--primary-h); }
+.gb-left p { font-size: 13px; color: rgba(255,255,255,0.45); }
+.gb-right { display: flex; gap: 20px; }
+.gb-stat { text-align: center; }
+.gb-stat-val { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--primary-h); }
+.gb-stat-label { font-size: 9px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 1px; }
+
+/* Quick stats row */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md);
+  padding: 18px 16px; transition: 150ms var(--ease);
+}
+.stat-card:hover { box-shadow: var(--shadow-sm); border-color: var(--t4); }
+.sc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.sc-icon {
+  width: 32px; height: 32px; border-radius: var(--r-sm); display: flex;
+  align-items: center; justify-content: center; font-size: 16px;
+}
+.sc-change { font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 2px; }
+.sc-change.up { color: var(--ok); }
+.sc-change.down { color: var(--err); }
+.sc-val { font-family: var(--mono); font-size: 26px; font-weight: 800; color: var(--t1); line-height: 1; }
+.sc-label { font-size: 10px; font-weight: 600; color: var(--t3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* Grid: 2-col layout for main panels */
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.dash-grid-full { grid-column: 1 / -1; }
+
+/* Card component */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
+.card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--border-lt);
+}
+.card-title { font-size: 13px; font-weight: 700; color: var(--t1); display: flex; align-items: center; gap: 8px; }
+.card-action { font-size: 11px; font-weight: 600; color: var(--primary); cursor: pointer; }
+.card-action:hover { text-decoration: underline; }
+.card-body { padding: 16px 18px; }
+
+/* Source Progress Card */
+.ring-progress-card { padding: 20px 18px; }
+.rpc-visual { display: flex; align-items: center; gap: 24px; margin-bottom: 20px; }
+.rpc-ring-wrap { position: relative; width: 100px; height: 100px; flex-shrink: 0; }
+.rpc-ring-svg { width: 100px; height: 100px; transform: rotate(-90deg); }
+.rpc-ring-bg { fill: none; stroke: var(--border); stroke-width: 6; }
+.rpc-ring-fg { fill: none; stroke: var(--explore); stroke-width: 6; stroke-linecap: round; transition: 600ms var(--ease); }
+.rpc-ring-center {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  text-align: center;
+}
+.rpc-ring-num { font-size: 28px; font-weight: 900; color: var(--explore); line-height: 1; }
+.rpc-ring-label { font-size: 8px; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: 0.08em; }
+.rpc-info h3 { font-size: 16px; font-weight: 800; color: var(--t1); margin-bottom: 4px; }
+.rpc-info p { font-size: 11px; color: var(--t3); line-height: 1.5; margin-bottom: 12px; }
+.rpc-milestones { display: flex; flex-direction: column; gap: 6px; }
+.rpc-milestone { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+.rpc-m-check { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 8px; }
+.rpc-m-check.done { background: var(--ok); border-color: var(--ok); color: white; }
+.rpc-m-text { color: var(--t2); }
+.rpc-m-text.done { color: var(--t3); text-decoration: line-through; }
+
+/* State selector */
+.state-switch { display: flex; gap: 6px; margin-bottom: 16px; }
+.state-btn {
+  display: flex; align-items: center; gap: 5px; padding: 6px 12px;
+  border-radius: var(--r-full); font-size: 11px; font-weight: 600; border: 1.5px solid var(--border);
+  background: var(--surface); cursor: pointer; transition: 150ms var(--ease); color: var(--t2);
+}
+.state-btn:hover { border-color: var(--t3); }
+.state-btn.active-explore { background: var(--explore-bg); border-color: var(--explore); color: var(--explore); }
+.state-btn.active-learn { background: var(--learn-bg); border-color: var(--learn); color: var(--learn); }
+.state-btn.locked { opacity: 0.35; cursor: not-allowed; }
+
+/* Today's Queue */
+.queue-list { display: flex; flex-direction: column; gap: 8px; }
+.queue-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  border: 1px solid var(--border-lt); border-radius: var(--r-sm);
+  transition: 150ms var(--ease); cursor: pointer;
+}
+.queue-item:hover { border-color: var(--border); background: var(--bg2); }
+.qi-type {
+  width: 28px; height: 28px; border-radius: var(--r-xs); display: flex;
+  align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0;
+}
+.qi-info { flex: 1; min-width: 0; }
+.qi-concept { font-size: 12px; font-weight: 600; color: var(--t1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qi-meta { font-size: 10px; color: var(--t3); }
+.qi-score { font-family: var(--mono); font-size: 11px; font-weight: 600; }
+.qi-btn {
+  padding: 5px 12px; border-radius: var(--r-sm); font-size: 10px; font-weight: 700;
+  background: var(--primary); color: white; border: none; cursor: pointer;
+  transition: 150ms var(--ease);
+}
+.qi-btn:hover { background: var(--primary-d); }
+
+/* Capture Card */
+.capture-area {
+  border: 2px dashed var(--border); border-radius: var(--r-md); padding: 28px;
+  text-align: center; transition: 200ms var(--ease); cursor: pointer;
+}
+.capture-area:hover { border-color: var(--primary); background: var(--primary-bg2); }
+.ca-icon { font-size: 36px; margin-bottom: 10px; }
+.ca-title { font-size: 14px; font-weight: 700; color: var(--t1); margin-bottom: 4px; }
+.ca-desc { font-size: 11px; color: var(--t3); margin-bottom: 16px; }
+.ca-input-row { display: flex; gap: 8px; max-width: 400px; margin: 0 auto; }
+.ca-input {
+  flex: 1; padding: 10px 14px; font-family: var(--font); font-size: 12px;
+  border: 1.5px solid var(--border); border-radius: var(--r-sm); background: var(--surface);
+  outline: none; transition: 150ms var(--ease);
+}
+.ca-input:focus { border-color: var(--primary); }
+.ca-submit {
+  padding: 10px 18px; background: var(--primary); color: white; border: none;
+  border-radius: var(--r-sm); font-family: var(--font); font-size: 12px;
+  font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+
+/* Activity Feed */
+.activity-list { display: flex; flex-direction: column; gap: 0; }
+.activity-item {
+  display: flex; align-items: flex-start; gap: 10px; padding: 10px 0;
+  border-bottom: 1px solid var(--border-lt);
+}
+.activity-item:last-child { border-bottom: none; }
+.ai-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.ai-text { font-size: 12px; color: var(--t2); }
+.ai-text strong { color: var(--t1); font-weight: 600; }
+.ai-time { font-size: 10px; color: var(--t3); margin-top: 1px; }
+
+/* Streak card */
+.streak-row { display: flex; gap: 4px; margin-bottom: 8px; }
+.streak-day {
+  flex: 1; height: 28px; border-radius: var(--r-xs); display: flex;
+  align-items: center; justify-content: center; font-size: 9px; font-weight: 700;
+  background: var(--bg2); color: var(--t3); border: 1px solid var(--border-lt);
+}
+.streak-day.active { background: var(--ok-bg); color: var(--ok); border-color: var(--ok); }
+.streak-day.today { border: 2px solid var(--primary); color: var(--primary); background: var(--primary-bg); }
+.streak-day.missed { background: var(--err-bg); color: var(--err); border-color: rgba(220,38,38,0.2); }
+
+/* Mastery mini chart */
+.mastery-bars { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+.mastery-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; }
+.mastery-bar {
+  width: 100%; border-radius: 3px 3px 0 0; transition: 300ms var(--ease);
+  margin-top: auto;
+}
+.mastery-bar-label { font-size: 8px; font-weight: 600; color: var(--t3); }
+
+/* Notification indicator */
+.nudge-card {
+  background: var(--warn-bg); border: 1px solid rgba(217,119,6,0.15);
+  border-radius: var(--r-md); padding: 14px 16px; display: flex;
+  align-items: center; gap: 12px;
+}
+.nudge-icon { font-size: 22px; flex-shrink: 0; }
+.nudge-text h4 { font-size: 12px; font-weight: 700; color: var(--warn); }
+.nudge-text p { font-size: 11px; color: var(--t3); }
+.nudge-btn {
+  margin-left: auto; padding: 7px 14px; background: var(--warn); color: white;
+  border: none; border-radius: var(--r-sm); font-size: 11px; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+}
+
+/* Dev notes */
+.dev-notes { margin-top: 20px; }
+.dev-note { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r-md); padding: 16px 20px; margin-bottom: 8px; }
+.dev-note-title { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); margin-bottom: 4px; }
+.dev-note-body { font-size: 10px; color: rgba(255,255,255,0.25); line-height: 1.7; }
+.dev-note-body code { font-family: var(--mono); background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 3px; font-size: 9px; color: var(--primary-h); }
+
+/* Responsive */
+@media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2, 1fr); } .dash-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="top-nav-inner">
+    <div class="tn-logo">Co<span>Learner</span></div>
+    <span class="tn-badge">Phase 3 · Dashboard</span>
+    <button class="tn-btn active" onclick="showSec('all',this)">All Screens</button>
+    <button class="tn-btn" onclick="showSec('home',this)">Home Dashboard</button>
+    <button class="tn-btn" onclick="showSec('capture',this)">Capture View</button>
+    <button class="tn-btn" onclick="showSec('queue',this)">Recall Queue</button>
+    <button class="tn-btn" onclick="showSec('mastery',this)">Mastery Analytics</button>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ════════════════════════════════════════════════
+     SCREEN 1: HOME DASHBOARD
+     ════════════════════════════════════════════════ -->
+<section class="screen-section visible" id="sec-home">
+  <div class="sec-head">
+    <div class="sec-num">Screen 01 · Home Dashboard</div>
+    <div class="sec-title">Main Dashboard</div>
+    <div class="sec-desc">The student's home — sidebar nav, stats overview, ring progress, recall queue, capture CTA, activity feed, and streak tracker.</div>
+  </div>
+
+  <div class="frame-label">Dashboard — Active Learner View</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">🔒</span> app.colearner.io/dashboard</div>
+    </div>
+    <div class="browser-body">
+      <div class="app-shell">
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="sb-header">
+            <div class="sb-logo">Co<span>Learner</span></div>
+          </div>
+          <div class="sb-nav">
+            <div class="sb-item active">
+              <div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+              <span class="sb-item-label">Dashboard</span>
+            </div>
+            <div class="sb-item">
+              <div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+              <span class="sb-item-label">Capture</span>
+            </div>
+            <div class="sb-item">
+              <div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+              <span class="sb-item-label">Recall</span>
+              <span class="sb-item-badge">5</span>
+            </div>
+            <div class="sb-item">
+              <div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div>
+              <span class="sb-item-label">Mastery</span>
+            </div>
+            <div class="sb-item">
+              <div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+              <span class="sb-item-label">Review Queue</span>
+              <span class="sb-item-badge" style="background:var(--warn)">3</span>
+            </div>
+
+            <div class="sb-section-label">Settings</div>
+            <div class="sb-item">
+              <div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+              <span class="sb-item-label">Settings</span>
+            </div>
+            <div class="sb-item">
+              <div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+              <span class="sb-item-label">Notifications</span>
+            </div>
+
+            <!-- Source Progress -->
+            <div class="sb-ring-card">
+              <div class="sb-ring-top">
+                <div class="sb-ring-circle">1</div>
+                <div class="sb-ring-info">
+                  <h4>Source 1 — Beginner</h4>
+                  <p>34 / 50 recall attempts</p>
+                </div>
+              </div>
+              <div class="sb-ring-bar"><div class="sb-ring-fill" style="width:68%"></div></div>
+              <div class="sb-ring-meta"><span>68% complete</span><span>16 to go</span></div>
+            </div>
+          </div>
+
+          <div class="sb-footer">
+            <div class="sb-user">
+              <div class="sb-avatar">AK</div>
+              <div>
+                <div class="sb-user-name">Ahmed Khan</div>
+                <div class="sb-user-email">ahmed@example.com</div>
+              </div>
+              <div class="sb-user-dots">···</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="app-main">
+          <div class="main-topbar">
+            <div class="mt-left">
+              <h1>Dashboard</h1>
+              <p>Thursday, Feb 27, 2026</p>
+            </div>
+            <div class="mt-right">
+              <div class="mt-search">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+                Search... <kbd>⌘K</kbd>
+              </div>
+              <div class="mt-icon-btn">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+                <div class="mt-notif-dot"></div>
+              </div>
+              <div class="mt-icon-btn">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-content">
+            <!-- Greeting -->
+            <div class="greeting-banner">
+              <div class="gb-row">
+                <div class="gb-left">
+                  <h2>Good morning, <span>Ahmed</span></h2>
+                  <p>You have 5 recall items due today. Keep the streak alive!</p>
+                </div>
+                <div class="gb-right">
+                  <div class="gb-stat"><div class="gb-stat-val">7</div><div class="gb-stat-label">Day Streak</div></div>
+                  <div class="gb-stat"><div class="gb-stat-val">82%</div><div class="gb-stat-label">Pass Rate</div></div>
+                  <div class="gb-stat"><div class="gb-stat-val">34</div><div class="gb-stat-label">Concepts</div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="stats-row">
+              <div class="stat-card">
+                <div class="sc-top">
+                  <div class="sc-icon" style="background:var(--primary-bg)">📥</div>
+                  <div class="sc-change up">↑ 12%</div>
+                </div>
+                <div class="sc-val">142</div>
+                <div class="sc-label">Total Recalls</div>
+              </div>
+              <div class="stat-card">
+                <div class="sc-top">
+                  <div class="sc-icon" style="background:var(--ok-bg)">✅</div>
+                  <div class="sc-change up">↑ 3%</div>
+                </div>
+                <div class="sc-val">82%</div>
+                <div class="sc-label">Pass Rate</div>
+              </div>
+              <div class="stat-card">
+                <div class="sc-top">
+                  <div class="sc-icon" style="background:var(--learn-bg)">🧠</div>
+                  <div class="sc-change up">↑ 5</div>
+                </div>
+                <div class="sc-val">34</div>
+                <div class="sc-label">Active Concepts</div>
+              </div>
+              <div class="stat-card">
+                <div class="sc-top">
+                  <div class="sc-icon" style="background:var(--warn-bg)">🔥</div>
+                  <div class="sc-change up">best: 12</div>
+                </div>
+                <div class="sc-val">7</div>
+                <div class="sc-label">Day Streak</div>
+              </div>
+            </div>
+
+            <!-- Notification -->
+            <div class="nudge-card" style="margin-bottom:16px">
+              <div class="nudge-icon">⏰</div>
+              <div class="nudge-text">
+                <h4>5 items due for recall</h4>
+                <p>3 from SM-2 schedule, 2 failed items from yesterday</p>
+              </div>
+              <button class="nudge-btn">Start Recall →</button>
+            </div>
+
+            <!-- Two-col grid -->
+            <div class="dash-grid">
+              <!-- Source Progress -->
+              <div class="card">
+                <div class="card-head">
+                  <div class="card-title">📊 Source Progress</div>
+                  <div class="card-action">View details →</div>
+                </div>
+                <div class="ring-progress-card">
+                  <div class="rpc-visual">
+                    <div class="rpc-ring-wrap">
+                      <svg class="rpc-ring-svg" viewBox="0 0 100 100">
+                        <circle class="rpc-ring-bg" cx="50" cy="50" r="42"/>
+                        <circle class="rpc-ring-fg" cx="50" cy="50" r="42"
+                          stroke-dasharray="264" stroke-dashoffset="84"/>
+                      </svg>
+                      <div class="rpc-ring-center">
+                        <div class="rpc-ring-num">1</div>
+                        <div class="rpc-ring-label">Source</div>
+                      </div>
+                    </div>
+                    <div class="rpc-info">
+                      <h3>Beginner Source</h3>
+                      <p>Complete 50 recall attempts with 70%+ pass rate to unlock Source 2.</p>
+                      <div class="rpc-milestones">
+                        <div class="rpc-milestone"><div class="rpc-m-check done">✓</div><span class="rpc-m-text done">First extraction complete</span></div>
+                        <div class="rpc-milestone"><div class="rpc-m-check done">✓</div><span class="rpc-m-text done">10 recall attempts</span></div>
+                        <div class="rpc-milestone"><div class="rpc-m-check"></div><span class="rpc-m-text">50 recall attempts (34/50)</span></div>
+                        <div class="rpc-milestone"><div class="rpc-m-check"></div><span class="rpc-m-text">70% pass rate (82% ✓)</span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="font-size:10px;color:var(--t3)">
+                    <strong style="color:var(--t2)">Current engagement state:</strong>
+                  </div>
+                  <div class="state-switch" style="margin-top:6px">
+                    <div class="state-btn active-explore">🧭 Explore</div>
+                    <div class="state-btn active-learn">🚂 Learn</div>
+                    <div class="state-btn locked">🌱 Grow</div>
+                    <div class="state-btn locked">🏆 Excel</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Today's Queue -->
+              <div class="card">
+                <div class="card-head">
+                  <div class="card-title">📋 Today's Recall Queue <span style="font-size:10px;background:var(--warn-bg);color:var(--warn);padding:2px 8px;border-radius:99px;font-weight:700">5 due</span></div>
+                  <div class="card-action">View all →</div>
+                </div>
+                <div class="card-body" style="padding:12px 14px">
+                  <div class="queue-list">
+                    <div class="queue-item">
+                      <div class="qi-type" style="background:var(--learn-bg)">📝</div>
+                      <div class="qi-info">
+                        <div class="qi-concept">Spaced Repetition Fundamentals</div>
+                        <div class="qi-meta">Open Answer · Due today · <span style="color:var(--ok)">Last: 8/10</span></div>
+                      </div>
+                      <button class="qi-btn">Recall</button>
+                    </div>
+                    <div class="queue-item">
+                      <div class="qi-type" style="background:var(--explore-bg)">🔤</div>
+                      <div class="qi-info">
+                        <div class="qi-concept">Neural Network Activation Functions</div>
+                        <div class="qi-meta">MCQ · Due today · <span style="color:var(--ok)">Last: 7/10</span></div>
+                      </div>
+                      <button class="qi-btn">Recall</button>
+                    </div>
+                    <div class="queue-item">
+                      <div class="qi-type" style="background:var(--err-bg)">✏️</div>
+                      <div class="qi-info">
+                        <div class="qi-concept">Gradient Descent Optimization</div>
+                        <div class="qi-meta">Cloze · Failed yesterday · <span style="color:var(--err)">Last: 4/10</span></div>
+                      </div>
+                      <button class="qi-btn">Retry</button>
+                    </div>
+                    <div class="queue-item">
+                      <div class="qi-type" style="background:var(--learn-bg)">📝</div>
+                      <div class="qi-info">
+                        <div class="qi-concept">Transformer Architecture</div>
+                        <div class="qi-meta">Open Answer · Due today</div>
+                      </div>
+                      <button class="qi-btn">Recall</button>
+                    </div>
+                    <div class="queue-item">
+                      <div class="qi-type" style="background:var(--err-bg)">🔤</div>
+                      <div class="qi-info">
+                        <div class="qi-concept">Backpropagation Algorithm</div>
+                        <div class="qi-meta">MCQ · Failed 2 days ago · <span style="color:var(--err)">Last: 3/10</span></div>
+                      </div>
+                      <button class="qi-btn">Retry</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Capture CTA -->
+              <div class="card">
+                <div class="card-head">
+                  <div class="card-title">📥 Quick Capture</div>
+                  <div class="card-action">All sources →</div>
+                </div>
+                <div class="card-body">
+                  <div class="capture-area">
+                    <div class="ca-icon">🎬</div>
+                    <div class="ca-title">Paste a YouTube URL to capture</div>
+                    <div class="ca-desc">We'll extract key concepts and generate recall questions automatically</div>
+                    <div class="ca-input-row">
+                      <input class="ca-input" placeholder="https://youtube.com/watch?v=..." />
+                      <button class="ca-submit">Extract →</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Streak + Activity -->
+              <div class="card">
+                <div class="card-head">
+                  <div class="card-title">🔥 Weekly Streak</div>
+                </div>
+                <div class="card-body">
+                  <div class="streak-row">
+                    <div class="streak-day active">M</div>
+                    <div class="streak-day active">T</div>
+                    <div class="streak-day active">W</div>
+                    <div class="streak-day active">T</div>
+                    <div class="streak-day active">F</div>
+                    <div class="streak-day missed">S</div>
+                    <div class="streak-day today">S</div>
+                  </div>
+                  <div style="font-size:10px;color:var(--t3);margin-bottom:16px">7-day streak · Best ever: 12 days</div>
+
+                  <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:8px">Recent Activity</div>
+                  <div class="activity-list">
+                    <div class="activity-item">
+                      <div class="ai-dot" style="background:var(--ok)"></div>
+                      <div>
+                        <div class="ai-text"><strong>Scored 9/10</strong> on "Neural Network Basics"</div>
+                        <div class="ai-time">2 hours ago</div>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="ai-dot" style="background:var(--primary)"></div>
+                      <div>
+                        <div class="ai-text"><strong>Captured</strong> "Deep Learning Crash Course" — 8 concepts</div>
+                        <div class="ai-time">5 hours ago</div>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="ai-dot" style="background:var(--err)"></div>
+                      <div>
+                        <div class="ai-text"><strong>Failed</strong> "Gradient Descent" — 4/10, retry tomorrow</div>
+                        <div class="ai-time">Yesterday</div>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="ai-dot" style="background:var(--learn)"></div>
+                      <div>
+                        <div class="ai-text">State changed to <strong>Learn</strong> mode</div>
+                        <div class="ai-time">2 days ago</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dev-notes">
+    <div class="dev-note">
+      <div class="dev-note-title">Next.js Architecture: <code>app/(dashboard)/layout.tsx</code></div>
+      <div class="dev-note-body">
+        <code>app/(dashboard)/layout.tsx</code> renders <code>&lt;AppShell&gt;</code> with <code>&lt;Sidebar&gt;</code> + <code>{children}</code>. Dashboard route: <code>app/(dashboard)/page.tsx</code> is a Server Component that fetches initial data via <code>fetch()</code> to NestJS, then passes to client sub-components: <code>&lt;GreetingBanner&gt;</code>, <code>&lt;StatsRow&gt;</code>, <code>&lt;NotificationAlert&gt;</code>, <code>&lt;SourceProgressCard&gt;</code>, <code>&lt;RecallQueue&gt;</code>, <code>&lt;QuickCapture&gt;</code>, <code>&lt;StreakTracker&gt;</code>. Interactive components are <code>'use client'</code>. Server state via <code>@tanstack/react-query</code> hydrated from RSC, UI state via <code>zustand</code>. Sidebar is a shared component in <code>components/layout/Sidebar.tsx</code>.
+      </div>
+    </div>
+    <div class="dev-note">
+      <div class="dev-note-title">NestJS API: <code>src/dashboard/dashboard.controller.ts</code></div>
+      <div class="dev-note-body">
+        <code>GET /api/dashboard/stats</code> → <code>{ totalRecalls, passRate, activeConcepts, streak }</code>. <code>GET /api/recall/queue</code> → due + failed items (merges SM-2 due + failed subquery from <code>recall_attempts</code>). <code>GET /api/user/activity</code> → recent activity feed (paginated). <code>GET /api/source/progress</code> → current source, milestones, available states. All protected by <code>@UseGuards(JwtAuthGuard)</code>. Next.js fetches these in Server Components with <code>cookies()</code> forwarded for auth. Client components use <code>@tanstack/react-query</code> for polling/refetch.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     SCREEN 2: CAPTURE VIEW
+     ════════════════════════════════════════════════ -->
+<section class="screen-section visible" id="sec-capture">
+  <div class="sec-head">
+    <div class="sec-num">Screen 02 · Capture</div>
+    <div class="sec-title">Capture View</div>
+    <div class="sec-desc">Dedicated capture page — URL input, extraction progress, and extracted concepts display.</div>
+  </div>
+
+  <div class="frame-label">Capture — Extraction in Progress</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">🔒</span> app.colearner.io/capture</div>
+    </div>
+    <div class="browser-body">
+      <div class="app-shell">
+        <div class="sidebar">
+          <div class="sb-header"><div class="sb-logo">Co<span>Learner</span></div></div>
+          <div class="sb-nav">
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><span class="sb-item-label">Dashboard</span></div>
+            <div class="sb-item active"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><span class="sb-item-label">Capture</span></div>
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><span class="sb-item-label">Recall</span><span class="sb-item-badge">5</span></div>
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div><span class="sb-item-label">Mastery</span></div>
+          </div>
+          <div class="sb-footer">
+            <div class="sb-user"><div class="sb-avatar">AK</div><div><div class="sb-user-name">Ahmed Khan</div><div class="sb-user-email">ahmed@example.com</div></div></div>
+          </div>
+        </div>
+
+        <div class="app-main">
+          <div class="main-topbar">
+            <div class="mt-left"><h1>Capture</h1><p>Paste a YouTube URL to extract concepts</p></div>
+          </div>
+          <div class="dash-content">
+            <!-- URL Input -->
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-body" style="padding:20px">
+                <div style="display:flex;gap:10px;align-items:center">
+                  <div style="flex:1;position:relative">
+                    <input class="ca-input" value="https://youtube.com/watch?v=pDN..." style="width:100%;padding:12px 16px 12px 40px;font-size:13px;border-radius:var(--r-md)" />
+                    <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px">🎬</span>
+                  </div>
+                  <button class="ca-submit" style="padding:12px 24px;border-radius:var(--r-md);font-size:13px;background:var(--t3);cursor:not-allowed" disabled>Extracting...</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Extraction progress -->
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-head">
+                <div class="card-title">⚙️ Extraction Progress</div>
+                <div style="font-size:11px;color:var(--primary);font-weight:600">Processing...</div>
+              </div>
+              <div class="card-body">
+                <div style="margin-bottom:16px">
+                  <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px">
+                    <span style="font-weight:600;color:var(--t1)">Pass 1 — Chunk Extraction</span>
+                    <span style="font-family:var(--mono);color:var(--ok)">3/4 chunks ✓</span>
+                  </div>
+                  <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+                    <div style="height:100%;width:75%;background:var(--ok);border-radius:3px;transition:400ms ease"></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px">
+                    <span style="font-weight:600;color:var(--t1)">Pass 2 — Question Generation</span>
+                    <span style="font-family:var(--mono);color:var(--t3)">Waiting...</span>
+                  </div>
+                  <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+                    <div style="height:100%;width:0%;background:var(--learn);border-radius:3px"></div>
+                  </div>
+                </div>
+                <div style="margin-top:12px;display:flex;gap:16px;font-size:10px;color:var(--t3)">
+                  <span>Model: <strong style="color:var(--t2)">llama3.2:3b</strong> (Pass 1)</span>
+                  <span>Chunks: <strong style="color:var(--t2)">4</strong></span>
+                  <span>Total chars: <strong style="color:var(--t2)">14,200</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Extracted concepts preview (partially loaded) -->
+            <div class="card">
+              <div class="card-head">
+                <div class="card-title">💡 Extracted Concepts <span style="font-size:10px;background:var(--info-bg);color:var(--info);padding:2px 8px;border-radius:99px;font-weight:700">8 found so far</span></div>
+              </div>
+              <div class="card-body" style="padding:12px 14px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                  <div style="padding:10px 14px;border:1px solid var(--border-lt);border-radius:var(--r-sm);font-size:12px">
+                    <div style="font-weight:700;color:var(--t1);margin-bottom:2px">Transformer Self-Attention</div>
+                    <div style="font-size:10px;color:var(--t3)">key_concept · chunk 1</div>
+                  </div>
+                  <div style="padding:10px 14px;border:1px solid var(--border-lt);border-radius:var(--r-sm);font-size:12px">
+                    <div style="font-weight:700;color:var(--t1);margin-bottom:2px">Multi-Head Attention Mechanism</div>
+                    <div style="font-size:10px;color:var(--t3)">key_concept · chunk 1</div>
+                  </div>
+                  <div style="padding:10px 14px;border:1px solid var(--border-lt);border-radius:var(--r-sm);font-size:12px">
+                    <div style="font-weight:700;color:var(--t1);margin-bottom:2px">Positional Encoding</div>
+                    <div style="font-size:10px;color:var(--t3)">definition · chunk 2</div>
+                  </div>
+                  <div style="padding:10px 14px;border:1px solid var(--border-lt);border-radius:var(--r-sm);font-size:12px">
+                    <div style="font-weight:700;color:var(--t1);margin-bottom:2px">Layer Normalization</div>
+                    <div style="font-size:10px;color:var(--t3)">key_concept · chunk 2</div>
+                  </div>
+                  <div style="padding:10px 14px;border:1px solid var(--border-lt);border-radius:var(--r-sm);font-size:12px">
+                    <div style="font-weight:700;color:var(--t1);margin-bottom:2px">Feed-Forward Networks</div>
+                    <div style="font-size:10px;color:var(--t3)">key_concept · chunk 3</div>
+                  </div>
+                  <div style="padding:10px 14px;border:1px solid var(--border-lt);border-radius:var(--r-sm);font-size:12px">
+                    <div style="font-weight:700;color:var(--t1);margin-bottom:2px">Encoder-Decoder Architecture</div>
+                    <div style="font-size:10px;color:var(--t3)">insight · chunk 3</div>
+                  </div>
+                  <div style="padding:10px 14px;border:1px solid var(--border-lt);border-radius:var(--r-sm);font-size:12px;opacity:0.4;background:repeating-linear-gradient(90deg,var(--border-lt),var(--border-lt) 60px,var(--bg) 60px,var(--bg) 120px);background-size:200% 100%;animation:shimmer 1.5s infinite">
+                    <div style="font-weight:700;color:transparent;margin-bottom:2px">Loading concept...</div>
+                    <div style="font-size:10px;color:transparent">Loading...</div>
+                  </div>
+                  <div style="padding:10px 14px;border:1px solid var(--border-lt);border-radius:var(--r-sm);font-size:12px;opacity:0.4;background:repeating-linear-gradient(90deg,var(--border-lt),var(--border-lt) 60px,var(--bg) 60px,var(--bg) 120px);background-size:200% 100%;animation:shimmer 1.5s infinite">
+                    <div style="font-weight:700;color:transparent;margin-bottom:2px">Loading concept...</div>
+                    <div style="font-size:10px;color:transparent">Loading...</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dev-notes">
+    <div class="dev-note">
+      <div class="dev-note-title">Next.js: <code>app/(dashboard)/capture/page.tsx</code></div>
+      <div class="dev-note-body">
+        Client component (<code>'use client'</code>) with URL input form. On submit, calls NestJS <code>POST /api/capture/extract</code> with <code>{ url: string }</code>. Subscribes to progress via SSE endpoint <code>GET /api/capture/stream/:extractionId</code> using <code>EventSource</code>. Concept cards render progressively as chunks complete. NestJS side: <code>CaptureController</code> fetches transcript via <code>youtube-transcript</code>, chunks to 4000 chars / 300 overlap, runs Pass 1 (<code>llama3.2:3b</code>) per chunk, then Pass 2 (<code>gemma2:9b</code>) for question gen. Stores in <code>extractions</code> table with SHA256 hash of video_id — never raw URL (privacy rule). Uses <code>@nestjs/event-emitter</code> for real-time progress.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     SCREEN 3: RECALL QUEUE
+     ════════════════════════════════════════════════ -->
+<section class="screen-section visible" id="sec-queue">
+  <div class="sec-head">
+    <div class="sec-num">Screen 03 · Recall Queue</div>
+    <div class="sec-title">Review Queue</div>
+    <div class="sec-desc">Full recall queue view — SM-2 due items + failed items, filterable by type and state.</div>
+  </div>
+
+  <div class="frame-label">Queue — Full List with Filters</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">🔒</span> app.colearner.io/queue</div>
+    </div>
+    <div class="browser-body">
+      <div class="app-shell">
+        <div class="sidebar">
+          <div class="sb-header"><div class="sb-logo">Co<span>Learner</span></div></div>
+          <div class="sb-nav">
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><span class="sb-item-label">Dashboard</span></div>
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><span class="sb-item-label">Capture</span></div>
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><span class="sb-item-label">Recall</span><span class="sb-item-badge">5</span></div>
+            <div class="sb-item active"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><span class="sb-item-label">Review Queue</span><span class="sb-item-badge" style="background:var(--warn)">8</span></div>
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div><span class="sb-item-label">Mastery</span></div>
+          </div>
+          <div class="sb-footer">
+            <div class="sb-user"><div class="sb-avatar">AK</div><div><div class="sb-user-name">Ahmed Khan</div><div class="sb-user-email">ahmed@example.com</div></div></div>
+          </div>
+        </div>
+        <div class="app-main">
+          <div class="main-topbar">
+            <div class="mt-left"><h1>Review Queue</h1><p>8 items need your attention</p></div>
+            <div class="mt-right">
+              <button class="ca-submit" style="border-radius:var(--r-sm);font-size:12px;padding:8px 18px">Start All →</button>
+            </div>
+          </div>
+          <div class="dash-content">
+            <!-- Filters -->
+            <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+              <span style="font-size:11px;font-weight:600;color:var(--t3);margin-right:4px">Filter:</span>
+              <div class="state-btn active-explore" style="font-size:10px;padding:4px 10px">All (8)</div>
+              <div class="state-btn" style="font-size:10px;padding:4px 10px;border-color:var(--border);color:var(--t2)">📝 Open (3)</div>
+              <div class="state-btn" style="font-size:10px;padding:4px 10px;border-color:var(--border);color:var(--t2)">🔤 MCQ (3)</div>
+              <div class="state-btn" style="font-size:10px;padding:4px 10px;border-color:var(--border);color:var(--t2)">✏️ Cloze (2)</div>
+              <div style="margin-left:auto;display:flex;gap:8px">
+                <div class="state-btn" style="font-size:10px;padding:4px 10px;border-color:var(--border);color:var(--warn)">⚠️ Failed (3)</div>
+                <div class="state-btn" style="font-size:10px;padding:4px 10px;border-color:var(--border);color:var(--learn)">📅 SM-2 Due (5)</div>
+              </div>
+            </div>
+
+            <!-- Queue table -->
+            <div class="card">
+              <div style="overflow-x:auto">
+                <table style="width:100%;border-collapse:collapse;font-size:12px">
+                  <thead>
+                    <tr style="background:var(--bg)">
+                      <th style="padding:10px 14px;text-align:left;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);border-bottom:2px solid var(--t1)">Concept</th>
+                      <th style="padding:10px 14px;text-align:left;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);border-bottom:2px solid var(--t1)">Type</th>
+                      <th style="padding:10px 14px;text-align:left;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);border-bottom:2px solid var(--t1)">Source</th>
+                      <th style="padding:10px 14px;text-align:left;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);border-bottom:2px solid var(--t1)">Last Score</th>
+                      <th style="padding:10px 14px;text-align:left;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);border-bottom:2px solid var(--t1)">SM-2</th>
+                      <th style="padding:10px 14px;text-align:right;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);border-bottom:2px solid var(--t1)">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-bottom:1px solid var(--border-lt)">
+                      <td style="padding:12px 14px;font-weight:600">Spaced Repetition Fundamentals</td>
+                      <td style="padding:12px 14px"><span style="background:var(--learn-bg);color:var(--learn);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600">Open</span></td>
+                      <td style="padding:12px 14px;color:var(--t3)">SM-2 Due</td>
+                      <td style="padding:12px 14px"><span style="font-family:var(--mono);color:var(--ok);font-weight:600">8/10</span></td>
+                      <td style="padding:12px 14px;font-size:10px;color:var(--t3)">EF: 2.6 · Int: 6d</td>
+                      <td style="padding:12px 14px;text-align:right"><button class="qi-btn">Recall</button></td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--border-lt)">
+                      <td style="padding:12px 14px;font-weight:600">Neural Network Activation Functions</td>
+                      <td style="padding:12px 14px"><span style="background:var(--explore-bg);color:var(--explore);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600">MCQ</span></td>
+                      <td style="padding:12px 14px;color:var(--t3)">SM-2 Due</td>
+                      <td style="padding:12px 14px"><span style="font-family:var(--mono);color:var(--ok);font-weight:600">7/10</span></td>
+                      <td style="padding:12px 14px;font-size:10px;color:var(--t3)">EF: 2.5 · Int: 1d</td>
+                      <td style="padding:12px 14px;text-align:right"><button class="qi-btn">Recall</button></td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--border-lt);background:var(--err-bg)">
+                      <td style="padding:12px 14px;font-weight:600">Gradient Descent Optimization</td>
+                      <td style="padding:12px 14px"><span style="background:var(--grow-bg);color:var(--grow);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600">Cloze</span></td>
+                      <td style="padding:12px 14px;color:var(--err);font-weight:600">Failed</td>
+                      <td style="padding:12px 14px"><span style="font-family:var(--mono);color:var(--err);font-weight:600">4/10</span></td>
+                      <td style="padding:12px 14px;font-size:10px;color:var(--t3)">EF: 1.8 · Int: 1d</td>
+                      <td style="padding:12px 14px;text-align:right"><button class="qi-btn" style="background:var(--err)">Retry</button></td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--border-lt)">
+                      <td style="padding:12px 14px;font-weight:600">Transformer Architecture</td>
+                      <td style="padding:12px 14px"><span style="background:var(--learn-bg);color:var(--learn);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600">Open</span></td>
+                      <td style="padding:12px 14px;color:var(--t3)">SM-2 Due</td>
+                      <td style="padding:12px 14px"><span style="font-family:var(--mono);color:var(--ok);font-weight:600">9/10</span></td>
+                      <td style="padding:12px 14px;font-size:10px;color:var(--t3)">EF: 2.7 · Int: 15d</td>
+                      <td style="padding:12px 14px;text-align:right"><button class="qi-btn">Recall</button></td>
+                    </tr>
+                    <tr style="border-bottom:1px solid var(--border-lt);background:var(--err-bg)">
+                      <td style="padding:12px 14px;font-weight:600">Backpropagation Algorithm</td>
+                      <td style="padding:12px 14px"><span style="background:var(--explore-bg);color:var(--explore);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600">MCQ</span></td>
+                      <td style="padding:12px 14px;color:var(--err);font-weight:600">Failed</td>
+                      <td style="padding:12px 14px"><span style="font-family:var(--mono);color:var(--err);font-weight:600">3/10</span></td>
+                      <td style="padding:12px 14px;font-size:10px;color:var(--t3)">EF: 1.5 · Int: 1d</td>
+                      <td style="padding:12px 14px;text-align:right"><button class="qi-btn" style="background:var(--err)">Retry</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     SCREEN 4: MASTERY ANALYTICS
+     ════════════════════════════════════════════════ -->
+<section class="screen-section visible" id="sec-mastery">
+  <div class="sec-head">
+    <div class="sec-num">Screen 04 · Mastery</div>
+    <div class="sec-title">Mastery Analytics</div>
+    <div class="sec-desc">Visual analytics — pass rate over time, concept mastery heatmap, SM-2 distribution.</div>
+  </div>
+
+  <div class="frame-label">Mastery — Analytics Dashboard</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">🔒</span> app.colearner.io/mastery</div>
+    </div>
+    <div class="browser-body">
+      <div class="app-shell">
+        <div class="sidebar">
+          <div class="sb-header"><div class="sb-logo">Co<span>Learner</span></div></div>
+          <div class="sb-nav">
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><span class="sb-item-label">Dashboard</span></div>
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><span class="sb-item-label">Capture</span></div>
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><span class="sb-item-label">Recall</span></div>
+            <div class="sb-item active"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div><span class="sb-item-label">Mastery</span></div>
+          </div>
+          <div class="sb-footer"><div class="sb-user"><div class="sb-avatar">AK</div><div><div class="sb-user-name">Ahmed Khan</div><div class="sb-user-email">ahmed@example.com</div></div></div></div>
+        </div>
+        <div class="app-main">
+          <div class="main-topbar">
+            <div class="mt-left"><h1>Mastery Analytics</h1><p>Track your learning progress over time</p></div>
+            <div class="mt-right">
+              <div class="state-btn" style="font-size:10px;padding:5px 12px;border-color:var(--border);color:var(--t2)">Last 7 days</div>
+              <div class="state-btn active-learn" style="font-size:10px;padding:5px 12px">Last 30 days</div>
+              <div class="state-btn" style="font-size:10px;padding:5px 12px;border-color:var(--border);color:var(--t2)">All time</div>
+            </div>
+          </div>
+          <div class="dash-content">
+            <!-- Stats row -->
+            <div class="stats-row">
+              <div class="stat-card">
+                <div class="sc-top"><div class="sc-icon" style="background:var(--primary-bg)">📊</div><div class="sc-change up">↑ 8%</div></div>
+                <div class="sc-val">142</div><div class="sc-label">Total Attempts</div>
+              </div>
+              <div class="stat-card">
+                <div class="sc-top"><div class="sc-icon" style="background:var(--ok-bg)">✅</div><div class="sc-change up">↑ 5%</div></div>
+                <div class="sc-val">82%</div><div class="sc-label">Pass Rate</div>
+              </div>
+              <div class="stat-card">
+                <div class="sc-top"><div class="sc-icon" style="background:var(--learn-bg)">📈</div></div>
+                <div class="sc-val">7.4</div><div class="sc-label">Avg Score</div>
+              </div>
+              <div class="stat-card">
+                <div class="sc-top"><div class="sc-icon" style="background:var(--grow-bg)">🎯</div></div>
+                <div class="sc-val">2.48</div><div class="sc-label">Avg EF</div>
+              </div>
+            </div>
+
+            <div class="dash-grid">
+              <!-- Pass rate chart -->
+              <div class="card">
+                <div class="card-head">
+                  <div class="card-title">📈 Daily Pass Rate (30 days)</div>
+                </div>
+                <div class="card-body">
+                  <div class="mastery-bars" style="height:120px">
+                    <div class="mastery-bar-wrap"><div class="mastery-bar" style="height:65%;background:var(--ok)"></div><div class="mastery-bar-label">1</div></div>
+                    <div class="mastery-bar-wrap"><div class="mastery-bar" style="height:70%;background:var(--ok)"></div><div class="mastery-bar-label">2</div></div>
+                    <div class="mastery-bar-wrap"><div class="mastery-bar" style="height:55%;background:var(--warn)"></div><div class="mastery-bar-label">3</div></div>
+                    <div class="mastery-bar-wrap"><div class="mastery-bar" style="height:80%;background:var(--ok)"></div><div class="mastery-bar-label">4</div></div>
+                    <div class="mastery-bar-wrap"><div class="mastery-bar" style="height:85%;background:var(--ok)"></div><div class="mastery-bar-label">5</div></div>
+                    <div class="mastery-bar-wrap"><div class="mastery-bar" style="height:40%;background:var(--err)"></div><div class="mastery-bar-label">6</div></div>
+                    <div class="mastery-bar-wrap"><div class="mastery-bar" style="height:75%;background:var(--ok)"></div><div class="mastery-bar-label">7</div></div>
+                    <div class="mastery-bar-wrap"><div class="mastery-bar" style="height:90%;background:var(--ok)"></div><div class="mastery-bar-label">8</div></div>
+                    <div class="mastery-bar-wrap"><div class="mastery-bar" style="height:78%;background:var(--ok)"></div><div class="mastery-bar-label">9</div></div>
+                    <div class="mastery-bar-wrap"><div class="mastery-bar" style="height:82%;background:var(--ok)"></div><div class="mastery-bar-label">10</div></div>
+                    <div class="mastery-bar-wrap"><div class="mastery-bar" style="height:60%;background:var(--warn)"></div><div class="mastery-bar-label">11</div></div>
+                    <div class="mastery-bar-wrap"><div class="mastery-bar" style="height:88%;background:var(--ok)"></div><div class="mastery-bar-label">12</div></div>
+                    <div class="mastery-bar-wrap"><div class="mastery-bar" style="height:92%;background:var(--ok)"></div><div class="mastery-bar-label">13</div></div>
+                    <div class="mastery-bar-wrap"><div class="mastery-bar" style="height:85%;background:var(--ok)"></div><div class="mastery-bar-label">14</div></div>
+                  </div>
+                  <div style="display:flex;gap:16px;margin-top:8px;font-size:10px;color:var(--t3)">
+                    <span><span style="display:inline-block;width:8px;height:8px;background:var(--ok);border-radius:2px;margin-right:4px"></span> ≥70% (pass)</span>
+                    <span><span style="display:inline-block;width:8px;height:8px;background:var(--warn);border-radius:2px;margin-right:4px"></span> 50-69%</span>
+                    <span><span style="display:inline-block;width:8px;height:8px;background:var(--err);border-radius:2px;margin-right:4px"></span> &lt;50%</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Question Type Breakdown -->
+              <div class="card">
+                <div class="card-head">
+                  <div class="card-title">🧩 By Question Type</div>
+                </div>
+                <div class="card-body">
+                  <div style="display:flex;flex-direction:column;gap:16px">
+                    <div>
+                      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+                        <span style="font-weight:600">📝 Open Answer</span>
+                        <span style="font-family:var(--mono);color:var(--ok)">85% pass · 52 attempts</span>
+                      </div>
+                      <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+                        <div style="height:100%;width:85%;background:var(--ok);border-radius:4px"></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+                        <span style="font-weight:600">🔤 MCQ</span>
+                        <span style="font-family:var(--mono);color:var(--ok)">79% pass · 58 attempts</span>
+                      </div>
+                      <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+                        <div style="height:100%;width:79%;background:var(--learn);border-radius:4px"></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+                        <span style="font-weight:600">✏️ Cloze</span>
+                        <span style="font-family:var(--mono);color:var(--warn)">68% pass · 32 attempts</span>
+                      </div>
+                      <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+                        <div style="height:100%;width:68%;background:var(--warn);border-radius:4px"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border-lt)">
+                    <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:8px">SM-2 Interval Distribution</div>
+                    <div style="display:flex;gap:6px;align-items:flex-end;height:60px">
+                      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+                        <div style="width:100%;background:var(--primary);border-radius:3px 3px 0 0;height:50px"></div>
+                        <span style="font-size:8px;color:var(--t3)">1d</span>
+                      </div>
+                      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+                        <div style="width:100%;background:var(--primary);border-radius:3px 3px 0 0;height:30px;opacity:0.8"></div>
+                        <span style="font-size:8px;color:var(--t3)">6d</span>
+                      </div>
+                      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+                        <div style="width:100%;background:var(--learn);border-radius:3px 3px 0 0;height:20px"></div>
+                        <span style="font-size:8px;color:var(--t3)">15d</span>
+                      </div>
+                      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+                        <div style="width:100%;background:var(--grow);border-radius:3px 3px 0 0;height:12px"></div>
+                        <span style="font-size:8px;color:var(--t3)">30d</span>
+                      </div>
+                      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+                        <div style="width:100%;background:var(--excel);border-radius:3px 3px 0 0;height:6px"></div>
+                        <span style="font-size:8px;color:var(--t3)">60d+</span>
+                      </div>
+                    </div>
+                    <div style="font-size:9px;color:var(--t3);margin-top:6px">Most items at 1-day interval — keep practicing to push them out!</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Concept Mastery List -->
+              <div class="card dash-grid-full">
+                <div class="card-head">
+                  <div class="card-title">🧠 Concept Mastery Ledger</div>
+                  <div class="card-action">Export CSV →</div>
+                </div>
+                <div style="overflow-x:auto">
+                  <table style="width:100%;border-collapse:collapse;font-size:12px">
+                    <thead>
+                      <tr style="background:var(--bg)">
+                        <th style="padding:10px 14px;text-align:left;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);border-bottom:2px solid var(--t1)">Concept</th>
+                        <th style="padding:10px 14px;text-align:center;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);border-bottom:2px solid var(--t1)">Attempts</th>
+                        <th style="padding:10px 14px;text-align:center;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);border-bottom:2px solid var(--t1)">Pass Rate</th>
+                        <th style="padding:10px 14px;text-align:center;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);border-bottom:2px solid var(--t1)">Avg Score</th>
+                        <th style="padding:10px 14px;text-align:center;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);border-bottom:2px solid var(--t1)">EF</th>
+                        <th style="padding:10px 14px;text-align:center;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);border-bottom:2px solid var(--t1)">Next Review</th>
+                        <th style="padding:10px 14px;text-align:center;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);border-bottom:2px solid var(--t1)">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="border-bottom:1px solid var(--border-lt)">
+                        <td style="padding:10px 14px;font-weight:600">Transformer Self-Attention</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono)">8</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono);color:var(--ok)">87%</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono)">8.2</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono)">2.7</td>
+                        <td style="padding:10px 14px;text-align:center;font-size:10px;color:var(--t3)">Mar 12</td>
+                        <td style="padding:10px 14px;text-align:center"><span style="background:var(--ok-bg);color:var(--ok);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600">Strong</span></td>
+                      </tr>
+                      <tr style="border-bottom:1px solid var(--border-lt)">
+                        <td style="padding:10px 14px;font-weight:600">Multi-Head Attention</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono)">6</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono);color:var(--ok)">83%</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono)">7.8</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono)">2.5</td>
+                        <td style="padding:10px 14px;text-align:center;font-size:10px;color:var(--t3)">Mar 5</td>
+                        <td style="padding:10px 14px;text-align:center"><span style="background:var(--ok-bg);color:var(--ok);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600">Strong</span></td>
+                      </tr>
+                      <tr style="border-bottom:1px solid var(--border-lt)">
+                        <td style="padding:10px 14px;font-weight:600">Gradient Descent</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono)">5</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono);color:var(--err)">40%</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono)">4.6</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono)">1.6</td>
+                        <td style="padding:10px 14px;text-align:center;font-size:10px;color:var(--err);font-weight:600">Today</td>
+                        <td style="padding:10px 14px;text-align:center"><span style="background:var(--err-bg);color:var(--err);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600">Weak</span></td>
+                      </tr>
+                      <tr style="border-bottom:1px solid var(--border-lt)">
+                        <td style="padding:10px 14px;font-weight:600">Positional Encoding</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono)">3</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono);color:var(--warn)">67%</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono)">6.3</td>
+                        <td style="padding:10px 14px;text-align:center;font-family:var(--mono)">2.2</td>
+                        <td style="padding:10px 14px;text-align:center;font-size:10px;color:var(--warn);font-weight:600">Tomorrow</td>
+                        <td style="padding:10px 14px;text-align:center"><span style="background:var(--warn-bg);color:var(--warn);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600">Fair</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dev-notes">
+    <div class="dev-note">
+      <div class="dev-note-title">NestJS: <code>src/mastery/mastery.controller.ts</code></div>
+      <div class="dev-note-body">
+        <code>GET /api/mastery/stats?range=30d</code> → aggregate stats. <code>GET /api/mastery/daily?range=30d</code> → daily pass rate array for chart. <code>GET /api/mastery/by-type</code> → breakdown by Open/MCQ/Cloze. <code>GET /api/mastery/concepts?page=1&sort=ef</code> → paginated ledger with SM-2 fields. <code>GET /api/mastery/export</code> → CSV download via <code>StreamableFile</code>. All data sourced from <code>recall_attempts</code> table. Uses <code>@nestjs/swagger</code> for API docs.
+      </div>
+    </div>
+    <div class="dev-note">
+      <div class="dev-note-title">Next.js: <code>app/(dashboard)/mastery/page.tsx</code></div>
+      <div class="dev-note-body">
+        Server Component fetches initial stats and passes to client chart components. Uses <code>recharts</code> (<code>'use client'</code>) for the bar chart and SM-2 distribution. <code>&lt;ConceptLedger&gt;</code> table built with <code>@tanstack/react-table</code> for sorting, filtering, pagination — client component with <code>react-query</code> for pagination. Status badges computed from EF and pass rate: Strong (EF ≥ 2.5 + ≥80%), Fair (EF ≥ 2.0 + ≥60%), Weak (below). Date range picker updates all queries via <code>react-query</code> invalidation. CSV export triggers direct download from NestJS endpoint.
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<style>
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+</style>
+
+<script>
+function showSec(id, btn) {
+  document.querySelectorAll('.tn-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const secs = document.querySelectorAll('.screen-section');
+  if (id === 'all') { secs.forEach(s => s.classList.add('visible')); }
+  else { secs.forEach(s => s.classList.remove('visible')); document.getElementById('sec-' + id).classList.add('visible'); }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>

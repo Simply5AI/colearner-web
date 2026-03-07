@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoLearner — Capture Source Selection</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #C4621A; --primary-h: #D87430; --primary-d: #A85316;
+  --primary-bg: #FDF0E8; --primary-bg2: #FEF8F3; --primary-glow: rgba(196,98,26,0.12);
+  --explore: #1A7070; --explore-bg: #E8F5F5; --explore-l: #2A9494;
+  --learn: #1E4FA3; --learn-bg: #E8EFF9; --learn-l: #3B6FCA;
+  --grow: #6B3FA0; --grow-bg: #F2ECFB; --grow-l: #8B5FC8;
+  --excel: #2E6B3E; --excel-bg: #EAF2ED; --excel-l: #48A05E;
+  --ok: #16A34A; --ok-bg: #F0FDF4; --err: #DC2626; --err-bg: #FEF2F2;
+  --warn: #D97706; --warn-bg: #FFFBEB; --info: #2563EB; --info-bg: #EFF6FF;
+  --bg: #FAFAF8; --bg2: #F5F3EF; --surface: #FFFFFF;
+  --border: #E5E2DC; --border-lt: #F0EDE8;
+  --t1: #1A1714; --t2: #57534E; --t3: #A8A29E; --t4: #D6D3CD;
+  --font: 'Inter', -apple-system, sans-serif; --mono: 'JetBrains Mono', monospace;
+  --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-full: 999px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.04);
+  --sidebar-w: 240px;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  /* Ring colors */
+  --ring0: #DC2626; --ring0-bg: #FEF2F2; --ring0-l: #EF4444;
+  --ring1: #2563EB; --ring1-bg: #EFF6FF; --ring1-l: #3B82F6;
+  --ring2: #7C3AED; --ring2-bg: #F5F3FF; --ring2-l: #8B5CF6;
+  --ring3: #059669; --ring3-bg: #ECFDF5; --ring3-l: #10B981;
+  --ring4: #D97706; --ring4-bg: #FFFBEB; --ring4-l: #F59E0B;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { font-family: var(--font); background: #0C0A09; color: var(--t1); -webkit-font-smoothing: antialiased; }
+
+.page-header { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(12,10,9,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.page-header-inner { max-width: 1440px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; height: 48px; gap: 8px; }
+.ph-logo { font-weight: 800; font-size: 14px; color: #fff; }
+.ph-logo span { color: var(--primary-h); }
+.ph-badge { font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary-h); background: rgba(196,98,26,0.12); padding: 3px 8px; border-radius: 99px; }
+
+.main { max-width: 1440px; margin: 0 auto; padding: 68px 24px 80px; }
+.sec-head { margin-bottom: 32px; }
+.sec-num { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--primary-h); }
+.sec-title { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.5px; margin: 2px 0; }
+.sec-desc { font-size: 13px; color: rgba(255,255,255,0.3); max-width: 600px; }
+.frame-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.2); margin-bottom: 10px; text-align: center; }
+.browser-frame { background: #1C1917; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 30px 60px rgba(0,0,0,0.4); margin-bottom: 28px; }
+.browser-bar { background: #292524; padding: 8px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.browser-dots { display: flex; gap: 5px; }
+.browser-dots span { width: 9px; height: 9px; border-radius: 50%; }
+.browser-dots span:nth-child(1) { background: #EF4444; }
+.browser-dots span:nth-child(2) { background: #F59E0B; }
+.browser-dots span:nth-child(3) { background: #22C55E; }
+.browser-url { flex: 1; background: rgba(255,255,255,0.06); border-radius: 5px; padding: 4px 10px; font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.3); }
+.browser-url .lock { color: var(--ok); }
+.browser-body { background: var(--bg); min-height: 800px; }
+
+/* ══ APP SHELL ══ */
+.app-shell { display: flex; min-height: 800px; }
+.sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); padding: 16px 0; display: flex; flex-direction: column; flex-shrink: 0; }
+.sb-brand { padding: 0 16px 16px; border-bottom: 1px solid var(--border-lt); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.sb-logo { font-weight: 800; font-size: 16px; color: var(--t1); }
+.sb-logo span { color: var(--primary); }
+.sb-section { padding: 8px 12px 4px; }
+.sb-section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--t4); padding: 0 8px; margin-bottom: 4px; }
+.sb-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--r-sm); font-size: 13px; font-weight: 500; color: var(--t3); cursor: pointer; transition: 150ms var(--ease); margin-bottom: 1px; }
+.sb-item:hover { background: var(--bg2); color: var(--t2); }
+.sb-item.active { background: var(--primary-bg); color: var(--primary); font-weight: 700; }
+.sb-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.sb-spacer { flex: 1; }
+.sb-user { padding: 12px 16px; border-top: 1px solid var(--border-lt); display: flex; align-items: center; gap: 10px; }
+.sb-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary-bg); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: var(--primary); }
+.sb-uname { font-size: 12px; font-weight: 600; color: var(--t1); }
+.sb-uemail { font-size: 10px; color: var(--t3); }
+
+/* ══ CONTENT ══ */
+.content { flex: 1; padding: 28px 32px 40px; overflow-y: auto; }
+.page-title { font-size: 22px; font-weight: 900; color: var(--t1); letter-spacing: -0.3px; margin-bottom: 4px; }
+.page-subtitle { font-size: 13px; color: var(--t3); margin-bottom: 24px; line-height: 1.5; }
+
+/* ══ CAPTURE STATS BAR ══ */
+.capture-stats { display: flex; align-items: center; gap: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 12px 16px; margin-bottom: 24px; }
+.cs-item { display: flex; align-items: center; gap: 6px; }
+.cs-icon { width: 28px; height: 28px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; }
+.cs-icon svg { width: 14px; height: 14px; }
+.cs-label { font-size: 10px; color: var(--t3); }
+.cs-value { font-size: 14px; font-weight: 800; color: var(--t1); }
+.cs-divider { width: 1px; height: 28px; background: var(--border-lt); }
+.cs-limit-bar { flex: 1; }
+.cs-limit-header { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.cs-limit-label { font-size: 10px; font-weight: 600; color: var(--t3); }
+.cs-limit-count { font-size: 10px; font-weight: 700; color: var(--t1); }
+.cs-bar { height: 5px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+.cs-bar-fill { height: 100%; border-radius: 3px; }
+.cs-bar-fill.ok { background: var(--ok); }
+.cs-bar-fill.warn { background: var(--warn); }
+.cs-upgrade { font-size: 10px; font-weight: 700; color: var(--primary); cursor: pointer; white-space: nowrap; }
+
+/* ══ RING CARDS ══ */
+.ring-list { display: flex; flex-direction: column; gap: 10px; }
+
+.ring-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; transition: 200ms var(--ease); cursor: pointer; }
+.ring-card:hover { border-color: var(--t4); box-shadow: var(--shadow-md); }
+.ring-card.expanded { cursor: default; }
+.ring-card.expanded.r0 { border-color: var(--ring0); box-shadow: 0 0 0 3px rgba(220,38,38,0.08); }
+.ring-card.expanded.r1 { border-color: var(--ring1); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+.ring-card.expanded.r2 { border-color: var(--ring2); box-shadow: 0 0 0 3px rgba(124,58,237,0.08); }
+.ring-card.expanded.r3 { border-color: var(--ring3); box-shadow: 0 0 0 3px rgba(5,150,105,0.08); }
+.ring-card.expanded.r4 { border-color: var(--ring4); box-shadow: 0 0 0 3px rgba(217,119,6,0.08); }
+
+/* Ring header (always visible) */
+.ring-header { display: flex; align-items: center; gap: 14px; padding: 16px 20px; }
+.ring-icon { width: 44px; height: 44px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ring-icon svg { width: 22px; height: 22px; }
+.r0 .ring-icon { background: var(--ring0-bg); color: var(--ring0); }
+.r1 .ring-icon { background: var(--ring1-bg); color: var(--ring1); }
+.r2 .ring-icon { background: var(--ring2-bg); color: var(--ring2); }
+.r3 .ring-icon { background: var(--ring3-bg); color: var(--ring3); }
+.r4 .ring-icon { background: var(--ring4-bg); color: var(--ring4); }
+
+.ring-info { flex: 1; }
+.ring-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+.r0 .ring-label { color: var(--ring0); }
+.r1 .ring-label { color: var(--ring1); }
+.r2 .ring-label { color: var(--ring2); }
+.r3 .ring-label { color: var(--ring3); }
+.r4 .ring-label { color: var(--ring4); }
+.ring-name { font-size: 15px; font-weight: 800; color: var(--t1); margin-bottom: 2px; }
+.ring-desc { font-size: 11px; color: var(--t3); line-height: 1.4; }
+
+.ring-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ring-stat { text-align: center; }
+.ring-stat-val { font-size: 14px; font-weight: 800; color: var(--t1); }
+.ring-stat-label { font-size: 9px; color: var(--t3); }
+.ring-chevron { width: 20px; height: 20px; color: var(--t4); transition: 200ms var(--ease); }
+.ring-card.expanded .ring-chevron { transform: rotate(180deg); }
+.r0.expanded .ring-chevron { color: var(--ring0); }
+.r1.expanded .ring-chevron { color: var(--ring1); }
+.r2.expanded .ring-chevron { color: var(--ring2); }
+.r3.expanded .ring-chevron { color: var(--ring3); }
+.r4.expanded .ring-chevron { color: var(--ring4); }
+
+/* Ring expanded body */
+.ring-body { border-top: 1px solid var(--border-lt); padding: 20px; display: none; }
+.ring-card.expanded .ring-body { display: block; }
+
+/* ── Input areas ── */
+.input-group { margin-bottom: 14px; }
+.input-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--t3); margin-bottom: 6px; }
+.url-input-wrap { display: flex; gap: 8px; }
+.url-input { flex: 1; display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 0 12px; transition: 150ms var(--ease); }
+.url-input:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+.url-input svg { width: 16px; height: 16px; color: var(--t4); flex-shrink: 0; }
+.url-input input { flex: 1; border: none; background: transparent; font-family: var(--mono); font-size: 12px; color: var(--t1); padding: 10px 0; outline: none; }
+.url-input input::placeholder { color: var(--t4); }
+
+.start-btn { padding: 10px 24px; border-radius: var(--r-sm); font-family: var(--font); font-size: 13px; font-weight: 700; color: white; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 150ms var(--ease); flex-shrink: 0; }
+.start-btn svg { width: 16px; height: 16px; }
+.start-btn:hover { transform: translateY(-1px); }
+.r0 .start-btn { background: var(--ring0); }
+.r0 .start-btn:hover { background: #B91C1C; }
+.r1 .start-btn { background: var(--ring1); }
+.r1 .start-btn:hover { background: #1D4ED8; }
+.r2 .start-btn { background: var(--ring2); }
+.r2 .start-btn:hover { background: #6D28D9; }
+.r3 .start-btn { background: var(--ring3); }
+.r3 .start-btn:hover { background: #047857; }
+.r4 .start-btn { background: var(--ring4); }
+.r4 .start-btn:hover { background: #B45309; }
+
+/* File upload zone */
+.upload-zone { border: 2px dashed var(--border); border-radius: var(--r-md); padding: 28px 20px; text-align: center; cursor: pointer; transition: 200ms var(--ease); margin-bottom: 14px; }
+.upload-zone:hover { border-color: var(--t3); background: var(--bg2); }
+.r2 .upload-zone:hover { border-color: var(--ring2); background: var(--ring2-bg); }
+.r3 .upload-zone:hover { border-color: var(--ring3); background: var(--ring3-bg); }
+.r4 .upload-zone:hover { border-color: var(--ring4); background: var(--ring4-bg); }
+.upload-icon { width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+.upload-icon svg { width: 20px; height: 20px; }
+.r2 .upload-icon { background: var(--ring2-bg); color: var(--ring2); }
+.r3 .upload-icon { background: var(--ring3-bg); color: var(--ring3); }
+.r4 .upload-icon { background: var(--ring4-bg); color: var(--ring4); }
+.upload-text { font-size: 13px; font-weight: 600; color: var(--t2); margin-bottom: 4px; }
+.upload-text span { color: var(--primary); font-weight: 700; }
+.upload-hint { font-size: 11px; color: var(--t4); }
+.upload-formats { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
+.format-badge { font-size: 9px; font-weight: 700; letter-spacing: 0.05em; padding: 3px 8px; border-radius: var(--r-xs); text-transform: uppercase; }
+.r2 .format-badge { background: var(--ring2-bg); color: var(--ring2); }
+.r3 .format-badge { background: var(--ring3-bg); color: var(--ring3); }
+.r4 .format-badge { background: var(--ring4-bg); color: var(--ring4); }
+
+/* File selected state */
+.file-selected { display: flex; align-items: center; gap: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 10px 14px; margin-bottom: 14px; }
+.file-icon { width: 36px; height: 36px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; }
+.file-icon svg { width: 18px; height: 18px; }
+.file-info { flex: 1; }
+.file-name { font-size: 12px; font-weight: 700; color: var(--t1); }
+.file-meta { font-size: 10px; color: var(--t3); }
+.file-remove { width: 24px; height: 24px; border-radius: var(--r-xs); display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; color: var(--t4); }
+.file-remove:hover { background: var(--err-bg); color: var(--err); }
+
+/* Recording controls */
+.record-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.record-btn { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: 200ms var(--ease); }
+.record-btn svg { width: 22px; height: 22px; }
+.record-btn.idle { background: var(--ring3-bg); color: var(--ring3); }
+.record-btn.idle:hover { background: var(--ring3); color: white; }
+.record-btn.recording { background: var(--err); color: white; animation: pulse-record 1.5s ease infinite; }
+@keyframes pulse-record { 0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.3); } 50% { box-shadow: 0 0 0 10px rgba(220,38,38,0); } }
+.record-info { flex: 1; }
+.record-status { font-size: 12px; font-weight: 700; color: var(--t1); }
+.record-time { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--err); }
+.record-hint { font-size: 10px; color: var(--t3); }
+
+/* Waveform placeholder */
+.waveform { height: 40px; background: var(--ring3-bg); border-radius: var(--r-sm); display: flex; align-items: flex-end; justify-content: center; gap: 2px; padding: 8px; margin-bottom: 14px; }
+.wave-bar { width: 3px; border-radius: 2px; background: var(--ring3); }
+
+/* Options row */
+.capture-options { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.opt-chip { display: flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: var(--r-full); font-size: 11px; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--t2); cursor: pointer; transition: 150ms var(--ease); }
+.opt-chip:hover { border-color: var(--t3); }
+.opt-chip.active { border-color: var(--primary); background: var(--primary-bg2); color: var(--primary); }
+.opt-chip svg { width: 14px; height: 14px; }
+
+/* Helper text */
+.helper-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--t3); margin-top: 8px; }
+.helper-row svg { width: 14px; height: 14px; flex-shrink: 0; }
+.helper-row a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+/* Pipeline info strip */
+.pipeline-info { display: flex; align-items: center; gap: 8px; background: var(--bg2); border-radius: var(--r-sm); padding: 8px 12px; margin-top: 12px; font-size: 10px; color: var(--t3); }
+.pipeline-info svg { width: 14px; height: 14px; color: var(--t4); flex-shrink: 0; }
+.pipeline-info code { font-family: var(--mono); background: var(--surface); padding: 1px 5px; border-radius: 3px; font-size: 9px; color: var(--primary); }
+
+.dev-notes { margin-top: 20px; }
+.dev-note { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r-md); padding: 16px 20px; margin-bottom: 8px; }
+.dev-note-title { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); margin-bottom: 4px; }
+.dev-note-body { font-size: 10px; color: rgba(255,255,255,0.25); line-height: 1.7; }
+.dev-note-body code { font-family: var(--mono); background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 3px; font-size: 9px; color: var(--primary-h); }
+</style>
+</head>
+<body>
+
+<nav class="page-header">
+  <div class="page-header-inner">
+    <div class="ph-logo">Co<span>Learner</span></div>
+    <span class="ph-badge">Capture · Source Selection</span>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 1: All Sources Collapsed (Default State)
+     ═══════════════════════════════════════════ -->
+<section>
+  <div class="sec-head">
+    <div class="sec-num">Screen · Capture Source Selection</div>
+    <div class="sec-title">Choose Your Capture Source</div>
+    <div class="sec-desc">All 5 capture sources shown collapsed. User clicks a ring to expand it and reveal the input area. Free tier: 5 captures/day across all rings. Pro: unlimited.</div>
+  </div>
+
+  <div class="frame-label">Capture — All Sources Collapsed (Free Tier, 3/5 used today)</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/capture</div>
+    </div>
+    <div class="browser-body">
+      <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <div class="sb-brand"><div class="sb-logo">Co<span>Learner</span></div></div>
+          <div class="sb-section">
+            <div class="sb-section-label">Main</div>
+            <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> Home</div>
+            <div class="sb-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Capture</div>
+            <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Recall</div>
+            <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Mastery</div>
+          </div>
+          <div class="sb-section">
+            <div class="sb-section-label">Account</div>
+            <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Profile</div>
+            <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings</div>
+          </div>
+          <div class="sb-spacer"></div>
+          <div class="sb-user">
+            <div class="sb-avatar">AK</div>
+            <div><div class="sb-uname">Ahmed Khan</div><div class="sb-uemail">ahmed@colearner.io</div></div>
+          </div>
+        </aside>
+
+        <!-- Content -->
+        <main class="content">
+          <div class="page-title">Capture Knowledge</div>
+          <div class="page-subtitle">Choose a source to extract concepts from. We'll generate recall questions automatically using our two-model pipeline.</div>
+
+          <!-- Capture stats bar -->
+          <div class="capture-stats">
+            <div class="cs-item">
+              <div class="cs-icon" style="background:var(--primary-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+              <div>
+                <div class="cs-label">Today</div>
+                <div class="cs-value">3 captures</div>
+              </div>
+            </div>
+            <div class="cs-divider"></div>
+            <div class="cs-item">
+              <div class="cs-icon" style="background:var(--ok-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+              <div>
+                <div class="cs-label">Total Concepts</div>
+                <div class="cs-value">142</div>
+              </div>
+            </div>
+            <div class="cs-divider"></div>
+            <div class="cs-limit-bar">
+              <div class="cs-limit-header">
+                <span class="cs-limit-label">Daily Limit (Free)</span>
+                <span class="cs-limit-count">3 / 5 used</span>
+              </div>
+              <div class="cs-bar"><div class="cs-bar-fill warn" style="width:60%"></div></div>
+            </div>
+            <span class="cs-upgrade">Upgrade for unlimited →</span>
+          </div>
+
+          <!-- Source Cards — All Collapsed -->
+          <div class="ring-list">
+            <!-- Source 0 — YouTube -->
+            <div class="ring-card r0">
+              <div class="ring-header">
+                <div class="ring-icon">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                </div>
+                <div class="ring-info">
+                  <div class="ring-label">Source 0</div>
+                  <div class="ring-name">YouTube</div>
+                  <div class="ring-desc">Paste a YouTube URL to extract concepts from video transcripts</div>
+                </div>
+                <div class="ring-meta">
+                  <div class="ring-stat"><div class="ring-stat-val">24</div><div class="ring-stat-label">captures</div></div>
+                </div>
+                <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+
+            <!-- Source 1 — Web Articles -->
+            <div class="ring-card r1">
+              <div class="ring-header">
+                <div class="ring-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                </div>
+                <div class="ring-info">
+                  <div class="ring-label">Source 1</div>
+                  <div class="ring-name">Web Articles</div>
+                  <div class="ring-desc">Paste a URL or use the Chrome Extension for dwell-based capture</div>
+                </div>
+                <div class="ring-meta">
+                  <div class="ring-stat"><div class="ring-stat-val">18</div><div class="ring-stat-label">captures</div></div>
+                </div>
+                <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+
+            <!-- Source 2 — Local Docs -->
+            <div class="ring-card r2">
+              <div class="ring-header">
+                <div class="ring-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                </div>
+                <div class="ring-info">
+                  <div class="ring-label">Source 2</div>
+                  <div class="ring-name">Local Docs</div>
+                  <div class="ring-desc">Upload PDF or Word documents to extract and learn from</div>
+                </div>
+                <div class="ring-meta">
+                  <div class="ring-stat"><div class="ring-stat-val">7</div><div class="ring-stat-label">captures</div></div>
+                </div>
+                <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+
+            <!-- Source 3 — Audio & Podcasts -->
+            <div class="ring-card r3">
+              <div class="ring-header">
+                <div class="ring-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                </div>
+                <div class="ring-info">
+                  <div class="ring-label">Source 3</div>
+                  <div class="ring-name">Audio &amp; Podcasts</div>
+                  <div class="ring-desc">Upload audio files or record live for speech-to-concept extraction</div>
+                </div>
+                <div class="ring-meta">
+                  <div class="ring-stat"><div class="ring-stat-val">3</div><div class="ring-stat-label">captures</div></div>
+                </div>
+                <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+
+            <!-- Source 4 — Local Video -->
+            <div class="ring-card r4">
+              <div class="ring-header">
+                <div class="ring-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                </div>
+                <div class="ring-info">
+                  <div class="ring-label">Source 4</div>
+                  <div class="ring-name">Local Video</div>
+                  <div class="ring-desc">Upload local video files — we extract the audio track and transcribe</div>
+                </div>
+                <div class="ring-meta">
+                  <div class="ring-stat"><div class="ring-stat-val">2</div><div class="ring-stat-label">captures</div></div>
+                </div>
+                <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 2: Source 0 — YouTube Expanded
+     ═══════════════════════════════════════════ -->
+<section style="margin-top:48px">
+  <div class="sec-head">
+    <div class="sec-num">Screen · Source 0 Expanded</div>
+    <div class="sec-title">YouTube Capture</div>
+    <div class="sec-desc">Source 0 expanded showing YouTube URL input with paste field, auto-transcript toggle, and start capture button. Pipeline info strip shows which models will process.</div>
+  </div>
+
+  <div class="frame-label">Source 0 — YouTube Expanded (URL pasted)</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/capture</div>
+    </div>
+    <div class="browser-body">
+      <div class="app-shell">
+        <aside class="sidebar">
+          <div class="sb-brand"><div class="sb-logo">Co<span>Learner</span></div></div>
+          <div class="sb-section">
+            <div class="sb-section-label">Main</div>
+            <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> Home</div>
+            <div class="sb-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Capture</div>
+            <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Recall</div>
+            <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Mastery</div>
+          </div>
+          <div class="sb-spacer"></div>
+          <div class="sb-user"><div class="sb-avatar">AK</div><div><div class="sb-uname">Ahmed Khan</div><div class="sb-uemail">ahmed@colearner.io</div></div></div>
+        </aside>
+
+        <main class="content">
+          <div class="page-title">Capture Knowledge</div>
+          <div class="page-subtitle">Choose a source to extract concepts from.</div>
+
+          <div class="capture-stats">
+            <div class="cs-item"><div class="cs-icon" style="background:var(--primary-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><div><div class="cs-label">Today</div><div class="cs-value">3 captures</div></div></div>
+            <div class="cs-divider"></div>
+            <div class="cs-limit-bar"><div class="cs-limit-header"><span class="cs-limit-label">Daily Limit (Free)</span><span class="cs-limit-count">3 / 5 used</span></div><div class="cs-bar"><div class="cs-bar-fill warn" style="width:60%"></div></div></div>
+            <span class="cs-upgrade">Upgrade →</span>
+          </div>
+
+          <div class="ring-list">
+            <!-- Source 0 — EXPANDED -->
+            <div class="ring-card r0 expanded">
+              <div class="ring-header">
+                <div class="ring-icon">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                </div>
+                <div class="ring-info">
+                  <div class="ring-label">Source 0</div>
+                  <div class="ring-name">YouTube</div>
+                  <div class="ring-desc">Paste a YouTube URL to extract concepts from video transcripts</div>
+                </div>
+                <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+              <div class="ring-body" style="display:block">
+                <div class="input-group">
+                  <div class="input-label">YouTube Video URL</div>
+                  <div class="url-input-wrap">
+                    <div class="url-input">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                      <input type="text" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ" placeholder="https://youtube.com/watch?v=...">
+                    </div>
+                    <button class="start-btn">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      Start Capture
+                    </button>
+                  </div>
+                </div>
+                <div class="capture-options">
+                  <div class="opt-chip active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Auto-transcript
+                  </div>
+                  <div class="opt-chip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
+                    Manual paste
+                  </div>
+                  <div class="opt-chip active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    Generate all 3 types
+                  </div>
+                </div>
+                <div class="pipeline-info">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  Pipeline: Pass 1 <code>llama3.2:3b</code> chunk extraction → Pass 2 <code>gemma2:9b</code> question generation. Estimated: ~5–8 min (local) · ~30s (Pro)
+                </div>
+              </div>
+            </div>
+
+            <!-- Remaining rings collapsed -->
+            <div class="ring-card r1">
+              <div class="ring-header">
+                <div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+                <div class="ring-info"><div class="ring-label">Source 1</div><div class="ring-name">Web Articles</div><div class="ring-desc">Paste a URL or use the Chrome Extension</div></div>
+                <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+            <div class="ring-card r2">
+              <div class="ring-header">
+                <div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                <div class="ring-info"><div class="ring-label">Source 2</div><div class="ring-name">Local Docs</div><div class="ring-desc">Upload PDF or Word documents</div></div>
+                <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+            <div class="ring-card r3">
+              <div class="ring-header">
+                <div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div>
+                <div class="ring-info"><div class="ring-label">Source 3</div><div class="ring-name">Audio & Podcasts</div><div class="ring-desc">Upload audio or record live</div></div>
+                <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+            <div class="ring-card r4">
+              <div class="ring-header">
+                <div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
+                <div class="ring-info"><div class="ring-label">Source 4</div><div class="ring-name">Local Video</div><div class="ring-desc">Upload local video files</div></div>
+                <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 3: Source 1 — Web Articles Expanded
+     ═══════════════════════════════════════════ -->
+<section style="margin-top:48px">
+  <div class="sec-head">
+    <div class="sec-num">Screen · Source 1 Expanded</div>
+    <div class="sec-title">Web Article Capture</div>
+    <div class="sec-desc">Source 1 expanded with URL input and Chrome Extension helper link. Shows web article URL pasted with start button.</div>
+  </div>
+
+  <div class="frame-label">Source 1 — Web Article URL Input</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/capture</div>
+    </div>
+    <div class="browser-body" style="min-height:400px">
+      <div style="padding:28px 32px">
+        <div class="page-title" style="margin-bottom:16px">Capture Knowledge</div>
+        <div class="ring-list">
+          <!-- Source 0 collapsed -->
+          <div class="ring-card r0">
+            <div class="ring-header">
+              <div class="ring-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></div>
+              <div class="ring-info"><div class="ring-label">Source 0</div><div class="ring-name">YouTube</div></div>
+              <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
+
+          <!-- Source 1 — EXPANDED -->
+          <div class="ring-card r1 expanded">
+            <div class="ring-header">
+              <div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+              <div class="ring-info"><div class="ring-label">Source 1</div><div class="ring-name">Web Articles</div><div class="ring-desc">Paste any article URL — we'll extract the readable content and generate concepts</div></div>
+              <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+            <div class="ring-body" style="display:block">
+              <div class="input-group">
+                <div class="input-label">Article URL</div>
+                <div class="url-input-wrap">
+                  <div class="url-input">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <input type="text" value="https://blog.tensorflow.org/2024/attention-mechanisms" placeholder="https://example.com/article">
+                  </div>
+                  <button class="start-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Start Capture
+                  </button>
+                </div>
+              </div>
+              <div class="helper-row">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Or use the <a href="#">Chrome Extension</a> for automatic dwell-based capture (≥ 2 min reading time).
+              </div>
+              <div class="pipeline-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                We extract readable content using <code>@mozilla/readability</code>, chunk it, then run the two-model pipeline. SHA256 hash stored — never the raw URL.
+              </div>
+            </div>
+          </div>
+
+          <!-- Remaining collapsed -->
+          <div class="ring-card r2"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="ring-info"><div class="ring-label">Source 2</div><div class="ring-name">Local Docs</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+          <div class="ring-card r3"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg></div><div class="ring-info"><div class="ring-label">Source 3</div><div class="ring-name">Audio & Podcasts</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+          <div class="ring-card r4"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div><div class="ring-info"><div class="ring-label">Source 4</div><div class="ring-name">Local Video</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 4: Source 2 — Local Docs Expanded (File Upload)
+     ═══════════════════════════════════════════ -->
+<section style="margin-top:48px">
+  <div class="sec-head">
+    <div class="sec-num">Screen · Source 2 Expanded</div>
+    <div class="sec-title">Local Document Upload</div>
+    <div class="sec-desc">Source 2 expanded with drag-and-drop file upload zone for PDF and Word documents. Shows empty state and file-selected state side by side.</div>
+  </div>
+
+  <div class="frame-label">Source 2 — Document Upload (File Selected)</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/capture</div>
+    </div>
+    <div class="browser-body" style="min-height:440px">
+      <div style="padding:28px 32px">
+        <div class="page-title" style="margin-bottom:16px">Capture Knowledge</div>
+        <div class="ring-list">
+          <div class="ring-card r0"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></div><div class="ring-info"><div class="ring-label">Source 0</div><div class="ring-name">YouTube</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+          <div class="ring-card r1"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><div class="ring-info"><div class="ring-label">Source 1</div><div class="ring-name">Web Articles</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+
+          <!-- Source 2 — EXPANDED with file selected -->
+          <div class="ring-card r2 expanded">
+            <div class="ring-header">
+              <div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+              <div class="ring-info"><div class="ring-label">Source 2</div><div class="ring-name">Local Docs</div><div class="ring-desc">Upload PDF or Word documents — we'll extract text, chunk it, and generate concepts</div></div>
+              <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+            <div class="ring-body" style="display:block">
+              <div class="upload-zone">
+                <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+                <div class="upload-text">Drag & drop or <span>browse files</span></div>
+                <div class="upload-hint">Maximum file size: 25 MB</div>
+                <div class="upload-formats">
+                  <span class="format-badge">.pdf</span>
+                  <span class="format-badge">.docx</span>
+                  <span class="format-badge">.doc</span>
+                  <span class="format-badge">.txt</span>
+                </div>
+              </div>
+
+              <!-- File selected state -->
+              <div class="file-selected">
+                <div class="file-icon" style="background:var(--ring2-bg);color:var(--ring2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                <div class="file-info">
+                  <div class="file-name">Attention_Is_All_You_Need.pdf</div>
+                  <div class="file-meta">2.4 MB · 15 pages · PDF</div>
+                </div>
+                <button class="file-remove"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+              </div>
+
+              <div style="display:flex;justify-content:flex-end">
+                <button class="start-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Start Capture
+                </button>
+              </div>
+
+              <div class="pipeline-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Text extracted via <code>pdf-parse</code> (PDF) or <code>mammoth</code> (Word). Chunked at 4,000 chars with 300 overlap. Privacy: SHA256 of filename stored only.
+              </div>
+            </div>
+          </div>
+
+          <div class="ring-card r3"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg></div><div class="ring-info"><div class="ring-label">Source 3</div><div class="ring-name">Audio & Podcasts</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+          <div class="ring-card r4"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div><div class="ring-info"><div class="ring-label">Source 4</div><div class="ring-name">Local Video</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 5: Source 3 — Audio & Podcasts Expanded
+     ═══════════════════════════════════════════ -->
+<section style="margin-top:48px">
+  <div class="sec-head">
+    <div class="sec-num">Screen · Source 3 Expanded</div>
+    <div class="sec-title">Audio &amp; Podcast Capture</div>
+    <div class="sec-desc">Source 3 expanded with two input modes: file upload for audio files (MP3, WAV, M4A) and a live microphone recording option with waveform visualization and timer.</div>
+  </div>
+
+  <div class="frame-label">Source 3 — Audio Upload + Live Recording</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/capture</div>
+    </div>
+    <div class="browser-body" style="min-height:520px">
+      <div style="padding:28px 32px">
+        <div class="page-title" style="margin-bottom:16px">Capture Knowledge</div>
+        <div class="ring-list">
+          <div class="ring-card r0"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></div><div class="ring-info"><div class="ring-label">Source 0</div><div class="ring-name">YouTube</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+          <div class="ring-card r1"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><div class="ring-info"><div class="ring-label">Source 1</div><div class="ring-name">Web Articles</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+          <div class="ring-card r2"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="ring-info"><div class="ring-label">Source 2</div><div class="ring-name">Local Docs</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+
+          <!-- Source 3 — EXPANDED -->
+          <div class="ring-card r3 expanded">
+            <div class="ring-header">
+              <div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div>
+              <div class="ring-info"><div class="ring-label">Source 3</div><div class="ring-name">Audio &amp; Podcasts</div><div class="ring-desc">Upload audio files or record live — we'll transcribe using Whisper and extract concepts</div></div>
+              <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+            <div class="ring-body" style="display:block">
+              <!-- Tab-like toggle -->
+              <div style="display:flex;gap:6px;margin-bottom:16px">
+                <div class="opt-chip" style="padding:8px 16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload File</div>
+                <div class="opt-chip active" style="padding:8px 16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg> Record Live</div>
+              </div>
+
+              <!-- Live recording UI -->
+              <div class="record-controls">
+                <button class="record-btn recording">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                </button>
+                <div class="record-info">
+                  <div class="record-status">Recording...</div>
+                  <div class="record-time">02:34</div>
+                </div>
+              </div>
+
+              <!-- Waveform visualization -->
+              <div class="waveform">
+                <div class="wave-bar" style="height:8px"></div>
+                <div class="wave-bar" style="height:18px"></div>
+                <div class="wave-bar" style="height:12px"></div>
+                <div class="wave-bar" style="height:24px"></div>
+                <div class="wave-bar" style="height:16px"></div>
+                <div class="wave-bar" style="height:28px"></div>
+                <div class="wave-bar" style="height:20px"></div>
+                <div class="wave-bar" style="height:10px"></div>
+                <div class="wave-bar" style="height:22px"></div>
+                <div class="wave-bar" style="height:14px"></div>
+                <div class="wave-bar" style="height:26px"></div>
+                <div class="wave-bar" style="height:18px"></div>
+                <div class="wave-bar" style="height:8px"></div>
+                <div class="wave-bar" style="height:20px"></div>
+                <div class="wave-bar" style="height:30px"></div>
+                <div class="wave-bar" style="height:16px"></div>
+                <div class="wave-bar" style="height:12px"></div>
+                <div class="wave-bar" style="height:24px"></div>
+                <div class="wave-bar" style="height:10px"></div>
+                <div class="wave-bar" style="height:20px"></div>
+                <div class="wave-bar" style="height:14px"></div>
+                <div class="wave-bar" style="height:26px"></div>
+                <div class="wave-bar" style="height:8px"></div>
+                <div class="wave-bar" style="height:18px"></div>
+                <div class="wave-bar" style="height:22px"></div>
+                <div class="wave-bar" style="height:12px"></div>
+                <div class="wave-bar" style="height:28px"></div>
+                <div class="wave-bar" style="height:16px"></div>
+                <div class="wave-bar" style="height:10px"></div>
+                <div class="wave-bar" style="height:24px"></div>
+              </div>
+
+              <div class="upload-formats" style="justify-content:flex-start;margin-bottom:10px">
+                <span class="format-badge">.mp3</span>
+                <span class="format-badge">.wav</span>
+                <span class="format-badge">.m4a</span>
+                <span class="format-badge">.ogg</span>
+                <span class="format-badge">.flac</span>
+              </div>
+
+              <div style="display:flex;justify-content:flex-end">
+                <button class="start-btn" style="opacity:0.5;cursor:not-allowed">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Stop & Capture
+                </button>
+              </div>
+
+              <div class="pipeline-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Audio transcribed via <code>whisper.cpp</code> (local) or Whisper API (Pro). Then chunked and processed through the standard two-model pipeline.
+              </div>
+            </div>
+          </div>
+
+          <div class="ring-card r4"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div><div class="ring-info"><div class="ring-label">Source 4</div><div class="ring-name">Local Video</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 6: Source 4 — Local Video Expanded
+     ═══════════════════════════════════════════ -->
+<section style="margin-top:48px">
+  <div class="sec-head">
+    <div class="sec-num">Screen · Source 4 Expanded</div>
+    <div class="sec-title">Local Video Upload</div>
+    <div class="sec-desc">Source 4 expanded with video file upload zone. Shows supported formats, file size limit, and the extraction pipeline: audio track extraction → Whisper transcription → concept pipeline.</div>
+  </div>
+
+  <div class="frame-label">Source 4 — Video File Upload</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/capture</div>
+    </div>
+    <div class="browser-body" style="min-height:400px">
+      <div style="padding:28px 32px">
+        <div class="page-title" style="margin-bottom:16px">Capture Knowledge</div>
+        <div class="ring-list">
+          <div class="ring-card r0"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></div><div class="ring-info"><div class="ring-label">Source 0</div><div class="ring-name">YouTube</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+          <div class="ring-card r1"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div><div class="ring-info"><div class="ring-label">Source 1</div><div class="ring-name">Web Articles</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+          <div class="ring-card r2"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="ring-info"><div class="ring-label">Source 2</div><div class="ring-name">Local Docs</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+          <div class="ring-card r3"><div class="ring-header"><div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg></div><div class="ring-info"><div class="ring-label">Source 3</div><div class="ring-name">Audio & Podcasts</div></div><svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+
+          <!-- Source 4 — EXPANDED -->
+          <div class="ring-card r4 expanded">
+            <div class="ring-header">
+              <div class="ring-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
+              <div class="ring-info"><div class="ring-label">Source 4</div><div class="ring-name">Local Video</div><div class="ring-desc">Upload local video files — we extract the audio track, transcribe it, then generate concepts</div></div>
+              <svg class="ring-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+            <div class="ring-body" style="display:block">
+              <div class="upload-zone">
+                <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
+                <div class="upload-text">Drag & drop video file or <span>browse</span></div>
+                <div class="upload-hint">Maximum file size: 500 MB · Max duration: 35 min</div>
+                <div class="upload-formats">
+                  <span class="format-badge">.mp4</span>
+                  <span class="format-badge">.mkv</span>
+                  <span class="format-badge">.avi</span>
+                  <span class="format-badge">.webm</span>
+                  <span class="format-badge">.mov</span>
+                </div>
+              </div>
+
+              <div style="display:flex;justify-content:flex-end">
+                <button class="start-btn" style="opacity:0.4;cursor:not-allowed">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Start Capture
+                </button>
+              </div>
+
+              <div class="pipeline-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Pipeline: <code>ffmpeg</code> audio extraction → <code>whisper.cpp</code> transcription → chunk at 4,000 chars → Pass 1 <code>llama3.2:3b</code> → Pass 2 <code>gemma2:9b</code>. SHA256 of filename stored only.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Dev Notes -->
+<div class="dev-notes" style="margin-top:32px">
+  <div class="dev-note">
+    <div class="dev-note-title">Next.js Routes</div>
+    <div class="dev-note-body">
+      <code>app/(dashboard)/capture/page.tsx</code> — Main capture source selection page (Server Component shell + Client accordion).<br>
+      <code>app/(dashboard)/capture/[ringId]/page.tsx</code> — Optional: dedicated capture page per ring (if deep-link needed).<br>
+      <code>app/(dashboard)/capture/processing/[captureId]/page.tsx</code> — Redirect after "Start Capture" for extraction progress tracking.
+    </div>
+  </div>
+  <div class="dev-note">
+    <div class="dev-note-title">NestJS Endpoints</div>
+    <div class="dev-note-body">
+      <code>GET /api/capture/stats</code> — Returns today's capture count, total concepts, daily limit remaining.<br>
+      <code>POST /api/capture/youtube</code> — Body: <code>{ url, options: { autoTranscript, questionTypes } }</code> → Queue extraction.<br>
+      <code>POST /api/capture/web</code> — Body: <code>{ url }</code> → Fetch via <code>@mozilla/readability</code>, queue extraction.<br>
+      <code>POST /api/capture/document</code> — Multipart: file upload (PDF/DOCX) → Parse, chunk, queue extraction.<br>
+      <code>POST /api/capture/audio</code> — Multipart: audio file OR <code>{ recordingBlob }</code> → Whisper transcribe, queue extraction.<br>
+      <code>POST /api/capture/video</code> — Multipart: video file → FFmpeg audio extract, Whisper transcribe, queue extraction.<br>
+      <code>GET /api/capture/:id/status</code> — SSE endpoint for real-time extraction progress updates.
+    </div>
+  </div>
+  <div class="dev-note">
+    <div class="dev-note-title">Source Architecture Notes</div>
+    <div class="dev-note-body">
+      All rings share the same downstream pipeline: text → chunk (4,000 chars, 300 overlap, max 5) → Pass 1 <code>llama3.2:3b</code> → Pass 2 <code>gemma2:9b</code>.<br>
+      Sources differ only in the <strong>input adapter</strong>: Source 0 (YouTube transcript API), Source 1 (Readability + fetch), Source 2 (<code>pdf-parse</code>/<code>mammoth</code>), Source 3 (<code>whisper.cpp</code>), Source 4 (<code>ffmpeg</code> + <code>whisper.cpp</code>).<br>
+      Privacy: All rings follow the same SHA256 rule — never store raw URLs, filenames, or source content. Only hashes + extracted concepts.<br>
+      Daily limits: Free tier = 5 captures/day across ALL rings combined. Pro = unlimited. Enterprise = unlimited + priority queue.<br>
+      File uploads use <code>multer</code> middleware on NestJS with size limits: docs 25MB, audio 100MB, video 500MB.<br>
+      Live recording (Source 3): <code>MediaRecorder</code> API on frontend → Blob → upload same as file.
+    </div>
+  </div>
+  <div class="dev-note">
+    <div class="dev-note-title">State Management</div>
+    <div class="dev-note-body">
+      Zustand store: <code>useCaptureStore</code> — <code>{ expandedSource, selectedFile, captureUrl, isRecording, recordingTime, dailyStats }</code>.<br>
+      Accordion: only one ring expanded at a time. Click expanded header to collapse. Click another to switch.<br>
+      File upload: <code>react-dropzone</code> for drag-and-drop with file type validation per ring.<br>
+      Live recording: <code>MediaRecorder</code> + <code>AudioContext</code> for waveform visualization.<br>
+      After "Start Capture": redirect to <code>/capture/processing/[captureId]</code> with SSE progress tracking.
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

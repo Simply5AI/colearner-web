@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoLearner — Phase 5B: Settings &amp; Preferences</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #C4621A; --primary-h: #D87430; --primary-d: #A85316;
+  --primary-bg: #FDF0E8; --primary-bg2: #FEF8F3; --primary-glow: rgba(196,98,26,0.12);
+  --explore: #1A7070; --explore-bg: #E8F5F5;
+  --learn: #1E4FA3; --learn-bg: #E8EFF9;
+  --grow: #6B3FA0; --grow-bg: #F2ECFB;
+  --excel: #2E6B3E; --excel-bg: #EAF2ED;
+  --ok: #16A34A; --ok-bg: #F0FDF4; --err: #DC2626; --err-bg: #FEF2F2;
+  --warn: #D97706; --warn-bg: #FFFBEB; --info: #2563EB; --info-bg: #EFF6FF;
+  --bg: #FAFAF8; --bg2: #F5F3EF; --surface: #FFFFFF;
+  --border: #E5E2DC; --border-lt: #F0EDE8;
+  --t1: #1A1714; --t2: #57534E; --t3: #A8A29E; --t4: #D6D3CD;
+  --font: 'Inter', -apple-system, sans-serif; --mono: 'JetBrains Mono', monospace;
+  --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-full: 999px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --sidebar-w: 240px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { font-family: var(--font); background: #0C0A09; color: var(--t1); -webkit-font-smoothing: antialiased; }
+
+.page-header { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(12,10,9,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.page-header-inner { max-width: 1440px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; height: 48px; gap: 8px; }
+.ph-logo { font-weight: 800; font-size: 14px; color: #fff; }
+.ph-logo span { color: var(--primary-h); }
+.ph-badge { font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary-h); background: rgba(196,98,26,0.12); padding: 3px 8px; border-radius: 99px; }
+
+.main { max-width: 1440px; margin: 0 auto; padding: 68px 24px 80px; }
+.sec-head { margin-bottom: 32px; }
+.sec-num { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--primary-h); }
+.sec-title { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.5px; margin: 2px 0; }
+.sec-desc { font-size: 13px; color: rgba(255,255,255,0.3); max-width: 600px; }
+.frame-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.2); margin-bottom: 10px; text-align: center; }
+.browser-frame { background: #1C1917; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 30px 60px rgba(0,0,0,0.4); margin-bottom: 28px; }
+.browser-bar { background: #292524; padding: 8px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.browser-dots { display: flex; gap: 5px; }
+.browser-dots span { width: 9px; height: 9px; border-radius: 50%; }
+.browser-dots span:nth-child(1) { background: #EF4444; }
+.browser-dots span:nth-child(2) { background: #F59E0B; }
+.browser-dots span:nth-child(3) { background: #22C55E; }
+.browser-url { flex: 1; background: rgba(255,255,255,0.06); border-radius: 5px; padding: 4px 10px; font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.3); }
+.browser-url .lock { color: var(--ok); }
+.browser-body { background: var(--bg); min-height: 780px; }
+
+/* ══ SETTINGS LAYOUT ══ */
+.settings-layout { display: flex; min-height: 780px; }
+.settings-sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; flex-shrink: 0; }
+.ss-logo { font-size: 17px; font-weight: 800; color: var(--t1); letter-spacing: -0.4px; padding: 0 20px 20px; border-bottom: 1px solid var(--border-lt); margin-bottom: 12px; }
+.ss-logo span { color: var(--primary); }
+.ss-nav-label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--t3); padding: 12px 20px 6px; }
+.ss-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; cursor: pointer; transition: 150ms var(--ease); font-size: 13px; font-weight: 500; color: var(--t2); }
+.ss-item:hover { background: var(--bg); }
+.ss-item.active { background: var(--primary-bg); color: var(--primary); font-weight: 700; border-right: 3px solid var(--primary); }
+.ss-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* Main settings area */
+.settings-main { flex: 1; overflow-y: auto; }
+.settings-topbar { padding: 20px 32px; border-bottom: 1px solid var(--border-lt); background: var(--surface); position: sticky; top: 0; z-index: 10; }
+.settings-topbar h1 { font-size: 18px; font-weight: 800; color: var(--t1); }
+.settings-topbar p { font-size: 11px; color: var(--t3); }
+.settings-body { padding: 28px 32px; max-width: 720px; }
+
+/* Setting sections */
+.setting-section { margin-bottom: 32px; }
+.setting-section-title { font-size: 14px; font-weight: 800; color: var(--t1); margin-bottom: 4px; }
+.setting-section-desc { font-size: 12px; color: var(--t3); margin-bottom: 16px; }
+
+/* Setting row */
+.setting-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--border-lt); }
+.setting-row:last-child { border-bottom: none; }
+.sr-left { flex: 1; min-width: 0; padding-right: 20px; }
+.sr-label { font-size: 13px; font-weight: 600; color: var(--t1); margin-bottom: 2px; }
+.sr-desc { font-size: 11px; color: var(--t3); line-height: 1.5; }
+.sr-right { flex-shrink: 0; }
+
+/* Toggle switch */
+.toggle { width: 44px; height: 24px; background: var(--border); border-radius: 12px; position: relative; cursor: pointer; transition: 200ms var(--ease); }
+.toggle.on { background: var(--primary); }
+.toggle-knob { width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; box-shadow: var(--shadow-sm); transition: 200ms var(--ease); }
+.toggle.on .toggle-knob { left: 22px; }
+
+/* Select input */
+.setting-select { font-family: var(--font); font-size: 13px; font-weight: 500; padding: 8px 32px 8px 12px; border: 1.5px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--t1); cursor: pointer; outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; transition: 150ms var(--ease); }
+.setting-select:focus { border-color: var(--primary); }
+
+/* Text input */
+.setting-input { font-family: var(--font); font-size: 13px; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--t1); outline: none; width: 200px; transition: 150ms var(--ease); }
+.setting-input:focus { border-color: var(--primary); }
+
+/* Button */
+.btn-save { display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px; background: var(--primary); color: white; border: none; border-radius: var(--r-sm); font-family: var(--font); font-size: 13px; font-weight: 700; cursor: pointer; transition: 200ms var(--ease); }
+.btn-save:hover { background: var(--primary-d); }
+.btn-save svg { width: 16px; height: 16px; }
+.btn-danger { display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px; background: var(--surface); color: var(--err); border: 1.5px solid var(--err); border-radius: var(--r-sm); font-family: var(--font); font-size: 13px; font-weight: 700; cursor: pointer; transition: 150ms var(--ease); }
+.btn-danger:hover { background: var(--err-bg); }
+.btn-outline2 { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1.5px solid var(--border); border-radius: var(--r-sm); background: var(--surface); font-family: var(--font); font-size: 12px; font-weight: 600; color: var(--t2); cursor: pointer; }
+.btn-outline2:hover { border-color: var(--t3); }
+
+/* Connected accounts */
+.connected-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1.5px solid var(--border); border-radius: var(--r-sm); margin-bottom: 8px; }
+.ci-icon { width: 36px; height: 36px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ci-info { flex: 1; min-width: 0; }
+.ci-name { font-size: 13px; font-weight: 600; color: var(--t1); }
+.ci-email { font-size: 11px; color: var(--t3); }
+.ci-badge { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: var(--r-full); }
+.ci-badge.connected { background: var(--ok-bg); color: var(--ok); }
+.ci-badge.disconnected { background: var(--bg2); color: var(--t3); }
+
+/* Privacy section */
+.privacy-item { background: var(--bg); border: 1px solid var(--border-lt); border-radius: var(--r-sm); padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px; }
+.privacy-icon { width: 32px; height: 32px; border-radius: var(--r-sm); background: var(--ok-bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.privacy-icon svg { width: 16px; height: 16px; color: var(--ok); }
+.privacy-text { font-size: 12px; color: var(--t2); line-height: 1.6; }
+.privacy-text strong { color: var(--t1); }
+
+/* Success toast */
+.save-toast { position: fixed; bottom: 24px; right: 24px; background: var(--t1); color: white; padding: 12px 20px; border-radius: var(--r-sm); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-lg); z-index: 100; }
+.save-toast svg { width: 18px; height: 18px; color: var(--ok); }
+
+.dev-notes { margin-top: 20px; }
+.dev-note { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r-md); padding: 16px 20px; margin-bottom: 8px; }
+.dev-note-title { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); margin-bottom: 4px; }
+.dev-note-body { font-size: 10px; color: rgba(255,255,255,0.25); line-height: 1.7; }
+.dev-note-body code { font-family: var(--mono); background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 3px; font-size: 9px; color: var(--primary-h); }
+</style>
+</head>
+<body>
+
+<nav class="page-header">
+  <div class="page-header-inner">
+    <div class="ph-logo">Co<span>Learner</span></div>
+    <span class="ph-badge">Phase 5B · Settings</span>
+  </div>
+</nav>
+
+<div class="main">
+
+<section>
+  <div class="sec-head">
+    <div class="sec-num">Screen 02 · Settings</div>
+    <div class="sec-title">Settings &amp; Preferences</div>
+    <div class="sec-desc">Account settings, learning preferences, privacy controls, connected accounts, and data management — with a dedicated settings sidebar nav.</div>
+  </div>
+
+  <div class="frame-label">Settings — General Tab Active</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/settings</div>
+    </div>
+    <div class="browser-body">
+      <div class="settings-layout">
+        <!-- Settings Sidebar -->
+        <div class="settings-sidebar">
+          <div class="ss-logo">Co<span>Learner</span></div>
+          <div class="ss-nav-label">Settings</div>
+          <div class="ss-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4"/></svg>
+            General
+          </div>
+          <div class="ss-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            Learning
+          </div>
+          <div class="ss-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            Notifications
+          </div>
+          <div class="ss-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Privacy
+          </div>
+          <div class="ss-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Security
+          </div>
+          <div class="ss-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Data Export
+          </div>
+          <div class="ss-nav-label">Danger Zone</div>
+          <div class="ss-item" style="color:var(--err)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Delete Account
+          </div>
+        </div>
+
+        <!-- Settings Main Content -->
+        <div class="settings-main">
+          <div class="settings-topbar">
+            <h1>General Settings</h1>
+            <p>Manage your account and application preferences</p>
+          </div>
+
+          <div class="settings-body">
+            <!-- Account Section -->
+            <div class="setting-section">
+              <div class="setting-section-title">Account</div>
+              <div class="setting-section-desc">Your personal information and account details</div>
+
+              <div class="setting-row">
+                <div class="sr-left"><div class="sr-label">Display Name</div><div class="sr-desc">How your name appears in the app</div></div>
+                <div class="sr-right"><input class="setting-input" value="Ahmed Khan" /></div>
+              </div>
+              <div class="setting-row">
+                <div class="sr-left"><div class="sr-label">Email Address</div><div class="sr-desc">Used for login and notifications</div></div>
+                <div class="sr-right"><input class="setting-input" value="ahmed@example.com" style="color:var(--t3)" disabled /></div>
+              </div>
+              <div class="setting-row">
+                <div class="sr-left"><div class="sr-label">Learning Skill</div><div class="sr-desc">Your primary area of study</div></div>
+                <div class="sr-right"><input class="setting-input" value="Machine Learning" /></div>
+              </div>
+              <div class="setting-row">
+                <div class="sr-left"><div class="sr-label">Timezone</div><div class="sr-desc">Used for SM-2 scheduling and notification timing</div></div>
+                <div class="sr-right">
+                  <select class="setting-select">
+                    <option>Asia/Dubai (UTC+4)</option>
+                    <option>Asia/Karachi (UTC+5)</option>
+                    <option>Europe/London (UTC+0)</option>
+                    <option>America/New_York (UTC-5)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Connected Accounts -->
+            <div class="setting-section">
+              <div class="setting-section-title">Connected Accounts</div>
+              <div class="setting-section-desc">Manage your social login connections</div>
+
+              <div class="connected-item">
+                <div class="ci-icon" style="background:#f3f4f6">
+                  <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                </div>
+                <div class="ci-info"><div class="ci-name">Google</div><div class="ci-email">ahmed@gmail.com</div></div>
+                <span class="ci-badge connected">Connected</span>
+              </div>
+              <div class="connected-item">
+                <div class="ci-icon" style="background:#000;border-radius:var(--r-sm)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.32-1.55 4.3-3.74 4.25z"/></svg>
+                </div>
+                <div class="ci-info"><div class="ci-name">Apple</div><div class="ci-email">Not connected</div></div>
+                <button class="btn-outline2">Connect</button>
+              </div>
+            </div>
+
+            <!-- Appearance -->
+            <div class="setting-section">
+              <div class="setting-section-title">Appearance</div>
+              <div class="setting-section-desc">Customize how CoLearner looks</div>
+
+              <div class="setting-row">
+                <div class="sr-left"><div class="sr-label">Theme</div><div class="sr-desc">Choose light or dark mode</div></div>
+                <div class="sr-right">
+                  <select class="setting-select"><option>Light</option><option>Dark</option><option>System Default</option></select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="sr-left"><div class="sr-label">Compact Mode</div><div class="sr-desc">Reduce spacing for more content density</div></div>
+                <div class="sr-right"><div class="toggle"><div class="toggle-knob"></div></div></div>
+              </div>
+              <div class="setting-row">
+                <div class="sr-left"><div class="sr-label">Show Keyboard Shortcuts</div><div class="sr-desc">Display shortcut hints during recall sessions</div></div>
+                <div class="sr-right"><div class="toggle on"><div class="toggle-knob"></div></div></div>
+              </div>
+            </div>
+
+            <!-- Learning Preferences -->
+            <div class="setting-section">
+              <div class="setting-section-title">Learning Preferences</div>
+              <div class="setting-section-desc">Customize your recall and learning experience</div>
+
+              <div class="setting-row">
+                <div class="sr-left"><div class="sr-label">Default Question Mix</div><div class="sr-desc">Which question types to include by default</div></div>
+                <div class="sr-right"><select class="setting-select"><option>All Types (Mixed)</option><option>Open Answer Only</option><option>MCQ Only</option><option>Cloze Only</option></select></div>
+              </div>
+              <div class="setting-row">
+                <div class="sr-left"><div class="sr-label">Default Session Order</div><div class="sr-desc">How questions are ordered in recall sessions</div></div>
+                <div class="sr-right"><select class="setting-select"><option>SM-2 Priority (Due First)</option><option>Failed Items First</option><option>Random Shuffle</option></select></div>
+              </div>
+              <div class="setting-row">
+                <div class="sr-left"><div class="sr-label">Auto-show Hints</div><div class="sr-desc">Automatically show hints after a delay</div></div>
+                <div class="sr-right"><div class="toggle"><div class="toggle-knob"></div></div></div>
+              </div>
+              <div class="setting-row">
+                <div class="sr-left"><div class="sr-label">Session Timer</div><div class="sr-desc">Default timer per question in recall sessions</div></div>
+                <div class="sr-right"><select class="setting-select"><option>No Timer</option><option>30 seconds</option><option>60 seconds</option><option>90 seconds</option></select></div>
+              </div>
+            </div>
+
+            <!-- Privacy -->
+            <div class="setting-section">
+              <div class="setting-section-title">Privacy</div>
+              <div class="setting-section-desc">CoLearner is built with privacy-first principles</div>
+
+              <div class="privacy-item">
+                <div class="privacy-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                <div class="privacy-text"><strong>No raw content stored.</strong> CoLearner never stores original URLs, transcripts, or video IDs. Only SHA256 hashes and extracted concepts are kept in the database.</div>
+              </div>
+              <div class="privacy-item">
+                <div class="privacy-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+                <div class="privacy-text"><strong>Local-first processing.</strong> All AI inference runs on your machine via Ollama. No data leaves your device during extraction or judging.</div>
+              </div>
+              <div class="privacy-item">
+                <div class="privacy-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
+                <div class="privacy-text"><strong>Data deletion.</strong> You can export and delete all your data at any time. Deletion is permanent and irreversible.</div>
+              </div>
+            </div>
+
+            <!-- Data Export & Danger -->
+            <div class="setting-section">
+              <div class="setting-section-title">Data Management</div>
+              <div class="setting-section-desc">Export your data or manage your account</div>
+
+              <div class="setting-row">
+                <div class="sr-left"><div class="sr-label">Export All Data</div><div class="sr-desc">Download all your concepts, recall history, and SM-2 data as JSON</div></div>
+                <div class="sr-right"><button class="btn-outline2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export JSON</button></div>
+              </div>
+              <div class="setting-row">
+                <div class="sr-left"><div class="sr-label">Export as CSV</div><div class="sr-desc">Download recall attempts as a CSV spreadsheet</div></div>
+                <div class="sr-right"><button class="btn-outline2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Export CSV</button></div>
+              </div>
+              <div style="padding-top:24px;border-top:1px solid var(--border-lt);margin-top:16px">
+                <div style="font-size:13px;font-weight:700;color:var(--err);margin-bottom:4px">Danger Zone</div>
+                <div style="font-size:11px;color:var(--t3);margin-bottom:12px">Permanently delete your account and all associated data. This action cannot be undone.</div>
+                <button class="btn-danger"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete Account</button>
+              </div>
+            </div>
+
+            <div style="padding-top:16px"><button class="btn-save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Changes</button></div>
+          </div>
+        </div>
+
+        <!-- Success Toast (shown after save) -->
+        <div class="save-toast">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Settings saved successfully
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dev Notes -->
+  <div class="dev-notes">
+    <div class="dev-note">
+      <div class="dev-note-title">Next.js Routes</div>
+      <div class="dev-note-body">
+        <code>app/(dashboard)/settings/page.tsx</code> — Redirects to <code>/settings/general</code>.<br>
+        <code>app/(dashboard)/settings/layout.tsx</code> — Settings sidebar layout (replaces main sidebar).<br>
+        Sub-routes: <code>/general</code>, <code>/learning</code>, <code>/notifications</code>, <code>/privacy</code>, <code>/security</code>, <code>/export</code>.<br>
+        All settings pages use <code>'use client'</code> with <code>react-hook-form</code> + <code>zod</code> validation.
+      </div>
+    </div>
+    <div class="dev-note">
+      <div class="dev-note-title">NestJS Endpoints</div>
+      <div class="dev-note-body">
+        <code>GET /api/settings</code> — Returns all user settings as a flat object.<br>
+        <code>PUT /api/settings</code> — Partial update, accepts any subset of settings keys.<br>
+        <code>POST /api/user/export/json</code> — Generates full data export (extractions + recall_attempts + settings).<br>
+        <code>POST /api/user/export/csv</code> — Generates CSV of recall_attempts only.<br>
+        <code>DELETE /api/user/account</code> — Requires confirmation token, permanently deletes all data.<br>
+        <code>POST /api/auth/connect/google</code> / <code>POST /api/auth/connect/apple</code> — OAuth link flows.
+      </div>
+    </div>
+    <div class="dev-note">
+      <div class="dev-note-title">Privacy Architecture</div>
+      <div class="dev-note-body">
+        Privacy rules enforced at DB layer: <code>video_id_hash = SHA256(video_id)</code>, raw URLs never stored.<br>
+        Local-first: Ollama inference on device. Pro tier (future) will use hosted API with opt-in consent.<br>
+        Export uses streaming JSON for large datasets: <code>@nestjs/common StreamableFile</code>.
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

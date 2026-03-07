@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoLearner — Billing & Payment Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #C4621A; --primary-h: #D87430; --primary-d: #A85316;
+  --primary-bg: #FDF0E8; --primary-bg2: #FEF8F3; --primary-glow: rgba(196,98,26,0.12);
+  --explore: #1A7070; --explore-bg: #E8F5F5; --explore-l: #2A9494;
+  --learn: #1E4FA3; --learn-bg: #E8EFF9; --learn-l: #3B6FCA;
+  --grow: #6B3FA0; --grow-bg: #F2ECFB; --grow-l: #8B5FC8;
+  --excel: #2E6B3E; --excel-bg: #EAF2ED; --excel-l: #48A05E;
+  --ok: #16A34A; --ok-bg: #F0FDF4; --err: #DC2626; --err-bg: #FEF2F2;
+  --warn: #D97706; --warn-bg: #FFFBEB; --info: #2563EB; --info-bg: #EFF6FF;
+  --bg: #FAFAF8; --bg2: #F5F3EF; --surface: #FFFFFF;
+  --border: #E5E2DC; --border-lt: #F0EDE8;
+  --t1: #1A1714; --t2: #57534E; --t3: #A8A29E; --t4: #D6D3CD;
+  --font: 'Inter', -apple-system, sans-serif; --mono: 'JetBrains Mono', monospace;
+  --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-full: 999px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.04);
+  --sidebar-w: 240px;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { font-family: var(--font); background: #0C0A09; color: var(--t1); -webkit-font-smoothing: antialiased; }
+
+.page-header { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(12,10,9,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.page-header-inner { max-width: 1440px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; height: 48px; gap: 8px; }
+.ph-logo { font-weight: 800; font-size: 14px; color: #fff; }
+.ph-logo span { color: var(--primary-h); }
+.ph-badge { font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary-h); background: rgba(196,98,26,0.12); padding: 3px 8px; border-radius: 99px; }
+
+.main { max-width: 1440px; margin: 0 auto; padding: 68px 24px 80px; }
+.sec-head { margin-bottom: 32px; }
+.sec-num { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--primary-h); }
+.sec-title { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.5px; margin: 2px 0; }
+.sec-desc { font-size: 13px; color: rgba(255,255,255,0.3); max-width: 600px; }
+.frame-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.2); margin-bottom: 10px; text-align: center; }
+.browser-frame { background: #1C1917; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 30px 60px rgba(0,0,0,0.4); margin-bottom: 28px; }
+.browser-bar { background: #292524; padding: 8px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.browser-dots { display: flex; gap: 5px; }
+.browser-dots span { width: 9px; height: 9px; border-radius: 50%; }
+.browser-dots span:nth-child(1) { background: #EF4444; }
+.browser-dots span:nth-child(2) { background: #F59E0B; }
+.browser-dots span:nth-child(3) { background: #22C55E; }
+.browser-url { flex: 1; background: rgba(255,255,255,0.06); border-radius: 5px; padding: 4px 10px; font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.3); }
+.browser-url .lock { color: var(--ok); }
+.browser-body { background: var(--bg); min-height: 800px; }
+
+/* ══ APP SHELL ══ */
+.app-shell { display: flex; min-height: 800px; }
+.sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); padding: 16px 0; display: flex; flex-direction: column; flex-shrink: 0; }
+.sb-brand { padding: 0 16px 16px; border-bottom: 1px solid var(--border-lt); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.sb-logo { font-weight: 800; font-size: 16px; color: var(--t1); }
+.sb-logo span { color: var(--primary); }
+.sb-section { padding: 8px 12px 4px; }
+.sb-section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--t4); padding: 0 8px; margin-bottom: 4px; }
+.sb-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--r-sm); font-size: 13px; font-weight: 500; color: var(--t3); cursor: pointer; transition: 150ms var(--ease); margin-bottom: 1px; }
+.sb-item:hover { background: var(--bg2); color: var(--t2); }
+.sb-item.active { background: var(--primary-bg); color: var(--primary); font-weight: 700; }
+.sb-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.sb-spacer { flex: 1; }
+.sb-user { padding: 12px 16px; border-top: 1px solid var(--border-lt); display: flex; align-items: center; gap: 10px; }
+.sb-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary-bg); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: var(--primary); }
+.sb-uname { font-size: 12px; font-weight: 600; color: var(--t1); }
+.sb-uemail { font-size: 10px; color: var(--t3); }
+
+/* ══ CONTENT ══ */
+.content { flex: 1; padding: 28px 32px 40px; overflow-y: auto; }
+.page-title { font-size: 22px; font-weight: 900; color: var(--t1); letter-spacing: -0.3px; margin-bottom: 4px; }
+.page-subtitle { font-size: 13px; color: var(--t3); margin-bottom: 28px; }
+.breadcrumb { font-size: 11px; color: var(--t3); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.breadcrumb a { color: var(--primary); text-decoration: none; font-weight: 600; }
+.breadcrumb .sep { color: var(--t4); }
+
+/* ══ CURRENT PLAN CARD ══ */
+.current-plan { background: var(--surface); border: 2px solid var(--primary); border-radius: var(--r-lg); padding: 24px; margin-bottom: 24px; position: relative; overflow: hidden; }
+.current-plan::before { content: ''; position: absolute; top: 0; right: 0; width: 200px; height: 200px; background: radial-gradient(circle at top right, var(--primary-glow), transparent 70%); pointer-events: none; }
+.cp-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; position: relative; z-index: 1; }
+.cp-label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--t3); margin-bottom: 4px; }
+.cp-plan-row { display: flex; align-items: center; gap: 10px; }
+.cp-plan-name { font-size: 24px; font-weight: 900; color: var(--t1); }
+.cp-plan-badge { font-size: 9px; font-weight: 800; letter-spacing: 0.1em; color: white; background: var(--primary); padding: 3px 10px; border-radius: var(--r-full); }
+.cp-model-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: var(--r-full); font-size: 10px; font-weight: 700; background: var(--learn-bg); color: var(--learn); margin-top: 6px; }
+.cp-actions { display: flex; gap: 8px; }
+.cp-btn { padding: 8px 16px; border-radius: var(--r-sm); font-family: var(--font); font-size: 12px; font-weight: 700; cursor: pointer; transition: 150ms var(--ease); border: none; }
+.cp-btn.change { background: var(--primary); color: white; }
+.cp-btn.change:hover { background: var(--primary-d); }
+.cp-btn.cancel { background: transparent; color: var(--t3); border: 1px solid var(--border); }
+.cp-btn.cancel:hover { color: var(--err); border-color: var(--err); }
+.cp-details { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; position: relative; z-index: 1; }
+.cp-detail { background: var(--bg); border-radius: var(--r-sm); padding: 12px 14px; }
+.cp-detail-label { font-size: 10px; font-weight: 600; color: var(--t3); margin-bottom: 2px; }
+.cp-detail-value { font-size: 13px; font-weight: 700; color: var(--t1); }
+.cp-detail-value.ok { color: var(--ok); }
+.cp-detail-value.warn { color: var(--warn); }
+
+/* ══ TWO-COL LAYOUT ══ */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+
+/* ══ CARD ══ */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+.card-header { padding: 16px 20px; border-bottom: 1px solid var(--border-lt); display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 14px; font-weight: 800; color: var(--t1); display: flex; align-items: center; gap: 8px; }
+.card-title svg { width: 18px; height: 18px; color: var(--t3); }
+.card-body { padding: 20px; }
+
+/* ══ PAYMENT METHOD ══ */
+.pm-card { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--bg); border-radius: var(--r-md); border: 1px solid var(--border-lt); margin-bottom: 12px; }
+.pm-card.default { border-color: var(--primary); background: var(--primary-bg2); }
+.pm-icon { width: 48px; height: 32px; background: var(--surface); border-radius: var(--r-xs); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.pm-visa { font-family: var(--font); font-size: 12px; font-weight: 900; color: #1A1F71; letter-spacing: 0.5px; font-style: italic; }
+.pm-mc { display: flex; }
+.pm-mc-circle { width: 14px; height: 14px; border-radius: 50%; }
+.pm-mc-circle.red { background: #EB001B; }
+.pm-mc-circle.yellow { background: #F79E1B; margin-left: -5px; opacity: 0.85; }
+.pm-details { flex: 1; }
+.pm-number { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--t1); }
+.pm-exp { font-size: 11px; color: var(--t3); margin-top: 1px; }
+.pm-default-badge { font-size: 9px; font-weight: 700; color: var(--primary); background: var(--primary-bg); padding: 2px 8px; border-radius: var(--r-full); }
+.pm-actions { display: flex; gap: 6px; }
+.pm-act-btn { padding: 4px 10px; border-radius: var(--r-xs); font-size: 10px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--t2); transition: 150ms var(--ease); }
+.pm-act-btn:hover { border-color: var(--t3); }
+.pm-act-btn.remove:hover { color: var(--err); border-color: var(--err); }
+
+/* Add new card button */
+.add-card-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; border: 2px dashed var(--border); border-radius: var(--r-md); background: transparent; font-family: var(--font); font-size: 12px; font-weight: 600; color: var(--t3); cursor: pointer; transition: 150ms var(--ease); }
+.add-card-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-bg2); }
+.add-card-btn svg { width: 16px; height: 16px; }
+
+/* ══ ADD CARD FORM ══ */
+.add-card-form { border: 1px solid var(--primary); border-radius: var(--r-md); padding: 16px; background: var(--primary-bg2); }
+.acf-title { font-size: 13px; font-weight: 700; color: var(--t1); margin-bottom: 12px; }
+.acf-row { display: grid; gap: 12px; margin-bottom: 12px; }
+.acf-row.two { grid-template-columns: 1fr 1fr; }
+.acf-row.three { grid-template-columns: 2fr 1fr 1fr; }
+.acf-field label { display: block; font-size: 10px; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+.acf-field input { width: 100%; padding: 9px 12px; border-radius: var(--r-sm); border: 1px solid var(--border); background: var(--surface); font-family: var(--mono); font-size: 13px; color: var(--t1); outline: none; transition: 150ms var(--ease); }
+.acf-field input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+.acf-field input::placeholder { color: var(--t4); }
+.acf-field .card-number-input { position: relative; }
+.acf-field .card-number-input input { padding-right: 44px; }
+.acf-field .card-number-input .card-type-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
+.acf-secure { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--t3); margin-top: 4px; }
+.acf-secure svg { width: 12px; height: 12px; color: var(--ok); }
+.acf-actions { display: flex; gap: 8px; margin-top: 14px; }
+.acf-btn { padding: 9px 20px; border-radius: var(--r-sm); font-family: var(--font); font-size: 12px; font-weight: 700; cursor: pointer; border: none; transition: 150ms var(--ease); }
+.acf-btn.save { background: var(--primary); color: white; }
+.acf-btn.save:hover { background: var(--primary-d); }
+.acf-btn.cancel { background: var(--bg); color: var(--t2); border: 1px solid var(--border); }
+
+/* ══ BILLING SUMMARY ══ */
+.bs-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-lt); }
+.bs-item:last-child { border-bottom: none; }
+.bs-label { font-size: 12px; color: var(--t3); }
+.bs-value { font-size: 13px; font-weight: 700; color: var(--t1); }
+.bs-value.primary { color: var(--primary); }
+.bs-total { border-top: 2px solid var(--border); padding-top: 12px; margin-top: 4px; }
+.bs-total .bs-label { font-weight: 700; color: var(--t1); }
+.bs-total .bs-value { font-size: 16px; color: var(--primary); }
+
+/* ══ USAGE METERS ══ */
+.usage-meter { margin-bottom: 14px; }
+.usage-meter:last-child { margin-bottom: 0; }
+.um-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.um-label { font-size: 11px; font-weight: 600; color: var(--t2); }
+.um-count { font-size: 11px; font-weight: 700; color: var(--t1); }
+.um-bar { height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+.um-fill { height: 100%; border-radius: 3px; transition: 300ms var(--ease); }
+.um-fill.ok { background: var(--ok); }
+.um-fill.warn { background: var(--warn); }
+.um-fill.primary { background: var(--primary); }
+
+/* ══ BILLING HISTORY TABLE ══ */
+.billing-table { width: 100%; border-collapse: collapse; }
+.billing-table th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--t3); padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--border); }
+.billing-table td { font-size: 12px; padding: 12px 14px; border-bottom: 1px solid var(--border-lt); color: var(--t2); }
+.billing-table tr:hover { background: var(--bg); }
+.bt-invoice { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--t1); }
+.bt-amount { font-family: var(--mono); font-weight: 700; color: var(--t1); }
+.bt-status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: var(--r-full); font-size: 10px; font-weight: 700; }
+.bt-status.paid { background: var(--ok-bg); color: var(--ok); }
+.bt-status.pending { background: var(--warn-bg); color: var(--warn); }
+.bt-status.failed { background: var(--err-bg); color: var(--err); }
+.bt-status.refund { background: var(--info-bg); color: var(--info); }
+.bt-download { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: var(--r-xs); font-size: 10px; font-weight: 600; color: var(--primary); background: var(--primary-bg2); border: none; cursor: pointer; transition: 150ms var(--ease); font-family: var(--font); }
+.bt-download:hover { background: var(--primary-bg); }
+.bt-download svg { width: 12px; height: 12px; }
+.bt-pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-top: 1px solid var(--border-lt); }
+.bt-page-info { font-size: 11px; color: var(--t3); }
+.bt-page-btns { display: flex; gap: 4px; }
+.bt-page-btn { padding: 5px 10px; border-radius: var(--r-xs); font-size: 11px; font-weight: 600; border: 1px solid var(--border); background: var(--surface); color: var(--t2); cursor: pointer; }
+.bt-page-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* ══ PLAN CHANGE MODAL ══ */
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+.modal-card { background: var(--surface); border-radius: var(--r-xl); width: 460px; box-shadow: var(--shadow-xl); overflow: hidden; }
+.modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border-lt); display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-size: 16px; font-weight: 800; color: var(--t1); }
+.modal-close { width: 28px; height: 28px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; background: var(--bg); border: none; cursor: pointer; color: var(--t3); }
+.modal-close:hover { background: var(--bg2); color: var(--t1); }
+.modal-body { padding: 24px; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border-lt); display: flex; justify-content: flex-end; gap: 8px; background: var(--bg); }
+.modal-btn { padding: 9px 20px; border-radius: var(--r-sm); font-family: var(--font); font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: 150ms var(--ease); }
+.modal-btn.cancel { background: var(--surface); color: var(--t2); border: 1px solid var(--border); }
+.modal-btn.confirm { background: var(--primary); color: white; }
+.modal-btn.confirm:hover { background: var(--primary-d); }
+
+/* Plan comparison in modal */
+.plan-compare { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin-bottom: 20px; }
+.pc-plan { background: var(--bg); border-radius: var(--r-md); padding: 14px; text-align: center; }
+.pc-plan.current { border: 1px solid var(--border); }
+.pc-plan.target { border: 2px solid var(--primary); background: var(--primary-bg2); }
+.pc-plan-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--t3); margin-bottom: 4px; }
+.pc-plan-name { font-size: 16px; font-weight: 900; color: var(--t1); }
+.pc-plan-price { font-family: var(--mono); font-size: 12px; color: var(--t3); margin-top: 2px; }
+.pc-arrow { color: var(--primary); }
+.pc-arrow svg { width: 20px; height: 20px; }
+.proration-box { background: var(--info-bg); border-radius: var(--r-sm); padding: 12px 14px; margin-bottom: 16px; }
+.proration-label { font-size: 10px; font-weight: 700; color: var(--info); margin-bottom: 4px; }
+.proration-detail { font-size: 12px; color: var(--t2); line-height: 1.6; }
+.proration-amount { font-family: var(--mono); font-weight: 800; color: var(--info); font-size: 18px; display: block; margin-top: 4px; }
+
+/* Cancel section in modal */
+.cancel-warning { background: var(--err-bg); border-radius: var(--r-sm); padding: 12px 14px; margin-bottom: 16px; }
+.cancel-warning-title { font-size: 12px; font-weight: 700; color: var(--err); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.cancel-warning-text { font-size: 12px; color: var(--t2); line-height: 1.6; }
+.cancel-keeps { background: var(--bg); border-radius: var(--r-sm); padding: 12px 14px; }
+.cancel-keeps-title { font-size: 10px; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+.ck-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--t2); padding: 3px 0; }
+.ck-item svg { width: 14px; height: 14px; color: var(--ok); }
+.modal-btn.danger { background: var(--err); color: white; }
+.modal-btn.danger:hover { background: #B91C1C; }
+
+/* ══ TOAST ══ */
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--t1); color: white; padding: 12px 20px; border-radius: var(--r-md); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-xl); z-index: 3000; }
+.toast svg { width: 18px; height: 18px; color: var(--ok); }
+
+.dev-notes { margin-top: 20px; }
+.dev-note { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r-md); padding: 16px 20px; margin-bottom: 8px; }
+.dev-note-title { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); margin-bottom: 4px; }
+.dev-note-body { font-size: 10px; color: rgba(255,255,255,0.25); line-height: 1.7; }
+.dev-note-body code { font-family: var(--mono); background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 3px; font-size: 9px; color: var(--primary-h); }
+</style>
+</head>
+<body>
+
+<nav class="page-header">
+  <div class="page-header-inner">
+    <div class="ph-logo">Co<span>Learner</span></div>
+    <span class="ph-badge">Subscription · Billing</span>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 1: Billing Dashboard (Active Pro Plan)
+     ═══════════════════════════════════════════ -->
+<section>
+  <div class="sec-head">
+    <div class="sec-num">Screen · Billing Dashboard</div>
+    <div class="sec-title">Billing &amp; Payment Management</div>
+    <div class="sec-desc">Full billing UI for Pro subscriber: current plan overview, payment methods, usage summary, billing cycle details, and invoice history with download.</div>
+  </div>
+
+  <div class="frame-label">Billing Dashboard — Pro Plan Active</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/settings/billing</div>
+    </div>
+    <div class="browser-body">
+      <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <div class="sb-brand"><div class="sb-logo">Co<span>Learner</span></div></div>
+          <div class="sb-section">
+            <div class="sb-section-label">Main</div>
+            <div class="sb-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> Home
+            </div>
+            <div class="sb-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Capture
+            </div>
+            <div class="sb-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Recall
+            </div>
+            <div class="sb-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Mastery
+            </div>
+          </div>
+          <div class="sb-section">
+            <div class="sb-section-label">Account</div>
+            <div class="sb-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Profile
+            </div>
+            <div class="sb-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings
+            </div>
+            <div class="sb-item active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Billing
+            </div>
+          </div>
+          <div class="sb-spacer"></div>
+          <div class="sb-user">
+            <div class="sb-avatar">AK</div>
+            <div><div class="sb-uname">Ahmed Khan</div><div class="sb-uemail">ahmed@colearner.io</div></div>
+          </div>
+        </aside>
+
+        <!-- Content -->
+        <main class="content">
+          <div class="breadcrumb">
+            <a href="#">Settings</a>
+            <span class="sep">/</span>
+            Billing
+          </div>
+          <div class="page-title">Billing &amp; Payments</div>
+          <div class="page-subtitle">Manage your subscription, payment methods, and view invoice history.</div>
+
+          <!-- Current Plan Card -->
+          <div class="current-plan">
+            <div class="cp-header">
+              <div>
+                <div class="cp-label">Current Plan</div>
+                <div class="cp-plan-row">
+                  <span class="cp-plan-name">Pro</span>
+                  <span class="cp-plan-badge">ACTIVE</span>
+                </div>
+                <div class="cp-model-badge">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                  Hosted API (Groq / Anthropic)
+                </div>
+              </div>
+              <div class="cp-actions">
+                <button class="cp-btn change">Change Plan</button>
+                <button class="cp-btn cancel">Cancel</button>
+              </div>
+            </div>
+            <div class="cp-details">
+              <div class="cp-detail">
+                <div class="cp-detail-label">Billing Cycle</div>
+                <div class="cp-detail-value">Yearly</div>
+              </div>
+              <div class="cp-detail">
+                <div class="cp-detail-label">Next Payment</div>
+                <div class="cp-detail-value">Mar 15, 2027</div>
+              </div>
+              <div class="cp-detail">
+                <div class="cp-detail-label">Amount</div>
+                <div class="cp-detail-value ok">$120.00 / year</div>
+              </div>
+              <div class="cp-detail">
+                <div class="cp-detail-label">Member Since</div>
+                <div class="cp-detail-value">Mar 15, 2026</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Two column: Payment Methods + Billing Summary -->
+          <div class="two-col">
+            <!-- Payment Methods -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                  Payment Methods
+                </div>
+              </div>
+              <div class="card-body">
+                <!-- Default card -->
+                <div class="pm-card default">
+                  <div class="pm-icon"><span class="pm-visa">VISA</span></div>
+                  <div class="pm-details">
+                    <div class="pm-number">•••• •••• •••• 4242</div>
+                    <div class="pm-exp">Expires 08/2028</div>
+                  </div>
+                  <span class="pm-default-badge">Default</span>
+                  <div class="pm-actions">
+                    <button class="pm-act-btn">Edit</button>
+                  </div>
+                </div>
+                <!-- Secondary card -->
+                <div class="pm-card">
+                  <div class="pm-icon"><div class="pm-mc"><div class="pm-mc-circle red"></div><div class="pm-mc-circle yellow"></div></div></div>
+                  <div class="pm-details">
+                    <div class="pm-number">•••• •••• •••• 8371</div>
+                    <div class="pm-exp">Expires 02/2027</div>
+                  </div>
+                  <div class="pm-actions">
+                    <button class="pm-act-btn">Set Default</button>
+                    <button class="pm-act-btn remove">Remove</button>
+                  </div>
+                </div>
+                <!-- Add new -->
+                <button class="add-card-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add Payment Method
+                </button>
+              </div>
+            </div>
+
+            <!-- Billing Summary -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  Billing Summary
+                </div>
+                <span style="font-size:10px;font-weight:700;color:var(--t3)">Current Period</span>
+              </div>
+              <div class="card-body">
+                <div class="bs-item">
+                  <span class="bs-label">Plan</span>
+                  <span class="bs-value">Pro (Yearly)</span>
+                </div>
+                <div class="bs-item">
+                  <span class="bs-label">Period</span>
+                  <span class="bs-value">Mar 15, 2026 — Mar 15, 2027</span>
+                </div>
+                <div class="bs-item">
+                  <span class="bs-label">Base price</span>
+                  <span class="bs-value">$144.00</span>
+                </div>
+                <div class="bs-item">
+                  <span class="bs-label">Yearly discount</span>
+                  <span class="bs-value" style="color:var(--ok)">−$24.00</span>
+                </div>
+                <div class="bs-item bs-total">
+                  <span class="bs-label">Total billed</span>
+                  <span class="bs-value primary">$120.00</span>
+                </div>
+
+                <!-- Usage meters -->
+                <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-lt)">
+                  <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--t3);margin-bottom:12px">Current Usage</div>
+                  <div class="usage-meter">
+                    <div class="um-header">
+                      <span class="um-label">Captures this month</span>
+                      <span class="um-count">47 / ∞</span>
+                    </div>
+                    <div class="um-bar"><div class="um-fill ok" style="width:30%"></div></div>
+                  </div>
+                  <div class="usage-meter">
+                    <div class="um-header">
+                      <span class="um-label">API calls (extraction)</span>
+                      <span class="um-count">182 / 5,000</span>
+                    </div>
+                    <div class="um-bar"><div class="um-fill primary" style="width:3.6%"></div></div>
+                  </div>
+                  <div class="usage-meter">
+                    <div class="um-header">
+                      <span class="um-label">API calls (judging)</span>
+                      <span class="um-count">1,024 / 10,000</span>
+                    </div>
+                    <div class="um-bar"><div class="um-fill primary" style="width:10.2%"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Billing History -->
+          <div class="card" style="margin-bottom:24px">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Billing History
+              </div>
+              <button class="bt-download" style="font-size:11px;padding:6px 14px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export All
+              </button>
+            </div>
+            <table class="billing-table">
+              <thead>
+                <tr>
+                  <th>Invoice</th>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Receipt</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="bt-invoice">INV-2026-0012</td>
+                  <td>Mar 15, 2026</td>
+                  <td>Pro Plan — Yearly subscription</td>
+                  <td class="bt-amount">$120.00</td>
+                  <td><span class="bt-status paid"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Paid</span></td>
+                  <td><button class="bt-download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> PDF</button></td>
+                </tr>
+                <tr>
+                  <td class="bt-invoice">INV-2026-0008</td>
+                  <td>Feb 15, 2026</td>
+                  <td>Pro Plan — Monthly subscription</td>
+                  <td class="bt-amount">$12.00</td>
+                  <td><span class="bt-status paid"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Paid</span></td>
+                  <td><button class="bt-download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> PDF</button></td>
+                </tr>
+                <tr>
+                  <td class="bt-invoice">INV-2026-0005</td>
+                  <td>Jan 15, 2026</td>
+                  <td>Pro Plan — Monthly subscription</td>
+                  <td class="bt-amount">$12.00</td>
+                  <td><span class="bt-status paid"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Paid</span></td>
+                  <td><button class="bt-download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> PDF</button></td>
+                </tr>
+                <tr>
+                  <td class="bt-invoice">INV-2025-0042</td>
+                  <td>Dec 15, 2025</td>
+                  <td>Pro Plan — Monthly subscription</td>
+                  <td class="bt-amount">$12.00</td>
+                  <td><span class="bt-status paid"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Paid</span></td>
+                  <td><button class="bt-download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> PDF</button></td>
+                </tr>
+                <tr>
+                  <td class="bt-invoice">INV-2025-0039</td>
+                  <td>Nov 15, 2025</td>
+                  <td>Pro Plan — Monthly subscription</td>
+                  <td class="bt-amount">$12.00</td>
+                  <td><span class="bt-status refund"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg> Refunded</span></td>
+                  <td><button class="bt-download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> PDF</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="bt-pagination">
+              <span class="bt-page-info">Showing 1–5 of 8 invoices</span>
+              <div class="bt-page-btns">
+                <button class="bt-page-btn active">1</button>
+                <button class="bt-page-btn">2</button>
+                <button class="bt-page-btn">→</button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 2: Add New Payment Method (Form Expanded)
+     ═══════════════════════════════════════════ -->
+<section style="margin-top:48px">
+  <div class="sec-head">
+    <div class="sec-num">Screen · Add Payment Method</div>
+    <div class="sec-title">Credit / Debit Card Form</div>
+    <div class="sec-desc">Stripe Elements–powered card form with real-time validation, card type detection, and secure encryption badge. Form appears inline when "Add Payment Method" is clicked.</div>
+  </div>
+
+  <div class="frame-label">Payment Method — Add New Card Form</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/settings/billing</div>
+    </div>
+    <div class="browser-body">
+      <div class="app-shell">
+        <aside class="sidebar">
+          <div class="sb-brand"><div class="sb-logo">Co<span>Learner</span></div></div>
+          <div class="sb-section">
+            <div class="sb-section-label">Main</div>
+            <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> Home</div>
+            <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Capture</div>
+            <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Recall</div>
+            <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> Mastery</div>
+          </div>
+          <div class="sb-section">
+            <div class="sb-section-label">Account</div>
+            <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Profile</div>
+            <div class="sb-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings</div>
+            <div class="sb-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Billing</div>
+          </div>
+          <div class="sb-spacer"></div>
+          <div class="sb-user">
+            <div class="sb-avatar">AK</div>
+            <div><div class="sb-uname">Ahmed Khan</div><div class="sb-uemail">ahmed@colearner.io</div></div>
+          </div>
+        </aside>
+
+        <main class="content">
+          <div class="breadcrumb"><a href="#">Settings</a><span class="sep">/</span><a href="#">Billing</a><span class="sep">/</span>Add Payment</div>
+          <div class="page-title">Payment Methods</div>
+          <div class="page-subtitle">Add a new credit or debit card to your account.</div>
+
+          <div class="card" style="max-width:560px">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                Saved Cards
+              </div>
+            </div>
+            <div class="card-body">
+              <!-- Existing card -->
+              <div class="pm-card default" style="margin-bottom:16px">
+                <div class="pm-icon"><span class="pm-visa">VISA</span></div>
+                <div class="pm-details">
+                  <div class="pm-number">•••• •••• •••• 4242</div>
+                  <div class="pm-exp">Expires 08/2028</div>
+                </div>
+                <span class="pm-default-badge">Default</span>
+              </div>
+
+              <!-- Add card form (expanded state) -->
+              <div class="add-card-form">
+                <div class="acf-title">Add New Card</div>
+                <div class="acf-row">
+                  <div class="acf-field">
+                    <label>Cardholder Name</label>
+                    <input type="text" value="Ahmed Khan" placeholder="Name on card">
+                  </div>
+                </div>
+                <div class="acf-row">
+                  <div class="acf-field">
+                    <label>Card Number</label>
+                    <div class="card-number-input">
+                      <input type="text" value="5412 7534 ____  ____" placeholder="1234 5678 9012 3456">
+                      <div class="card-type-icon">
+                        <div class="pm-mc" style="transform:scale(0.85)"><div class="pm-mc-circle red"></div><div class="pm-mc-circle yellow"></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="acf-row three">
+                  <div class="acf-field">
+                    <label>Expiry Date</label>
+                    <input type="text" placeholder="MM / YY">
+                  </div>
+                  <div class="acf-field">
+                    <label>CVC</label>
+                    <input type="text" placeholder="123">
+                  </div>
+                  <div class="acf-field">
+                    <label>ZIP / Postal</label>
+                    <input type="text" placeholder="10001">
+                  </div>
+                </div>
+                <div class="acf-secure">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Secured with Stripe. Card data never touches our servers.
+                </div>
+                <div class="acf-actions">
+                  <button class="acf-btn save">Save Card</button>
+                  <button class="acf-btn cancel">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 3: Plan Change Confirmation Modal
+     ═══════════════════════════════════════════ -->
+<section style="margin-top:48px">
+  <div class="sec-head">
+    <div class="sec-num">Screen · Plan Change Modal</div>
+    <div class="sec-title">Upgrade / Downgrade Confirmation</div>
+    <div class="sec-desc">Modal overlay for plan changes with proration calculation, plan comparison, and payment method confirmation. Two variants: upgrade (prorate charge) and downgrade (end-of-cycle).</div>
+  </div>
+
+  <!-- Upgrade Modal -->
+  <div class="frame-label">Modal — Upgrade from Pro to Enterprise</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/settings/billing</div>
+    </div>
+    <div class="browser-body" style="min-height:600px;position:relative;background:var(--bg)">
+      <!-- Dimmed background content hint -->
+      <div style="padding:28px 32px;opacity:0.3;filter:blur(1px)">
+        <div style="font-size:22px;font-weight:900;color:var(--t1)">Billing & Payments</div>
+        <div style="margin-top:12px;height:100px;background:var(--surface);border-radius:var(--r-lg);border:1px solid var(--border)"></div>
+      </div>
+
+      <!-- Modal Overlay -->
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:20px">
+        <div class="modal-card">
+          <div class="modal-header">
+            <div class="modal-title">Upgrade to Enterprise</div>
+            <button class="modal-close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+          <div class="modal-body">
+            <!-- Plan comparison -->
+            <div class="plan-compare">
+              <div class="pc-plan current">
+                <div class="pc-plan-label">Current</div>
+                <div class="pc-plan-name">Pro</div>
+                <div class="pc-plan-price">$120 / year</div>
+              </div>
+              <div class="pc-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </div>
+              <div class="pc-plan target">
+                <div class="pc-plan-label">New Plan</div>
+                <div class="pc-plan-name">Enterprise</div>
+                <div class="pc-plan-price">$490 / user / year</div>
+              </div>
+            </div>
+
+            <!-- Proration -->
+            <div class="proration-box">
+              <div class="proration-label">Prorated Charge</div>
+              <div class="proration-detail">
+                You have 198 days remaining on your Pro plan. The prorated upgrade cost for the remaining period is:
+                <span class="proration-amount">$200.55</span>
+              </div>
+            </div>
+
+            <!-- Payment method -->
+            <div style="display:flex;align-items:center;gap:10px;background:var(--bg);padding:10px 12px;border-radius:var(--r-sm)">
+              <div class="pm-icon" style="width:40px;height:26px"><span class="pm-visa" style="font-size:10px">VISA</span></div>
+              <span style="font-size:12px;font-weight:600;color:var(--t1)">•••• 4242</span>
+              <span style="font-size:10px;color:var(--t3);margin-left:auto">Default card</span>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="modal-btn cancel">Cancel</button>
+            <button class="modal-btn confirm">Confirm Upgrade — $200.55</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Downgrade Modal -->
+  <div class="frame-label" style="margin-top:24px">Modal — Downgrade from Pro to Free</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/settings/billing</div>
+    </div>
+    <div class="browser-body" style="min-height:600px;position:relative;background:var(--bg)">
+      <div style="padding:28px 32px;opacity:0.3;filter:blur(1px)">
+        <div style="font-size:22px;font-weight:900;color:var(--t1)">Billing & Payments</div>
+        <div style="margin-top:12px;height:100px;background:var(--surface);border-radius:var(--r-lg);border:1px solid var(--border)"></div>
+      </div>
+
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:20px">
+        <div class="modal-card">
+          <div class="modal-header">
+            <div class="modal-title">Downgrade to Free</div>
+            <button class="modal-close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+          <div class="modal-body">
+            <div class="plan-compare">
+              <div class="pc-plan current">
+                <div class="pc-plan-label">Current</div>
+                <div class="pc-plan-name">Pro</div>
+                <div class="pc-plan-price">$120 / year</div>
+              </div>
+              <div class="pc-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </div>
+              <div class="pc-plan target" style="border-color:var(--warn);background:var(--warn-bg)">
+                <div class="pc-plan-label">New Plan</div>
+                <div class="pc-plan-name">Free</div>
+                <div class="pc-plan-price">$0 / forever</div>
+              </div>
+            </div>
+
+            <div class="cancel-warning">
+              <div class="cancel-warning-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Features you'll lose
+              </div>
+              <div class="cancel-warning-text">
+                Cloud AI inference (back to Ollama local), unlimited captures (limited to 5/day), NCU multipliers, contextual notifications, Chrome extension, Anki export, and email support.
+              </div>
+            </div>
+
+            <div class="cancel-keeps">
+              <div class="cancel-keeps-title">What you keep</div>
+              <div class="ck-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> All your concepts, questions, and recall history</div>
+              <div class="ck-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> SM-2 schedules and mastery progress</div>
+              <div class="ck-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Source progression and achievements</div>
+              <div class="ck-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Local Ollama inference (all 3 recall types)</div>
+            </div>
+
+            <div style="margin-top:12px;font-size:12px;color:var(--t3);line-height:1.6">
+              Your Pro features will remain active until <strong style="color:var(--t1)">Mar 15, 2027</strong> (end of current billing period). No further charges will be made.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="modal-btn cancel">Keep Pro Plan</button>
+            <button class="modal-btn danger">Downgrade to Free</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN 4: Success Toast + Updated State
+     ═══════════════════════════════════════════ -->
+<section style="margin-top:48px">
+  <div class="sec-head">
+    <div class="sec-num">Screen · Payment Success</div>
+    <div class="sec-title">Success Confirmation Toast</div>
+    <div class="sec-desc">Toast notification after successful payment method addition or plan change. Auto-dismisses after 5 seconds.</div>
+  </div>
+
+  <div class="frame-label">Toast — Card Added Successfully</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/settings/billing</div>
+    </div>
+    <div class="browser-body" style="min-height:300px;position:relative;background:var(--bg)">
+      <div style="padding:28px 32px">
+        <div style="font-size:22px;font-weight:900;color:var(--t1);margin-bottom:4px">Billing & Payments</div>
+        <div style="font-size:13px;color:var(--t3);margin-bottom:20px">Manage your subscription, payment methods, and view invoice history.</div>
+        <!-- Updated plan card hint -->
+        <div style="background:var(--surface);border:2px solid var(--primary);border-radius:var(--r-lg);padding:20px;display:flex;align-items:center;gap:12px">
+          <div style="font-size:18px;font-weight:900;color:var(--t1)">Pro</div>
+          <span style="font-size:9px;font-weight:800;color:white;background:var(--primary);padding:3px 10px;border-radius:99px">ACTIVE</span>
+          <span style="font-size:11px;color:var(--t3);margin-left:auto">Next payment: Mar 15, 2027</span>
+        </div>
+      </div>
+
+      <!-- Toast -->
+      <div class="toast" style="position:absolute;bottom:16px;right:16px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Payment method added successfully
+      </div>
+    </div>
+  </div>
+
+  <div class="frame-label" style="margin-top:16px">Toast — Plan Upgraded</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/settings/billing</div>
+    </div>
+    <div class="browser-body" style="min-height:300px;position:relative;background:var(--bg)">
+      <div style="padding:28px 32px">
+        <div style="font-size:22px;font-weight:900;color:var(--t1);margin-bottom:4px">Billing & Payments</div>
+        <div style="font-size:13px;color:var(--t3);margin-bottom:20px">Manage your subscription, payment methods, and view invoice history.</div>
+        <div style="background:var(--surface);border:2px solid var(--grow);border-radius:var(--r-lg);padding:20px;display:flex;align-items:center;gap:12px">
+          <div style="font-size:18px;font-weight:900;color:var(--t1)">Enterprise</div>
+          <span style="font-size:9px;font-weight:800;color:white;background:var(--grow);padding:3px 10px;border-radius:99px">ACTIVE</span>
+          <div style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;background:var(--grow-bg);color:var(--grow)">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Private VPC
+          </div>
+          <span style="font-size:11px;color:var(--t3);margin-left:auto">$200.55 charged today</span>
+        </div>
+      </div>
+
+      <div class="toast" style="position:absolute;bottom:16px;right:16px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Upgraded to Enterprise — Welcome!
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Dev Notes -->
+<div class="dev-notes" style="margin-top:32px">
+  <div class="dev-note">
+    <div class="dev-note-title">Next.js Routes</div>
+    <div class="dev-note-body">
+      <code>app/(dashboard)/settings/billing/page.tsx</code> — Main billing dashboard (Server Component + Client islands).<br>
+      <code>app/(dashboard)/settings/billing/payment-methods/page.tsx</code> — Payment methods management sub-route.<br>
+      Both require authentication — redirect to <code>/login</code> if no session.
+    </div>
+  </div>
+  <div class="dev-note">
+    <div class="dev-note-title">NestJS Endpoints</div>
+    <div class="dev-note-body">
+      <code>GET /api/billing/summary</code> — Current plan, billing cycle, next payment date, usage stats.<br>
+      <code>GET /api/billing/payment-methods</code> — Returns Stripe PaymentMethods attached to customer.<br>
+      <code>POST /api/billing/payment-methods</code> — Attach new PaymentMethod (Stripe token from frontend).<br>
+      <code>DELETE /api/billing/payment-methods/:id</code> — Detach a payment method.<br>
+      <code>PUT /api/billing/payment-methods/:id/default</code> — Set as default payment method.<br>
+      <code>GET /api/billing/invoices</code> — Paginated invoice history from Stripe (query: <code>?page=1&limit=5</code>).<br>
+      <code>GET /api/billing/invoices/:id/pdf</code> — Redirect to Stripe-hosted invoice PDF.<br>
+      <code>POST /api/billing/change-plan</code> — Body: <code>{ targetPlan: "enterprise", billingCycle: "yearly" }</code> → Creates Stripe subscription update with proration.<br>
+      <code>POST /api/billing/cancel</code> — Schedule cancellation at end of billing period (<code>cancel_at_period_end: true</code>).
+    </div>
+  </div>
+  <div class="dev-note">
+    <div class="dev-note-title">Stripe Integration Details</div>
+    <div class="dev-note-body">
+      Frontend: <code>@stripe/stripe-js</code> + <code>@stripe/react-stripe-js</code> — CardElement for PCI-compliant card collection.<br>
+      Backend: <code>stripe</code> SDK — Customer, Subscription, PaymentMethod, Invoice APIs.<br>
+      Webhooks: <code>POST /api/webhooks/stripe</code> — handles <code>invoice.paid</code>, <code>invoice.payment_failed</code>, <code>customer.subscription.updated</code>, <code>customer.subscription.deleted</code>.<br>
+      Proration: Stripe's <code>proration_behavior: 'create_prorations'</code> on subscription update.<br>
+      Card form uses Stripe Elements — raw card data never reaches CoLearner servers.
+    </div>
+  </div>
+  <div class="dev-note">
+    <div class="dev-note-title">State Management</div>
+    <div name="dev-note-body" class="dev-note-body">
+      Zustand store: <code>useBillingStore</code> — <code>{ plan, billingCycle, paymentMethods, invoices, usage }</code>.<br>
+      <code>@tanstack/react-query</code> for server state: <code>useBillingSummary()</code>, <code>useInvoices(page)</code>, <code>usePaymentMethods()</code>.<br>
+      Optimistic update on plan change: show new plan immediately, revert on webhook failure.<br>
+      Toast via <code>react-hot-toast</code> or custom toast component — auto-dismiss 5s.
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoLearner — Phase 5A: Profile &amp; Achievements</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #C4621A; --primary-h: #D87430; --primary-d: #A85316;
+  --primary-bg: #FDF0E8; --primary-bg2: #FEF8F3; --primary-glow: rgba(196,98,26,0.12);
+  --explore: #1A7070; --explore-bg: #E8F5F5; --explore-l: #2A9494;
+  --learn: #1E4FA3; --learn-bg: #E8EFF9; --learn-l: #3B6FCA;
+  --grow: #6B3FA0; --grow-bg: #F2ECFB; --grow-l: #8B5FC8;
+  --excel: #2E6B3E; --excel-bg: #EAF2ED; --excel-l: #48A05E;
+  --ok: #16A34A; --ok-bg: #F0FDF4; --err: #DC2626; --err-bg: #FEF2F2;
+  --warn: #D97706; --warn-bg: #FFFBEB; --info: #2563EB; --info-bg: #EFF6FF;
+  --bg: #FAFAF8; --bg2: #F5F3EF; --surface: #FFFFFF;
+  --border: #E5E2DC; --border-lt: #F0EDE8;
+  --t1: #1A1714; --t2: #57534E; --t3: #A8A29E; --t4: #D6D3CD;
+  --font: 'Inter', -apple-system, sans-serif; --mono: 'JetBrains Mono', monospace;
+  --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-full: 999px;
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --sidebar-w: 240px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { font-family: var(--font); background: #0C0A09; color: var(--t1); -webkit-font-smoothing: antialiased; }
+
+/* ══ PAGE HEADER ══ */
+.page-header { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(12,10,9,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.page-header-inner { max-width: 1440px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; height: 48px; gap: 8px; }
+.ph-logo { font-weight: 800; font-size: 14px; color: #fff; }
+.ph-logo span { color: var(--primary-h); }
+.ph-badge { font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary-h); background: rgba(196,98,26,0.12); padding: 3px 8px; border-radius: 99px; }
+
+/* ══ BROWSER FRAME ══ */
+.main { max-width: 1440px; margin: 0 auto; padding: 68px 24px 80px; }
+.sec-head { margin-bottom: 32px; }
+.sec-num { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--primary-h); }
+.sec-title { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.5px; margin: 2px 0; }
+.sec-desc { font-size: 13px; color: rgba(255,255,255,0.3); max-width: 600px; }
+.frame-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.2); margin-bottom: 10px; text-align: center; }
+.browser-frame { background: #1C1917; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 30px 60px rgba(0,0,0,0.4); margin-bottom: 28px; }
+.browser-bar { background: #292524; padding: 8px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.browser-dots { display: flex; gap: 5px; }
+.browser-dots span { width: 9px; height: 9px; border-radius: 50%; }
+.browser-dots span:nth-child(1) { background: #EF4444; }
+.browser-dots span:nth-child(2) { background: #F59E0B; }
+.browser-dots span:nth-child(3) { background: #22C55E; }
+.browser-url { flex: 1; background: rgba(255,255,255,0.06); border-radius: 5px; padding: 4px 10px; font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.3); }
+.browser-url .lock { color: var(--ok); }
+.browser-body { background: var(--bg); }
+
+/* ══ APP SHELL ══ */
+.app-shell { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 780px; }
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+.sb-header { padding: 20px 20px 16px; border-bottom: 1px solid var(--border-lt); }
+.sb-logo { font-size: 17px; font-weight: 800; color: var(--t1); letter-spacing: -0.4px; }
+.sb-logo span { color: var(--primary); }
+.sb-nav { flex: 1; padding: 12px 10px; }
+.sb-section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--t3); padding: 12px 10px 6px; margin-top: 4px; }
+.sb-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--r-sm); cursor: pointer; transition: 150ms var(--ease); margin-bottom: 2px; }
+.sb-item:hover { background: var(--bg2); }
+.sb-item.active { background: var(--primary-bg); }
+.sb-item-icon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--t3); }
+.sb-item.active .sb-item-icon { color: var(--primary); }
+.sb-item-label { font-size: 13px; font-weight: 500; color: var(--t2); }
+.sb-item.active .sb-item-label { color: var(--primary); font-weight: 700; }
+.sb-item-badge { margin-left: auto; font-size: 10px; font-weight: 700; color: white; background: var(--primary); padding: 1px 7px; border-radius: var(--r-full); }
+.sb-ring-card { margin: 8px 10px; background: var(--bg2); border-radius: var(--r-md); padding: 14px; border: 1px solid var(--border-lt); }
+.sb-ring-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.sb-ring-circle { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--explore), var(--explore-l)); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; color: white; flex-shrink: 0; }
+.sb-ring-info h4 { font-size: 12px; font-weight: 700; color: var(--t1); }
+.sb-ring-info p { font-size: 10px; color: var(--t3); }
+.sb-ring-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.sb-ring-fill { height: 100%; border-radius: 2px; background: var(--explore); }
+.sb-ring-meta { display: flex; justify-content: space-between; font-size: 9px; color: var(--t3); margin-top: 4px; }
+.sb-footer { padding: 12px 10px; border-top: 1px solid var(--border-lt); }
+.sb-user { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--r-sm); cursor: pointer; }
+.sb-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-bg), var(--border)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: var(--primary); flex-shrink: 0; }
+.sb-user-name { font-size: 12px; font-weight: 600; color: var(--t1); }
+.sb-user-email { font-size: 10px; color: var(--t3); }
+.sb-user-dots { margin-left: auto; color: var(--t3); font-size: 14px; }
+
+/* Main */
+.app-main { background: var(--bg); overflow-y: auto; }
+.main-topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border-lt); background: var(--surface); position: sticky; top: 0; z-index: 10; }
+.mt-left h1 { font-size: 18px; font-weight: 800; color: var(--t1); letter-spacing: -0.3px; }
+.mt-left p { font-size: 11px; color: var(--t3); }
+.mt-right { display: flex; align-items: center; gap: 10px; }
+.btn-outline { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1.5px solid var(--border); border-radius: var(--r-sm); background: var(--surface); font-family: var(--font); font-size: 12px; font-weight: 600; color: var(--t2); cursor: pointer; transition: 150ms var(--ease); }
+.btn-outline:hover { border-color: var(--t3); color: var(--t1); }
+.btn-outline svg { width: 14px; height: 14px; }
+
+.profile-content { padding: 28px; }
+
+/* ══ PROFILE HEADER ══ */
+.profile-hero { background: linear-gradient(135deg, #1C1410, #261A10); border-radius: var(--r-lg); padding: 32px; margin-bottom: 24px; color: white; position: relative; overflow: hidden; }
+.profile-hero::after { content: ''; position: absolute; top: -60px; right: -60px; width: 240px; height: 240px; border-radius: 50%; border: 1px solid rgba(196,98,26,0.12); }
+.ph-row { display: flex; align-items: center; gap: 24px; position: relative; z-index: 1; }
+.ph-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-h)); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 900; color: white; flex-shrink: 0; border: 3px solid rgba(255,255,255,0.2); }
+.ph-info { flex: 1; }
+.ph-name { font-size: 24px; font-weight: 900; letter-spacing: -0.4px; margin-bottom: 2px; }
+.ph-email { font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
+.ph-meta { display: flex; gap: 20px; }
+.ph-meta-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: rgba(255,255,255,0.5); }
+.ph-meta-item svg { width: 14px; height: 14px; }
+.ph-meta-item strong { color: rgba(255,255,255,0.9); font-weight: 700; }
+.ph-stats { display: flex; gap: 24px; }
+.ph-stat { text-align: center; }
+.ph-stat-val { font-family: var(--mono); font-size: 28px; font-weight: 800; color: var(--primary-h); }
+.ph-stat-label { font-size: 9px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ══ RING JOURNEY ══ */
+.ring-journey { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 24px; margin-bottom: 24px; }
+.rj-title { font-size: 16px; font-weight: 800; color: var(--t1); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+.rj-title svg { width: 20px; height: 20px; color: var(--primary); }
+.rj-rings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.rj-ring { border: 2px solid var(--border); border-radius: var(--r-md); padding: 20px; text-align: center; position: relative; transition: 200ms var(--ease); }
+.rj-ring.active { border-color: var(--explore); background: rgba(26,112,112,0.03); }
+.rj-ring.locked { opacity: 0.45; }
+.rj-ring-badge { position: absolute; top: -8px; right: 12px; font-size: 9px; font-weight: 700; padding: 2px 10px; border-radius: var(--r-full); }
+.rj-ring-badge.current { background: var(--explore); color: white; }
+.rj-ring-badge.locked-badge { background: var(--bg2); color: var(--t3); border: 1px solid var(--border); }
+.rj-circle { width: 72px; height: 72px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; position: relative; }
+.rj-circle-svg { width: 72px; height: 72px; transform: rotate(-90deg); }
+.rj-circle-bg { fill: none; stroke: var(--bg2); stroke-width: 5; }
+.rj-circle-fg { fill: none; stroke-width: 5; stroke-linecap: round; }
+.rj-circle-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 22px; font-weight: 900; }
+.rj-ring-name { font-size: 14px; font-weight: 800; color: var(--t1); margin-bottom: 2px; }
+.rj-ring-sub { font-size: 11px; color: var(--t3); margin-bottom: 10px; }
+.rj-ring-states { display: flex; justify-content: center; gap: 6px; margin-bottom: 10px; }
+.rj-state-chip { font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: var(--r-full); }
+.rj-progress-text { font-family: var(--mono); font-size: 11px; font-weight: 600; }
+
+/* ══ ACHIEVEMENTS ══ */
+.achievements-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; margin-bottom: 24px; }
+.ac-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-lt); }
+.ac-title { font-size: 15px; font-weight: 800; color: var(--t1); display: flex; align-items: center; gap: 8px; }
+.ac-title svg { width: 20px; height: 20px; color: var(--warn); }
+.ac-count { font-size: 11px; color: var(--t3); }
+.ac-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding: 20px; }
+.ac-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1.5px solid var(--border); border-radius: var(--r-md); transition: 150ms var(--ease); }
+.ac-item:hover { border-color: var(--t4); box-shadow: var(--shadow-sm); }
+.ac-item.earned { border-color: var(--warn); background: var(--warn-bg); }
+.ac-item.locked { opacity: 0.4; }
+.ac-icon { width: 44px; height: 44px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.ac-info { min-width: 0; }
+.ac-info-name { font-size: 12px; font-weight: 700; color: var(--t1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ac-info-desc { font-size: 10px; color: var(--t3); line-height: 1.4; }
+.ac-info-date { font-size: 9px; color: var(--t3); margin-top: 2px; font-family: var(--mono); }
+
+/* ══ LEARNING HISTORY ══ */
+.history-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; margin-bottom: 24px; }
+.hc-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-lt); }
+.hc-title { font-size: 15px; font-weight: 800; color: var(--t1); display: flex; align-items: center; gap: 8px; }
+.hc-title svg { width: 20px; height: 20px; color: var(--learn); }
+.hc-tabs { display: flex; gap: 4px; }
+.hc-tab { font-family: var(--font); font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: var(--r-full); border: 1.5px solid var(--border); background: var(--surface); cursor: pointer; color: var(--t3); }
+.hc-tab.active { background: var(--primary); border-color: var(--primary); color: white; }
+.hc-table { width: 100%; border-collapse: collapse; }
+.hc-table th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--t3); padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border-lt); background: var(--bg); }
+.hc-table td { font-size: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border-lt); color: var(--t2); }
+.hc-table tr:last-child td { border-bottom: none; }
+.hc-table tr:hover { background: var(--bg); }
+.hc-session-score { font-family: var(--mono); font-weight: 700; }
+.hc-session-score.good { color: var(--ok); }
+.hc-session-score.mid { color: var(--warn); }
+.hc-session-score.bad { color: var(--err); }
+.hc-badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: var(--r-full); font-size: 10px; font-weight: 700; }
+.hc-badge.pass { background: var(--ok-bg); color: var(--ok); }
+.hc-badge.fail { background: var(--err-bg); color: var(--err); }
+
+/* ══ CONCEPT STRENGTH HEATMAP ══ */
+.heatmap-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; margin-bottom: 24px; }
+.hm-head { padding: 16px 20px; border-bottom: 1px solid var(--border-lt); }
+.hm-title { font-size: 15px; font-weight: 800; color: var(--t1); display: flex; align-items: center; gap: 8px; }
+.hm-title svg { width: 20px; height: 20px; color: var(--grow); }
+.hm-body { padding: 20px; }
+.hm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.hm-cell { padding: 12px; border-radius: var(--r-sm); border: 1px solid var(--border-lt); }
+.hm-cell-name { font-size: 11px; font-weight: 700; color: var(--t1); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hm-cell-bar { height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+.hm-cell-fill { height: 100%; border-radius: 3px; }
+.hm-cell-meta { display: flex; justify-content: space-between; font-size: 9px; }
+.hm-cell-meta .strength { font-weight: 700; }
+.hm-cell.strong { background: rgba(22,163,74,0.04); }
+.hm-cell.strong .hm-cell-fill { background: var(--ok); }
+.hm-cell.strong .strength { color: var(--ok); }
+.hm-cell.fair { background: rgba(217,119,6,0.04); }
+.hm-cell.fair .hm-cell-fill { background: var(--warn); }
+.hm-cell.fair .strength { color: var(--warn); }
+.hm-cell.weak { background: rgba(220,38,38,0.04); }
+.hm-cell.weak .hm-cell-fill { background: var(--err); }
+.hm-cell.weak .strength { color: var(--err); }
+.hm-cell .ef { color: var(--t3); font-family: var(--mono); }
+
+/* Dev notes */
+.dev-notes { margin-top: 20px; }
+.dev-note { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r-md); padding: 16px 20px; margin-bottom: 8px; }
+.dev-note-title { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); margin-bottom: 4px; }
+.dev-note-body { font-size: 10px; color: rgba(255,255,255,0.25); line-height: 1.7; }
+.dev-note-body code { font-family: var(--mono); background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 3px; font-size: 9px; color: var(--primary-h); }
+
+@media (max-width: 900px) { .rj-rings { grid-template-columns: 1fr; } .ac-grid { grid-template-columns: 1fr 1fr; } .hm-grid { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+
+<nav class="page-header">
+  <div class="page-header-inner">
+    <div class="ph-logo">Co<span>Learner</span></div>
+    <span class="ph-badge">Phase 5A · Profile</span>
+  </div>
+</nav>
+
+<div class="main">
+
+<section>
+  <div class="sec-head">
+    <div class="sec-num">Screen 01 · User Profile</div>
+    <div class="sec-title">Profile &amp; Achievements</div>
+    <div class="sec-desc">Student's public profile showing source journey, achievements/badges, learning history, and concept strength heatmap.</div>
+  </div>
+
+  <div class="frame-label">Profile — Active Learner</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/profile</div>
+    </div>
+    <div class="browser-body">
+      <div class="app-shell">
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="sb-header"><div class="sb-logo">Co<span>Learner</span></div></div>
+          <div class="sb-nav">
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><span class="sb-item-label">Dashboard</span></div>
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><span class="sb-item-label">Capture</span></div>
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><span class="sb-item-label">Recall</span><span class="sb-item-badge">5</span></div>
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div><span class="sb-item-label">Mastery</span></div>
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><span class="sb-item-label">Review Queue</span></div>
+            <div class="sb-section-label">Account</div>
+            <div class="sb-item active"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span class="sb-item-label">Profile</span></div>
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><span class="sb-item-label">Settings</span></div>
+            <div class="sb-item"><div class="sb-item-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><span class="sb-item-label">Notifications</span></div>
+            <div class="sb-ring-card">
+              <div class="sb-ring-top"><div class="sb-ring-circle">1</div><div class="sb-ring-info"><h4>Source 1 — Beginner</h4><p>39 / 50 recall attempts</p></div></div>
+              <div class="sb-ring-bar"><div class="sb-ring-fill" style="width:78%"></div></div>
+              <div class="sb-ring-meta"><span>78% complete</span><span>11 to go</span></div>
+            </div>
+          </div>
+          <div class="sb-footer"><div class="sb-user"><div class="sb-avatar">AK</div><div><div class="sb-user-name">Ahmed Khan</div><div class="sb-user-email">ahmed@example.com</div></div><div class="sb-user-dots">···</div></div></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="app-main">
+          <div class="main-topbar">
+            <div class="mt-left"><h1>Profile</h1><p>Your learning journey at a glance</p></div>
+            <div class="mt-right">
+              <button class="btn-outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Edit Profile</button>
+            </div>
+          </div>
+
+          <div class="profile-content">
+            <!-- Profile Hero -->
+            <div class="profile-hero">
+              <div class="ph-row">
+                <div class="ph-avatar">AK</div>
+                <div class="ph-info">
+                  <div class="ph-name">Ahmed Khan</div>
+                  <div class="ph-email">ahmed@example.com</div>
+                  <div class="ph-meta">
+                    <div class="ph-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg> Joined <strong>Feb 2026</strong></div>
+                    <div class="ph-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Skill: <strong>Machine Learning</strong></div>
+                    <div class="ph-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> State: <strong style="color:var(--learn-l)">Learn</strong></div>
+                  </div>
+                </div>
+                <div class="ph-stats">
+                  <div class="ph-stat"><div class="ph-stat-val">147</div><div class="ph-stat-label">Total Recalls</div></div>
+                  <div class="ph-stat"><div class="ph-stat-val">82%</div><div class="ph-stat-label">Pass Rate</div></div>
+                  <div class="ph-stat"><div class="ph-stat-val">8</div><div class="ph-stat-label">Day Streak</div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Source Journey -->
+            <div class="ring-journey">
+              <div class="rj-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg> Source Journey</div>
+              <div class="rj-rings">
+                <!-- Source 1: Active -->
+                <div class="rj-ring active">
+                  <div class="rj-ring-badge current">CURRENT</div>
+                  <div class="rj-circle">
+                    <svg class="rj-circle-svg" viewBox="0 0 72 72">
+                      <circle class="rj-circle-bg" cx="36" cy="36" r="30"/>
+                      <circle class="rj-circle-fg" cx="36" cy="36" r="30" stroke="var(--explore)" stroke-dasharray="188.5" stroke-dashoffset="41.5"/>
+                    </svg>
+                    <div class="rj-circle-center" style="color:var(--explore)">1</div>
+                  </div>
+                  <div class="rj-ring-name">Beginner</div>
+                  <div class="rj-ring-sub">Explore + Learn</div>
+                  <div class="rj-ring-states">
+                    <span class="rj-state-chip" style="background:var(--explore-bg);color:var(--explore)">Explore</span>
+                    <span class="rj-state-chip" style="background:var(--learn-bg);color:var(--learn)">Learn</span>
+                  </div>
+                  <div class="rj-progress-text" style="color:var(--explore)">39 / 50 · 78%</div>
+                </div>
+
+                <!-- Source 2: Locked -->
+                <div class="rj-ring locked">
+                  <div class="rj-ring-badge locked-badge">LOCKED</div>
+                  <div class="rj-circle">
+                    <svg class="rj-circle-svg" viewBox="0 0 72 72">
+                      <circle class="rj-circle-bg" cx="36" cy="36" r="30"/>
+                    </svg>
+                    <div class="rj-circle-center" style="color:var(--t3)">2</div>
+                  </div>
+                  <div class="rj-ring-name">Intermediate</div>
+                  <div class="rj-ring-sub">Learn + Grow</div>
+                  <div class="rj-ring-states">
+                    <span class="rj-state-chip" style="background:var(--learn-bg);color:var(--learn)">Learn</span>
+                    <span class="rj-state-chip" style="background:var(--grow-bg);color:var(--grow)">Grow</span>
+                  </div>
+                  <div class="rj-progress-text" style="color:var(--t3)">Unlock: 50 recalls + 70% pass</div>
+                </div>
+
+                <!-- Source 3: Locked -->
+                <div class="rj-ring locked">
+                  <div class="rj-ring-badge locked-badge">LOCKED</div>
+                  <div class="rj-circle">
+                    <svg class="rj-circle-svg" viewBox="0 0 72 72">
+                      <circle class="rj-circle-bg" cx="36" cy="36" r="30"/>
+                    </svg>
+                    <div class="rj-circle-center" style="color:var(--t3)">3</div>
+                  </div>
+                  <div class="rj-ring-name">Advanced</div>
+                  <div class="rj-ring-sub">Grow + Excel</div>
+                  <div class="rj-ring-states">
+                    <span class="rj-state-chip" style="background:var(--grow-bg);color:var(--grow)">Grow</span>
+                    <span class="rj-state-chip" style="background:var(--excel-bg);color:var(--excel)">Excel</span>
+                  </div>
+                  <div class="rj-progress-text" style="color:var(--t3)">Unlock: Complete Source 2</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Achievements -->
+            <div class="achievements-card">
+              <div class="ac-head">
+                <div class="ac-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 12 7s5-3 7.5-3a2.5 2.5 0 0 1 0 5H18"/><path d="M18 15H6"/><path d="M18 9v12"/><path d="M6 9v12"/></svg> Achievements</div>
+                <div class="ac-count">5 of 12 earned</div>
+              </div>
+              <div class="ac-grid">
+                <div class="ac-item earned">
+                  <div class="ac-icon" style="background:var(--warn-bg)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+                  <div class="ac-info"><div class="ac-info-name">First Capture</div><div class="ac-info-desc">Extract your first content</div><div class="ac-info-date">Feb 15, 2026</div></div>
+                </div>
+                <div class="ac-item earned">
+                  <div class="ac-icon" style="background:var(--ok-bg)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                  <div class="ac-info"><div class="ac-info-name">Perfect Session</div><div class="ac-info-desc">Score 100% in a session</div><div class="ac-info-date">Feb 18, 2026</div></div>
+                </div>
+                <div class="ac-item earned">
+                  <div class="ac-icon" style="background:var(--primary-bg)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+                  <div class="ac-info"><div class="ac-info-name">7-Day Streak</div><div class="ac-info-desc">Practice 7 days in a row</div><div class="ac-info-date">Feb 26, 2026</div></div>
+                </div>
+                <div class="ac-item earned">
+                  <div class="ac-icon" style="background:var(--learn-bg)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--learn)" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+                  <div class="ac-info"><div class="ac-info-name">100 Recalls</div><div class="ac-info-desc">Complete 100 recall attempts</div><div class="ac-info-date">Feb 24, 2026</div></div>
+                </div>
+                <div class="ac-item earned">
+                  <div class="ac-icon" style="background:var(--explore-bg)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--explore)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></svg></div>
+                  <div class="ac-info"><div class="ac-info-name">Explorer</div><div class="ac-info-desc">Use Explore state 10 times</div><div class="ac-info-date">Feb 22, 2026</div></div>
+                </div>
+                <div class="ac-item locked">
+                  <div class="ac-icon" style="background:var(--bg2)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+                  <div class="ac-info"><div class="ac-info-name">Source 2 Unlocked</div><div class="ac-info-desc">Advance to Intermediate source</div></div>
+                </div>
+                <div class="ac-item locked">
+                  <div class="ac-icon" style="background:var(--bg2)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+                  <div class="ac-info"><div class="ac-info-name">30-Day Streak</div><div class="ac-info-desc">Practice 30 days in a row</div></div>
+                </div>
+                <div class="ac-item locked">
+                  <div class="ac-icon" style="background:var(--bg2)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div>
+                  <div class="ac-info"><div class="ac-info-name">Mastery: 10 Strong</div><div class="ac-info-desc">Get 10 concepts to Strong</div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Learning History -->
+            <div class="history-card">
+              <div class="hc-head">
+                <div class="hc-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Session History</div>
+                <div class="hc-tabs">
+                  <button class="hc-tab active">All</button>
+                  <button class="hc-tab">This Week</button>
+                  <button class="hc-tab">This Month</button>
+                </div>
+              </div>
+              <table class="hc-table">
+                <thead><tr><th>Date</th><th>Questions</th><th>Pass Rate</th><th>Avg Score</th><th>Types</th><th>Duration</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td style="font-weight:600;color:var(--t1)">Feb 27, 2:34 PM</td>
+                    <td>5</td>
+                    <td><span class="hc-badge pass">4/5 passed</span></td>
+                    <td class="hc-session-score good">6.8</td>
+                    <td><span style="font-size:10px;color:var(--t3)">Open, MCQ, Cloze</span></td>
+                    <td style="font-family:var(--mono);font-size:11px;color:var(--t3)">4:12</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:600;color:var(--t1)">Feb 26, 10:15 AM</td>
+                    <td>8</td>
+                    <td><span class="hc-badge pass">7/8 passed</span></td>
+                    <td class="hc-session-score good">7.4</td>
+                    <td><span style="font-size:10px;color:var(--t3)">Open, MCQ</span></td>
+                    <td style="font-family:var(--mono);font-size:11px;color:var(--t3)">6:48</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:600;color:var(--t1)">Feb 25, 3:20 PM</td>
+                    <td>3</td>
+                    <td><span class="hc-badge fail">1/3 passed</span></td>
+                    <td class="hc-session-score bad">4.2</td>
+                    <td><span style="font-size:10px;color:var(--t3)">Cloze</span></td>
+                    <td style="font-family:var(--mono);font-size:11px;color:var(--t3)">2:10</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:600;color:var(--t1)">Feb 24, 9:00 AM</td>
+                    <td>10</td>
+                    <td><span class="hc-badge pass">9/10 passed</span></td>
+                    <td class="hc-session-score good">8.1</td>
+                    <td><span style="font-size:10px;color:var(--t3)">Open, MCQ, Cloze</span></td>
+                    <td style="font-family:var(--mono);font-size:11px;color:var(--t3)">9:22</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Concept Strength Heatmap -->
+            <div class="heatmap-card">
+              <div class="hm-head"><div class="hm-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> Concept Strength</div></div>
+              <div class="hm-body">
+                <div class="hm-grid">
+                  <div class="hm-cell strong"><div class="hm-cell-name">Spaced Repetition</div><div class="hm-cell-bar"><div class="hm-cell-fill" style="width:92%"></div></div><div class="hm-cell-meta"><span class="strength">Strong</span><span class="ef">EF 2.8</span></div></div>
+                  <div class="hm-cell strong"><div class="hm-cell-name">Neural Networks</div><div class="hm-cell-bar"><div class="hm-cell-fill" style="width:85%"></div></div><div class="hm-cell-meta"><span class="strength">Strong</span><span class="ef">EF 2.6</span></div></div>
+                  <div class="hm-cell fair"><div class="hm-cell-name">Gradient Descent</div><div class="hm-cell-bar"><div class="hm-cell-fill" style="width:60%"></div></div><div class="hm-cell-meta"><span class="strength">Fair</span><span class="ef">EF 1.96</span></div></div>
+                  <div class="hm-cell fair"><div class="hm-cell-name">Transformers</div><div class="hm-cell-bar"><div class="hm-cell-fill" style="width:55%"></div></div><div class="hm-cell-meta"><span class="strength">Fair</span><span class="ef">EF 2.1</span></div></div>
+                  <div class="hm-cell weak"><div class="hm-cell-name">Backpropagation</div><div class="hm-cell-bar"><div class="hm-cell-fill" style="width:28%"></div></div><div class="hm-cell-meta"><span class="strength">Weak</span><span class="ef">EF 1.3</span></div></div>
+                  <div class="hm-cell strong"><div class="hm-cell-name">Loss Functions</div><div class="hm-cell-bar"><div class="hm-cell-fill" style="width:88%"></div></div><div class="hm-cell-meta"><span class="strength">Strong</span><span class="ef">EF 2.7</span></div></div>
+                  <div class="hm-cell fair"><div class="hm-cell-name">Regularization</div><div class="hm-cell-bar"><div class="hm-cell-fill" style="width:65%"></div></div><div class="hm-cell-meta"><span class="strength">Fair</span><span class="ef">EF 2.2</span></div></div>
+                  <div class="hm-cell weak"><div class="hm-cell-name">Attention Mechanism</div><div class="hm-cell-bar"><div class="hm-cell-fill" style="width:35%"></div></div><div class="hm-cell-meta"><span class="strength">Weak</span><span class="ef">EF 1.5</span></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dev Notes -->
+  <div class="dev-notes">
+    <div class="dev-note">
+      <div class="dev-note-title">Next.js Route</div>
+      <div class="dev-note-body">
+        <code>app/(dashboard)/profile/page.tsx</code> — Server Component. Fetches all data in parallel.<br>
+        Edit profile: <code>app/(dashboard)/profile/edit/page.tsx</code> — <code>'use client'</code> with <code>react-hook-form</code> + <code>zod</code>.
+      </div>
+    </div>
+    <div class="dev-note">
+      <div class="dev-note-title">NestJS Endpoints</div>
+      <div class="dev-note-body">
+        <code>GET /api/user/profile</code> — Returns name, email, skill, joined date, active_state, avatar.<br>
+        <code>GET /api/user/stats</code> — Total recalls, pass rate, streak, best streak.<br>
+        <code>GET /api/ring/progress</code> — All 3 sources with progress counts and unlock criteria.<br>
+        <code>GET /api/user/achievements</code> — All badges with earned/locked status + dates.<br>
+        <code>GET /api/recall/sessions?page=1&limit=10</code> — Paginated session history.<br>
+        <code>GET /api/mastery/concepts</code> — All concepts with strength (Strong/Fair/Weak), EF, last review date.<br>
+        <code>PUT /api/user/profile</code> — Update name, skill, avatar (multipart/form-data for file upload).
+      </div>
+    </div>
+    <div class="dev-note">
+      <div class="dev-note-title">Concept Strength Classification</div>
+      <div class="dev-note-body">
+        Strong: EF &ge; 2.5 AND last 3 recalls all passed.<br>
+        Fair: EF &ge; 1.8 OR mixed pass/fail in last 3.<br>
+        Weak: EF &lt; 1.8 OR last recall was a fail.<br>
+        These thresholds are configurable via <code>GET /api/settings/thresholds</code>.
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

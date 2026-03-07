@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoLearner — Design System v1.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   COLEARNER DESIGN SYSTEM v1.0
+   Brand Identity · Tokens · Components
+   ═══════════════════════════════════════════ */
+
+:root {
+  /* ── BRAND COLORS ── */
+  --cl-primary: #C4621A;
+  --cl-primary-light: #E8813E;
+  --cl-primary-dark: #9A4D14;
+  --cl-primary-bg: #FDF0E8;
+  --cl-primary-bg-subtle: #FEF8F3;
+
+  /* ── ENGAGEMENT STATE COLORS ── */
+  --cl-explore: #1A7070;
+  --cl-explore-bg: #E8F5F5;
+  --cl-explore-light: #2A9494;
+
+  --cl-learn: #1E4FA3;
+  --cl-learn-bg: #E8EFF9;
+  --cl-learn-light: #3B6FCA;
+
+  --cl-grow: #6B3FA0;
+  --cl-grow-bg: #F2ECFB;
+  --cl-grow-light: #8B5FC8;
+
+  --cl-excel: #2E6B3E;
+  --cl-excel-bg: #EAF2ED;
+  --cl-excel-light: #48A05E;
+
+  /* ── SEMANTIC COLORS ── */
+  --cl-success: #2E6B3E;
+  --cl-success-bg: #EAF2ED;
+  --cl-warning: #9B6F00;
+  --cl-warning-bg: #FEF7E0;
+  --cl-error: #B83232;
+  --cl-error-bg: #FBECEC;
+  --cl-info: #1E4FA3;
+  --cl-info-bg: #E8EFF9;
+
+  /* ── NEUTRALS ── */
+  --cl-bg: #F5F3EF;
+  --cl-bg-warm: #FAF8F5;
+  --cl-surface: #FFFFFF;
+  --cl-surface-raised: #FFFFFF;
+  --cl-border: #E2DDD6;
+  --cl-border-light: #EDE9E2;
+  --cl-text-primary: #1A1714;
+  --cl-text-secondary: #5C5650;
+  --cl-text-tertiary: #9B948C;
+  --cl-text-inverse: #FFFFFF;
+
+  /* ── TYPOGRAPHY ── */
+  --cl-font-primary: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+  --cl-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ── SPACING ── */
+  --cl-space-xs: 4px;
+  --cl-space-sm: 8px;
+  --cl-space-md: 16px;
+  --cl-space-lg: 24px;
+  --cl-space-xl: 32px;
+  --cl-space-2xl: 48px;
+  --cl-space-3xl: 64px;
+
+  /* ── RADIUS ── */
+  --cl-radius-sm: 4px;
+  --cl-radius-md: 8px;
+  --cl-radius-lg: 12px;
+  --cl-radius-xl: 16px;
+  --cl-radius-full: 999px;
+
+  /* ── SHADOWS ── */
+  --cl-shadow-sm: 0 1px 2px rgba(26,23,20,0.06);
+  --cl-shadow-md: 0 2px 8px rgba(26,23,20,0.08);
+  --cl-shadow-lg: 0 4px 16px rgba(26,23,20,0.12);
+  --cl-shadow-xl: 0 8px 32px rgba(26,23,20,0.16);
+
+  /* ── TRANSITIONS ── */
+  --cl-transition-fast: 150ms ease;
+  --cl-transition-normal: 250ms ease;
+  --cl-transition-slow: 400ms ease;
+}
+
+/* ── DARK MODE TOKENS ── */
+@media (prefers-color-scheme: dark) {
+  :root.dark-mode {
+    --cl-bg: #141210;
+    --cl-bg-warm: #1A1714;
+    --cl-surface: #1E1C18;
+    --cl-surface-raised: #262420;
+    --cl-border: #3A3630;
+    --cl-border-light: #2E2A26;
+    --cl-text-primary: #F5F3EF;
+    --cl-text-secondary: #B5AFA8;
+    --cl-text-tertiary: #7A746E;
+    --cl-primary-bg: #2A1A0E;
+    --cl-explore-bg: #0E2A2A;
+    --cl-learn-bg: #0E1A2E;
+    --cl-grow-bg: #1E1230;
+    --cl-excel-bg: #0E2216;
+  }
+}
+
+/* ══════════════════════════════════════
+   PAGE LAYOUT & NAVIGATION
+   ══════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; scroll-behavior: smooth; }
+body {
+  font-family: var(--cl-font-primary);
+  background: var(--cl-bg);
+  color: var(--cl-text-primary);
+  line-height: 1.6;
+}
+
+.ds-container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--cl-space-lg);
+}
+
+/* ── STICKY NAV ── */
+.ds-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--cl-surface);
+  border-bottom: 1px solid var(--cl-border);
+  padding: 12px 0;
+  box-shadow: var(--cl-shadow-sm);
+}
+.ds-nav-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--cl-space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--cl-space-lg);
+  overflow-x: auto;
+}
+.ds-nav-logo {
+  font-weight: 900;
+  font-size: 18px;
+  color: var(--cl-text-primary);
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ds-nav-logo span { color: var(--cl-primary); }
+.ds-nav a {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cl-text-tertiary);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: var(--cl-radius-sm);
+  transition: var(--cl-transition-fast);
+}
+.ds-nav a:hover { color: var(--cl-primary); background: var(--cl-primary-bg); }
+
+/* ── HERO ── */
+.ds-hero {
+  padding: var(--cl-space-3xl) 0 var(--cl-space-2xl);
+  text-align: center;
+}
+.ds-hero-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cl-primary);
+  background: var(--cl-primary-bg);
+  padding: 6px 16px;
+  border-radius: var(--cl-radius-full);
+  margin-bottom: var(--cl-space-md);
+}
+.ds-hero h1 {
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  margin-bottom: var(--cl-space-sm);
+}
+.ds-hero h1 span { color: var(--cl-primary); }
+.ds-hero p {
+  font-size: 16px;
+  color: var(--cl-text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ── SECTION ── */
+.ds-section {
+  padding: var(--cl-space-2xl) 0;
+  border-top: 1px solid var(--cl-border);
+}
+.ds-section-title {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cl-text-tertiary);
+  margin-bottom: var(--cl-space-xs);
+}
+.ds-section h2 {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: var(--cl-space-lg);
+}
+
+/* ══════════════════════════════════════
+   1. BRAND IDENTITY
+   ══════════════════════════════════════ */
+
+.brand-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--cl-space-lg);
+  margin-bottom: var(--cl-space-lg);
+}
+.brand-card {
+  background: var(--cl-surface);
+  border: 1px solid var(--cl-border);
+  border-radius: var(--cl-radius-lg);
+  padding: var(--cl-space-xl);
+  box-shadow: var(--cl-shadow-sm);
+}
+.brand-card h3 {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: var(--cl-space-md);
+  color: var(--cl-text-primary);
+}
+
+/* Logo Display */
+.logo-display {
+  text-align: center;
+  padding: var(--cl-space-xl) 0;
+}
+.logo-main {
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  margin-bottom: var(--cl-space-sm);
+}
+.logo-main span { color: var(--cl-primary); }
+.logo-tagline {
+  font-size: 13px;
+  color: var(--cl-text-tertiary);
+  font-weight: 500;
+}
+.logo-mark {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--cl-radius-xl);
+  background: linear-gradient(135deg, var(--cl-primary), var(--cl-primary-light));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--cl-space-md);
+  box-shadow: var(--cl-shadow-lg);
+}
+.logo-mark-text {
+  font-size: 32px;
+  font-weight: 900;
+  color: white;
+  letter-spacing: -1px;
+}
+
+/* Logo Variants */
+.logo-variants {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--cl-space-md);
+}
+.logo-variant {
+  padding: var(--cl-space-lg);
+  border-radius: var(--cl-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.logo-variant.light { background: var(--cl-bg); }
+.logo-variant.dark { background: var(--cl-text-primary); }
+.logo-variant.orange { background: var(--cl-primary); }
+.logo-variant .lv-text {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+.logo-variant.dark .lv-text { color: white; }
+.logo-variant.dark .lv-text span { color: var(--cl-primary-light); }
+.logo-variant.orange .lv-text { color: white; }
+.logo-variant.orange .lv-text span { opacity: 0.7; }
+
+/* Brand Values */
+.brand-values {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--cl-space-md);
+}
+.brand-value {
+  text-align: center;
+  padding: var(--cl-space-md);
+}
+.brand-value-icon {
+  font-size: 28px;
+  margin-bottom: var(--cl-space-sm);
+}
+.brand-value-name {
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+.brand-value-desc {
+  font-size: 10px;
+  color: var(--cl-text-tertiary);
+}
+
+/* ══════════════════════════════════════
+   2. COLOR SYSTEM
+   ══════════════════════════════════════ */
+
+.color-group {
+  margin-bottom: var(--cl-space-xl);
+}
+.color-group-title {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: var(--cl-space-md);
+  color: var(--cl-text-secondary);
+}
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--cl-space-md);
+}
+.color-swatch {
+  background: var(--cl-surface);
+  border: 1px solid var(--cl-border);
+  border-radius: var(--cl-radius-md);
+  overflow: hidden;
+  box-shadow: var(--cl-shadow-sm);
+}
+.color-preview {
+  height: 72px;
+  position: relative;
+}
+.color-preview .contrast-badge {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.9);
+  color: #333;
+}
+.color-info {
+  padding: 10px 12px;
+}
+.color-name {
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.color-hex {
+  font-family: var(--cl-font-mono);
+  font-size: 10px;
+  color: var(--cl-text-tertiary);
+}
+.color-token {
+  font-family: var(--cl-font-mono);
+  font-size: 9px;
+  color: var(--cl-text-tertiary);
+  margin-top: 2px;
+  opacity: 0.7;
+}
+
+/* State Color Cards */
+.state-colors {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--cl-space-md);
+  margin-bottom: var(--cl-space-xl);
+}
+.state-color-card {
+  border-radius: var(--cl-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--cl-border);
+  box-shadow: var(--cl-shadow-sm);
+}
+.state-color-main {
+  padding: var(--cl-space-xl) var(--cl-space-md);
+  text-align: center;
+  color: white;
+}
+.state-color-icon { font-size: 28px; margin-bottom: var(--cl-space-sm); }
+.state-color-name { font-size: 16px; font-weight: 800; }
+.state-color-persona { font-size: 10px; opacity: 0.8; margin-top: 2px; }
+.state-color-body {
+  background: var(--cl-surface);
+  padding: var(--cl-space-md);
+}
+.state-color-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 10px;
+}
+.state-color-row:not(:last-child) { border-bottom: 1px solid var(--cl-border-light); }
+.state-color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.state-color-label { color: var(--cl-text-secondary); }
+.state-color-value { font-family: var(--cl-font-mono); font-size: 9px; color: var(--cl-text-tertiary); }
+
+/* ══════════════════════════════════════
+   3. TYPOGRAPHY
+   ══════════════════════════════════════ */
+
+.type-scale {
+  background: var(--cl-surface);
+  border: 1px solid var(--cl-border);
+  border-radius: var(--cl-radius-lg);
+  overflow: hidden;
+}
+.type-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  border-bottom: 1px solid var(--cl-border-light);
+  align-items: baseline;
+}
+.type-row:last-child { border-bottom: none; }
+.type-meta {
+  padding: var(--cl-space-md);
+  background: var(--cl-bg);
+  border-right: 1px solid var(--cl-border-light);
+}
+.type-meta-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--cl-text-primary);
+}
+.type-meta-spec {
+  font-family: var(--cl-font-mono);
+  font-size: 9px;
+  color: var(--cl-text-tertiary);
+  margin-top: 2px;
+}
+.type-preview {
+  padding: var(--cl-space-md) var(--cl-space-lg);
+}
+
+/* ══════════════════════════════════════
+   4. RING SYSTEM
+   ══════════════════════════════════════ */
+
+.ring-system {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--cl-space-lg);
+  margin-bottom: var(--cl-space-xl);
+}
+.ring-card {
+  background: var(--cl-surface);
+  border: 2px solid var(--cl-border);
+  border-radius: var(--cl-radius-xl);
+  padding: var(--cl-space-xl);
+  text-align: center;
+  position: relative;
+  transition: var(--cl-transition-normal);
+}
+.ring-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--cl-shadow-lg);
+}
+.ring-card.beginner { border-color: var(--cl-explore); }
+.ring-card.intermediate { border-color: var(--cl-learn); }
+.ring-card.advanced { border-color: var(--cl-grow); }
+
+.ring-visual {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto var(--cl-space-md);
+  position: relative;
+}
+.ring-circle {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 4px solid var(--cl-border);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cl-surface);
+}
+.ring-card.beginner .ring-circle { border-color: var(--cl-explore); background: var(--cl-explore-bg); }
+.ring-card.intermediate .ring-circle { border-color: var(--cl-learn); background: var(--cl-learn-bg); }
+.ring-card.advanced .ring-circle { border-color: var(--cl-grow); background: var(--cl-grow-bg); }
+
+.ring-number {
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+}
+.ring-card.beginner .ring-number { color: var(--cl-explore); }
+.ring-card.intermediate .ring-number { color: var(--cl-learn); }
+.ring-card.advanced .ring-number { color: var(--cl-grow); }
+
+.ring-name {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.ring-subtitle {
+  font-size: 11px;
+  color: var(--cl-text-tertiary);
+  margin-bottom: var(--cl-space-md);
+}
+.ring-states {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.ring-state-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--cl-radius-full);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ══════════════════════════════════════
+   5. COMPONENTS
+   ══════════════════════════════════════ */
+
+/* Buttons */
+.comp-row {
+  display: flex;
+  gap: var(--cl-space-md);
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: var(--cl-space-lg);
+}
+.comp-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--cl-text-tertiary);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  width: 100%;
+  margin-bottom: var(--cl-space-xs);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--cl-font-primary);
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--cl-radius-md);
+  transition: var(--cl-transition-fast);
+  letter-spacing: 0.01em;
+}
+.btn-lg { font-size: 14px; padding: 12px 24px; }
+.btn-md { font-size: 12px; padding: 10px 20px; }
+.btn-sm { font-size: 11px; padding: 7px 14px; }
+.btn-xs { font-size: 10px; padding: 5px 10px; }
+
+.btn-primary {
+  background: var(--cl-primary);
+  color: white;
+}
+.btn-primary:hover { background: var(--cl-primary-dark); }
+
+.btn-secondary {
+  background: var(--cl-surface);
+  color: var(--cl-text-primary);
+  border: 1.5px solid var(--cl-border);
+}
+.btn-secondary:hover { border-color: var(--cl-primary); color: var(--cl-primary); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--cl-primary);
+}
+.btn-ghost:hover { background: var(--cl-primary-bg); }
+
+.btn-explore { background: var(--cl-explore); color: white; }
+.btn-learn { background: var(--cl-learn); color: white; }
+.btn-grow { background: var(--cl-grow); color: white; }
+.btn-excel { background: var(--cl-excel); color: white; }
+
+.btn-disabled {
+  background: var(--cl-border);
+  color: var(--cl-text-tertiary);
+  cursor: not-allowed;
+}
+
+/* Cards */
+.card {
+  background: var(--cl-surface);
+  border: 1px solid var(--cl-border);
+  border-radius: var(--cl-radius-lg);
+  box-shadow: var(--cl-shadow-sm);
+  overflow: hidden;
+}
+.card-header {
+  padding: var(--cl-space-md) var(--cl-space-lg);
+  border-bottom: 1px solid var(--cl-border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-body { padding: var(--cl-space-lg); }
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--cl-radius-full);
+}
+.badge-explore { background: var(--cl-explore-bg); color: var(--cl-explore); }
+.badge-learn { background: var(--cl-learn-bg); color: var(--cl-learn); }
+.badge-grow { background: var(--cl-grow-bg); color: var(--cl-grow); }
+.badge-excel { background: var(--cl-excel-bg); color: var(--cl-excel); }
+.badge-success { background: var(--cl-success-bg); color: var(--cl-success); }
+.badge-warning { background: var(--cl-warning-bg); color: var(--cl-warning); }
+.badge-error { background: var(--cl-error-bg); color: var(--cl-error); }
+.badge-neutral { background: var(--cl-bg); color: var(--cl-text-tertiary); border: 1px solid var(--cl-border); }
+
+/* Input Fields */
+.input-group { margin-bottom: var(--cl-space-md); }
+.input-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cl-text-secondary);
+  margin-bottom: 6px;
+}
+.input {
+  width: 100%;
+  font-family: var(--cl-font-primary);
+  font-size: 13px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--cl-border);
+  border-radius: var(--cl-radius-md);
+  background: var(--cl-surface);
+  color: var(--cl-text-primary);
+  transition: var(--cl-transition-fast);
+  outline: none;
+}
+.input:focus { border-color: var(--cl-primary); box-shadow: 0 0 0 3px var(--cl-primary-bg); }
+.input-error { border-color: var(--cl-error); }
+.input-help {
+  font-size: 10px;
+  color: var(--cl-text-tertiary);
+  margin-top: 4px;
+}
+.input-error-text {
+  font-size: 10px;
+  color: var(--cl-error);
+  margin-top: 4px;
+}
+
+/* Progress Bar */
+.progress-bar {
+  height: 8px;
+  background: var(--cl-border);
+  border-radius: var(--cl-radius-full);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: var(--cl-radius-full);
+  transition: width var(--cl-transition-slow);
+}
+
+/* Engagement State Indicator */
+.state-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--cl-space-md);
+  background: var(--cl-surface);
+  border: 1px solid var(--cl-border);
+  border-radius: var(--cl-radius-lg);
+  padding: var(--cl-space-md) var(--cl-space-lg);
+}
+.state-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.state-label {
+  font-size: 12px;
+  font-weight: 700;
+}
+.state-desc {
+  font-size: 10px;
+  color: var(--cl-text-tertiary);
+}
+
+/* Navigation Tab Bar */
+.tab-bar {
+  display: flex;
+  background: var(--cl-surface);
+  border: 1px solid var(--cl-border);
+  border-radius: var(--cl-radius-lg);
+  padding: 4px;
+  gap: 4px;
+}
+.tab-item {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cl-text-tertiary);
+  border-radius: var(--cl-radius-md);
+  cursor: pointer;
+  transition: var(--cl-transition-fast);
+}
+.tab-item:hover { color: var(--cl-text-secondary); background: var(--cl-bg); }
+.tab-item.active {
+  color: var(--cl-primary);
+  background: var(--cl-primary-bg);
+  font-weight: 700;
+}
+
+/* Bottom Nav (Mobile) */
+.bottom-nav {
+  display: flex;
+  background: var(--cl-surface);
+  border-top: 1px solid var(--cl-border);
+  padding: 8px 0 4px;
+  max-width: 375px;
+  margin: 0 auto;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  border-radius: var(--cl-radius-lg) var(--cl-radius-lg) 0 0;
+}
+.bnav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+.bnav-icon { font-size: 20px; }
+.bnav-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--cl-text-tertiary);
+}
+.bnav-item.active .bnav-label { color: var(--cl-primary); font-weight: 700; }
+.bnav-item.active .bnav-icon { filter: none; }
+
+/* Stat Cards */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--cl-space-md);
+}
+.stat-card {
+  background: var(--cl-surface);
+  border: 1px solid var(--cl-border);
+  border-radius: var(--cl-radius-md);
+  padding: var(--cl-space-md);
+}
+.stat-value {
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--cl-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ══════════════════════════════════════
+   6. SPACING & GRID
+   ══════════════════════════════════════ */
+
+.space-demo {
+  display: flex;
+  gap: var(--cl-space-md);
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.space-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.space-visual {
+  background: var(--cl-primary-bg);
+  border: 1px solid var(--cl-primary);
+  border-radius: 2px;
+}
+.space-name {
+  font-family: var(--cl-font-mono);
+  font-size: 9px;
+  color: var(--cl-text-tertiary);
+}
+.space-px {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--cl-text-secondary);
+}
+
+/* ══════════════════════════════════════
+   7. ICONOGRAPHY
+   ══════════════════════════════════════ */
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: var(--cl-space-sm);
+}
+.icon-item {
+  background: var(--cl-surface);
+  border: 1px solid var(--cl-border);
+  border-radius: var(--cl-radius-md);
+  padding: var(--cl-space-md);
+  text-align: center;
+}
+.icon-item-icon { font-size: 22px; margin-bottom: 4px; }
+.icon-item-name { font-size: 9px; color: var(--cl-text-tertiary); }
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════ */
+@media (max-width: 768px) {
+  .brand-grid { grid-template-columns: 1fr; }
+  .state-colors { grid-template-columns: repeat(2, 1fr); }
+  .ring-system { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .brand-values { grid-template-columns: repeat(2, 1fr); }
+  .ds-hero h1 { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════ NAVIGATION ══════ -->
+<nav class="ds-nav">
+  <div class="ds-nav-inner">
+    <div class="ds-nav-logo">Co<span>Learner</span></div>
+    <a href="#brand">Brand</a>
+    <a href="#colors">Colors</a>
+    <a href="#typography">Typography</a>
+    <a href="#rings">Sources</a>
+    <a href="#states">States</a>
+    <a href="#components">Components</a>
+    <a href="#spacing">Spacing</a>
+    <a href="#icons">Icons</a>
+  </div>
+</nav>
+
+<div class="ds-container">
+
+  <!-- ══════ HERO ══════ -->
+  <div class="ds-hero">
+    <div class="ds-hero-badge">Design System v1.0</div>
+    <h1>Co<span>Learner</span></h1>
+    <p>A comprehensive design system for the skill-based learning platform — guiding learners from Explore to Excel through ambient, privacy-first knowledge capture.</p>
+  </div>
+
+  <!-- ══════════════════════════════════
+       1. BRAND IDENTITY
+       ══════════════════════════════════ -->
+  <section class="ds-section" id="brand">
+    <div class="ds-section-title">Section 01</div>
+    <h2>Brand Identity</h2>
+
+    <div class="brand-grid">
+      <!-- Logo -->
+      <div class="brand-card">
+        <h3>Logo</h3>
+        <div class="logo-display">
+          <div class="logo-mark">
+            <span class="logo-mark-text">CL</span>
+          </div>
+          <div class="logo-main">Co<span>Learner</span></div>
+          <div class="logo-tagline">Learn ambient. Recall on demand.</div>
+        </div>
+      </div>
+
+      <!-- Logo Variants -->
+      <div class="brand-card">
+        <h3>Logo Variants</h3>
+        <div class="logo-variants">
+          <div class="logo-variant light">
+            <div class="lv-text">Co<span style="color:var(--cl-primary)">Learner</span></div>
+          </div>
+          <div class="logo-variant dark">
+            <div class="lv-text">Co<span>Learner</span></div>
+          </div>
+          <div class="logo-variant orange">
+            <div class="lv-text">Co<span>Learner</span></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;font-size:10px;color:var(--cl-text-tertiary);line-height:1.6">
+          <strong style="color:var(--cl-text-secondary)">Usage:</strong> "Co" is always the base text color. "Learner" always uses the brand orange. The mark "CL" is used for app icons and favicons.
+        </div>
+      </div>
+    </div>
+
+    <!-- Brand Values -->
+    <div class="brand-card" style="margin-bottom:24px">
+      <h3>Brand Values</h3>
+      <div class="brand-values">
+        <div class="brand-value">
+          <div class="brand-value-icon">🧭</div>
+          <div class="brand-value-name">Guided Discovery</div>
+          <div class="brand-value-desc">Learners explore at their own pace with AI-driven guidance</div>
+        </div>
+        <div class="brand-value">
+          <div class="brand-value-icon">🔒</div>
+          <div class="brand-value-name">Privacy First</div>
+          <div class="brand-value-desc">Never store raw content — only concepts, questions, and scores</div>
+        </div>
+        <div class="brand-value">
+          <div class="brand-value-icon">🌊</div>
+          <div class="brand-value-name">Ambient Learning</div>
+          <div class="brand-value-desc">Capture knowledge passively from daily activities</div>
+        </div>
+        <div class="brand-value">
+          <div class="brand-value-icon">📈</div>
+          <div class="brand-value-name">Measurable Growth</div>
+          <div class="brand-value-desc">SM-2 spaced repetition ensures lasting retention</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       2. COLOR SYSTEM
+       ══════════════════════════════════ -->
+  <section class="ds-section" id="colors">
+    <div class="ds-section-title">Section 02</div>
+    <h2>Color System</h2>
+
+    <!-- Engagement State Colors -->
+    <div class="color-group">
+      <div class="color-group-title">Engagement State Colors (Core Identity)</div>
+      <div class="state-colors">
+        <!-- Explore -->
+        <div class="state-color-card">
+          <div class="state-color-main" style="background:var(--cl-explore)">
+            <div class="state-color-icon">🧭</div>
+            <div class="state-color-name">Explore</div>
+            <div class="state-color-persona">The Guide</div>
+          </div>
+          <div class="state-color-body">
+            <div class="state-color-row">
+              <span><span class="state-color-dot" style="background:var(--cl-explore)"></span> <span class="state-color-label">Main</span></span>
+              <span class="state-color-value">#1A7070</span>
+            </div>
+            <div class="state-color-row">
+              <span><span class="state-color-dot" style="background:var(--cl-explore-light)"></span> <span class="state-color-label">Light</span></span>
+              <span class="state-color-value">#2A9494</span>
+            </div>
+            <div class="state-color-row">
+              <span><span class="state-color-dot" style="background:var(--cl-explore-bg)"></span> <span class="state-color-label">BG</span></span>
+              <span class="state-color-value">#E8F5F5</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Learn -->
+        <div class="state-color-card">
+          <div class="state-color-main" style="background:var(--cl-learn)">
+            <div class="state-color-icon">🚂</div>
+            <div class="state-color-name">Learn</div>
+            <div class="state-color-persona">The Train</div>
+          </div>
+          <div class="state-color-body">
+            <div class="state-color-row">
+              <span><span class="state-color-dot" style="background:var(--cl-learn)"></span> <span class="state-color-label">Main</span></span>
+              <span class="state-color-value">#1E4FA3</span>
+            </div>
+            <div class="state-color-row">
+              <span><span class="state-color-dot" style="background:var(--cl-learn-light)"></span> <span class="state-color-label">Light</span></span>
+              <span class="state-color-value">#3B6FCA</span>
+            </div>
+            <div class="state-color-row">
+              <span><span class="state-color-dot" style="background:var(--cl-learn-bg)"></span> <span class="state-color-label">BG</span></span>
+              <span class="state-color-value">#E8EFF9</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grow -->
+        <div class="state-color-card">
+          <div class="state-color-main" style="background:var(--cl-grow)">
+            <div class="state-color-icon">🌱</div>
+            <div class="state-color-name">Grow</div>
+            <div class="state-color-persona">The Mentor</div>
+          </div>
+          <div class="state-color-body">
+            <div class="state-color-row">
+              <span><span class="state-color-dot" style="background:var(--cl-grow)"></span> <span class="state-color-label">Main</span></span>
+              <span class="state-color-value">#6B3FA0</span>
+            </div>
+            <div class="state-color-row">
+              <span><span class="state-color-dot" style="background:var(--cl-grow-light)"></span> <span class="state-color-label">Light</span></span>
+              <span class="state-color-value">#8B5FC8</span>
+            </div>
+            <div class="state-color-row">
+              <span><span class="state-color-dot" style="background:var(--cl-grow-bg)"></span> <span class="state-color-label">BG</span></span>
+              <span class="state-color-value">#F2ECFB</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Excel -->
+        <div class="state-color-card">
+          <div class="state-color-main" style="background:var(--cl-excel)">
+            <div class="state-color-icon">🏆</div>
+            <div class="state-color-name">Excel</div>
+            <div class="state-color-persona">The Coach</div>
+          </div>
+          <div class="state-color-body">
+            <div class="state-color-row">
+              <span><span class="state-color-dot" style="background:var(--cl-excel)"></span> <span class="state-color-label">Main</span></span>
+              <span class="state-color-value">#2E6B3E</span>
+            </div>
+            <div class="state-color-row">
+              <span><span class="state-color-dot" style="background:var(--cl-excel-light)"></span> <span class="state-color-label">Light</span></span>
+              <span class="state-color-value">#48A05E</span>
+            </div>
+            <div class="state-color-row">
+              <span><span class="state-color-dot" style="background:var(--cl-excel-bg)"></span> <span class="state-color-label">BG</span></span>
+              <span class="state-color-value">#EAF2ED</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Brand Colors -->
+    <div class="color-group">
+      <div class="color-group-title">Brand & Primary</div>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="color-preview" style="background:var(--cl-primary)">
+            <span class="contrast-badge">AA ✓</span>
+          </div>
+          <div class="color-info">
+            <div class="color-name">Primary</div>
+            <div class="color-hex">#C4621A</div>
+            <div class="color-token">--cl-primary</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background:var(--cl-primary-light)"></div>
+          <div class="color-info">
+            <div class="color-name">Primary Light</div>
+            <div class="color-hex">#E8813E</div>
+            <div class="color-token">--cl-primary-light</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background:var(--cl-primary-dark)">
+            <span class="contrast-badge">AAA ✓</span>
+          </div>
+          <div class="color-info">
+            <div class="color-name">Primary Dark</div>
+            <div class="color-hex">#9A4D14</div>
+            <div class="color-token">--cl-primary-dark</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background:var(--cl-primary-bg)"></div>
+          <div class="color-info">
+            <div class="color-name">Primary BG</div>
+            <div class="color-hex">#FDF0E8</div>
+            <div class="color-token">--cl-primary-bg</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Semantic Colors -->
+    <div class="color-group">
+      <div class="color-group-title">Semantic</div>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="color-preview" style="background:var(--cl-success)"></div>
+          <div class="color-info">
+            <div class="color-name">Success</div>
+            <div class="color-hex">#2E6B3E</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background:var(--cl-warning)"></div>
+          <div class="color-info">
+            <div class="color-name">Warning</div>
+            <div class="color-hex">#9B6F00</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background:var(--cl-error)"></div>
+          <div class="color-info">
+            <div class="color-name">Error</div>
+            <div class="color-hex">#B83232</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background:var(--cl-info)"></div>
+          <div class="color-info">
+            <div class="color-name">Info</div>
+            <div class="color-hex">#1E4FA3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Neutral Colors -->
+    <div class="color-group">
+      <div class="color-group-title">Neutrals</div>
+      <div class="color-grid">
+        <div class="color-swatch">
+          <div class="color-preview" style="background:var(--cl-text-primary)"></div>
+          <div class="color-info">
+            <div class="color-name">Text Primary</div>
+            <div class="color-hex">#1A1714</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background:var(--cl-text-secondary)"></div>
+          <div class="color-info">
+            <div class="color-name">Text Secondary</div>
+            <div class="color-hex">#5C5650</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background:var(--cl-text-tertiary)"></div>
+          <div class="color-info">
+            <div class="color-name">Text Tertiary</div>
+            <div class="color-hex">#9B948C</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background:var(--cl-bg)"></div>
+          <div class="color-info">
+            <div class="color-name">Background</div>
+            <div class="color-hex">#F5F3EF</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background:var(--cl-surface);border:1px solid var(--cl-border)"></div>
+          <div class="color-info">
+            <div class="color-name">Surface</div>
+            <div class="color-hex">#FFFFFF</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-preview" style="background:var(--cl-border)"></div>
+          <div class="color-info">
+            <div class="color-name">Border</div>
+            <div class="color-hex">#E2DDD6</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       3. TYPOGRAPHY
+       ══════════════════════════════════ -->
+  <section class="ds-section" id="typography">
+    <div class="ds-section-title">Section 03</div>
+    <h2>Typography</h2>
+
+    <div style="margin-bottom:24px">
+      <div class="brand-grid">
+        <div class="brand-card">
+          <h3>Primary — Nunito</h3>
+          <div style="font-size:36px;font-weight:800;margin:16px 0 8px;letter-spacing:-0.5px">Aa Bb Cc</div>
+          <div style="font-size:12px;color:var(--cl-text-secondary);line-height:1.8">
+            ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>
+            abcdefghijklmnopqrstuvwxyz<br>
+            0123456789 !@#$%&amp;*()
+          </div>
+          <div style="font-size:10px;color:var(--cl-text-tertiary);margin-top:12px">
+            Warm, rounded, and approachable. Used for all UI text, headings, and body copy. Weights: 400 (Regular), 600 (SemiBold), 700 (Bold), 800 (ExtraBold), 900 (Black).
+          </div>
+        </div>
+        <div class="brand-card">
+          <h3>Monospace — JetBrains Mono</h3>
+          <div style="font-family:var(--cl-font-mono);font-size:36px;font-weight:500;margin:16px 0 8px">Aa Bb Cc</div>
+          <div style="font-family:var(--cl-font-mono);font-size:12px;color:var(--cl-text-secondary);line-height:1.8">
+            ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>
+            abcdefghijklmnopqrstuvwxyz<br>
+            0123456789 !@#$%&amp;*()
+          </div>
+          <div style="font-size:10px;color:var(--cl-text-tertiary);margin-top:12px">
+            Clean developer-grade mono. Used for scores, hex codes, data values, code snippets, and technical labels.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Type Scale -->
+    <div class="type-scale">
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-name">Display</div>
+          <div class="type-meta-spec">40px / 900</div>
+        </div>
+        <div class="type-preview">
+          <span style="font-size:40px;font-weight:900;letter-spacing:-1px;line-height:1.1">CoLearner</span>
+        </div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-name">Heading 1</div>
+          <div class="type-meta-spec">28px / 800</div>
+        </div>
+        <div class="type-preview">
+          <span style="font-size:28px;font-weight:800;letter-spacing:-0.5px">Your Learning Journey</span>
+        </div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-name">Heading 2</div>
+          <div class="type-meta-spec">22px / 800</div>
+        </div>
+        <div class="type-preview">
+          <span style="font-size:22px;font-weight:800;letter-spacing:-0.3px">Today's Recall Queue</span>
+        </div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-name">Heading 3</div>
+          <div class="type-meta-spec">16px / 700</div>
+        </div>
+        <div class="type-preview">
+          <span style="font-size:16px;font-weight:700">Spaced Repetition Schedule</span>
+        </div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-name">Body</div>
+          <div class="type-meta-spec">14px / 400</div>
+        </div>
+        <div class="type-preview">
+          <span style="font-size:14px;font-weight:400">Knowledge captured from your daily reading is transformed into recall questions using SM-2 spaced repetition.</span>
+        </div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-name">Body Small</div>
+          <div class="type-meta-spec">12px / 400</div>
+        </div>
+        <div class="type-preview">
+          <span style="font-size:12px;font-weight:400">3 concepts due for review today. Last recall session: 2 hours ago.</span>
+        </div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-name">Caption</div>
+          <div class="type-meta-spec">10px / 600</div>
+        </div>
+        <div class="type-preview">
+          <span style="font-size:10px;font-weight:600;color:var(--cl-text-secondary)">SM-2 interval: 6 days · EF: 2.50 · Next review: Mar 3</span>
+        </div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-name">Eyebrow</div>
+          <div class="type-meta-spec">9px / 700 CAPS</div>
+        </div>
+        <div class="type-preview">
+          <span style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--cl-primary)">RING 1 · YOUTUBE CAPTURE</span>
+        </div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="type-meta-name">Mono Value</div>
+          <div class="type-meta-spec">24px / 600 mono</div>
+        </div>
+        <div class="type-preview">
+          <span style="font-family:var(--cl-font-mono);font-size:24px;font-weight:600;color:var(--cl-success)">8/10</span>
+          <span style="font-family:var(--cl-font-mono);font-size:24px;font-weight:600;color:var(--cl-text-tertiary);margin-left:24px">72%</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       4. RING PROGRESSION SYSTEM
+       ══════════════════════════════════ -->
+  <section class="ds-section" id="rings">
+    <div class="ds-section-title">Section 04</div>
+    <h2>Source Progression System</h2>
+
+    <div class="ring-system">
+      <!-- Ring 1: Beginner -->
+      <div class="ring-card beginner">
+        <div class="ring-visual">
+          <div class="ring-circle">
+            <div class="ring-number">1</div>
+          </div>
+        </div>
+        <div class="ring-name">Beginner</div>
+        <div class="ring-subtitle">Foundation Source — Build your learning habit</div>
+        <div style="font-size:10px;color:var(--cl-text-secondary);margin-bottom:12px;line-height:1.6">
+          YouTube video capture, basic concept extraction, first recall sessions. The learner discovers how ambient capture works.
+        </div>
+        <div class="ring-states">
+          <span class="ring-state-badge" style="background:var(--cl-explore-bg);color:var(--cl-explore)">Explore</span>
+          <span class="ring-state-badge" style="background:var(--cl-learn-bg);color:var(--cl-learn)">Learn</span>
+        </div>
+        <div style="margin-top:12px;font-size:9px;color:var(--cl-text-tertiary)">
+          Unlock: Sign up → Complete first extraction
+        </div>
+      </div>
+
+      <!-- Ring 2: Intermediate -->
+      <div class="ring-card intermediate">
+        <div class="ring-visual">
+          <div class="ring-circle">
+            <div class="ring-number">2</div>
+          </div>
+        </div>
+        <div class="ring-name">Intermediate</div>
+        <div class="ring-subtitle">Growth Source — Expand your capture sources</div>
+        <div style="font-size:10px;color:var(--cl-text-secondary);margin-bottom:12px;line-height:1.6">
+          Browser extension (web articles), multi-source capture, SM-2 scheduling becomes active, review queue management.
+        </div>
+        <div class="ring-states">
+          <span class="ring-state-badge" style="background:var(--cl-learn-bg);color:var(--cl-learn)">Learn</span>
+          <span class="ring-state-badge" style="background:var(--cl-grow-bg);color:var(--cl-grow)">Grow</span>
+        </div>
+        <div style="margin-top:12px;font-size:9px;color:var(--cl-text-tertiary)">
+          Unlock: 50+ recall attempts · 70%+ pass rate
+        </div>
+      </div>
+
+      <!-- Ring 3: Advanced -->
+      <div class="ring-card advanced">
+        <div class="ring-visual">
+          <div class="ring-circle">
+            <div class="ring-number">3</div>
+          </div>
+        </div>
+        <div class="ring-name">Advanced</div>
+        <div class="ring-subtitle">Mastery Source — Deep knowledge synthesis</div>
+        <div style="font-size:10px;color:var(--cl-text-secondary);margin-bottom:12px;line-height:1.6">
+          Cross-concept connections, PDF/document capture, study group features, NCU multipliers active, advanced analytics.
+        </div>
+        <div class="ring-states">
+          <span class="ring-state-badge" style="background:var(--cl-grow-bg);color:var(--cl-grow)">Grow</span>
+          <span class="ring-state-badge" style="background:var(--cl-excel-bg);color:var(--cl-excel)">Excel</span>
+        </div>
+        <div style="margin-top:12px;font-size:9px;color:var(--cl-text-tertiary)">
+          Unlock: 200+ recall attempts · 80%+ pass rate · 30-day streak
+        </div>
+      </div>
+    </div>
+
+    <!-- Source → State Mapping -->
+    <div class="card">
+      <div class="card-header">
+        <strong style="font-size:12px">Source → Engagement State Mapping</strong>
+      </div>
+      <div class="card-body" style="padding:0">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead>
+            <tr style="background:var(--cl-bg)">
+              <th style="padding:10px 16px;text-align:left;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--cl-text-tertiary);border-bottom:2px solid var(--cl-text-primary)">Source</th>
+              <th style="padding:10px 16px;text-align:left;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--cl-text-tertiary);border-bottom:2px solid var(--cl-text-primary)">Available States</th>
+              <th style="padding:10px 16px;text-align:left;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--cl-text-tertiary);border-bottom:2px solid var(--cl-text-primary)">Recall Types</th>
+              <th style="padding:10px 16px;text-align:left;font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--cl-text-tertiary);border-bottom:2px solid var(--cl-text-primary)">Capture Sources</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--cl-border-light)">
+              <td style="padding:10px 16px;font-weight:700">🟢 Source 1 — Beginner</td>
+              <td style="padding:10px 16px"><span class="badge badge-explore">Explore</span> <span class="badge badge-learn">Learn</span></td>
+              <td style="padding:10px 16px">Open Answer, MCQ</td>
+              <td style="padding:10px 16px">YouTube videos</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--cl-border-light)">
+              <td style="padding:10px 16px;font-weight:700">🔵 Source 2 — Intermediate</td>
+              <td style="padding:10px 16px"><span class="badge badge-learn">Learn</span> <span class="badge badge-grow">Grow</span></td>
+              <td style="padding:10px 16px">Open, MCQ, Cloze</td>
+              <td style="padding:10px 16px">YouTube + Web articles</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 16px;font-weight:700">🟣 Source 3 — Advanced</td>
+              <td style="padding:10px 16px"><span class="badge badge-grow">Grow</span> <span class="badge badge-excel">Excel</span></td>
+              <td style="padding:10px 16px">Open, MCQ, Cloze + Synthesis</td>
+              <td style="padding:10px 16px">YouTube + Web + PDFs/Docs</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       5. ENGAGEMENT STATES
+       ══════════════════════════════════ -->
+  <section class="ds-section" id="states">
+    <div class="ds-section-title">Section 05</div>
+    <h2>Engagement States</h2>
+
+    <div style="display:grid;gap:12px;margin-bottom:24px">
+      <div class="state-indicator" style="border-left:4px solid var(--cl-explore)">
+        <div class="state-dot" style="background:var(--cl-explore)"></div>
+        <div style="flex:1">
+          <div class="state-label" style="color:var(--cl-explore)">Explore — The Guide</div>
+          <div class="state-desc">Reward curiosity and direction of thinking. Warm, encouraging feedback. NCU Multiplier: 1.0×</div>
+        </div>
+        <span class="badge badge-explore">Active</span>
+      </div>
+      <div class="state-indicator" style="border-left:4px solid var(--cl-learn)">
+        <div class="state-dot" style="background:var(--cl-learn)"></div>
+        <div style="flex:1">
+          <div class="state-label" style="color:var(--cl-learn)">Learn — The Train</div>
+          <div class="state-desc">Be precise — identify exactly what was missing and how to fix it. Structured feedback. NCU Multiplier: 2.5×</div>
+        </div>
+        <span class="badge badge-learn">Default</span>
+      </div>
+      <div class="state-indicator" style="border-left:4px solid var(--cl-grow)">
+        <div class="state-dot" style="background:var(--cl-grow)"></div>
+        <div style="flex:1">
+          <div class="state-label" style="color:var(--cl-grow)">Grow — The Mentor</div>
+          <div class="state-desc">Acknowledge good work, then challenge with application questions. Push further. NCU Multiplier: 5.0×</div>
+        </div>
+        <span class="badge badge-grow">Unlocked</span>
+      </div>
+      <div class="state-indicator" style="border-left:4px solid var(--cl-excel)">
+        <div class="state-dot" style="background:var(--cl-excel)"></div>
+        <div style="flex:1">
+          <div class="state-label" style="color:var(--cl-excel)">Excel — The Coach</div>
+          <div class="state-desc">Be exacting — expose the precise gap. No hand-holding. Master-level coaching. NCU Multiplier: 10.0×</div>
+        </div>
+        <span class="badge badge-excel">Locked</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       6. COMPONENTS
+       ══════════════════════════════════ -->
+  <section class="ds-section" id="components">
+    <div class="ds-section-title">Section 06</div>
+    <h2>Components</h2>
+
+    <!-- Buttons -->
+    <div class="brand-card" style="margin-bottom:24px">
+      <h3>Buttons</h3>
+
+      <div class="comp-row">
+        <div class="comp-label">Primary Actions</div>
+        <button class="btn btn-primary btn-lg">Start Recall</button>
+        <button class="btn btn-primary btn-md">Submit Answer</button>
+        <button class="btn btn-primary btn-sm">Next Question</button>
+        <button class="btn btn-primary btn-xs">View</button>
+      </div>
+
+      <div class="comp-row">
+        <div class="comp-label">Secondary & Ghost</div>
+        <button class="btn btn-secondary btn-md">Skip for Now</button>
+        <button class="btn btn-ghost btn-md">Cancel</button>
+        <button class="btn btn-disabled btn-md">Processing...</button>
+      </div>
+
+      <div class="comp-row">
+        <div class="comp-label">State-Themed</div>
+        <button class="btn btn-explore btn-md">🧭 Explore Mode</button>
+        <button class="btn btn-learn btn-md">🚂 Learn Mode</button>
+        <button class="btn btn-grow btn-md">🌱 Grow Mode</button>
+        <button class="btn btn-excel btn-md">🏆 Excel Mode</button>
+      </div>
+    </div>
+
+    <!-- Badges -->
+    <div class="brand-card" style="margin-bottom:24px">
+      <h3>Badges & Tags</h3>
+      <div class="comp-row">
+        <span class="badge badge-explore">Explore</span>
+        <span class="badge badge-learn">Learn</span>
+        <span class="badge badge-grow">Grow</span>
+        <span class="badge badge-excel">Excel</span>
+        <span class="badge badge-success">Passed</span>
+        <span class="badge badge-error">Failed</span>
+        <span class="badge badge-warning">Due Today</span>
+        <span class="badge badge-neutral">Source 1</span>
+      </div>
+    </div>
+
+    <!-- Form Inputs -->
+    <div class="brand-card" style="margin-bottom:24px">
+      <h3>Form Inputs</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <div>
+          <div class="input-group">
+            <label class="input-label">Email Address</label>
+            <input class="input" type="email" placeholder="you@example.com" />
+          </div>
+          <div class="input-group">
+            <label class="input-label">Your Answer</label>
+            <textarea class="input" rows="3" placeholder="Type your answer here..." style="resize:vertical"></textarea>
+            <div class="input-help">Be specific — the judge evaluates precision of your response</div>
+          </div>
+        </div>
+        <div>
+          <div class="input-group">
+            <label class="input-label">Password</label>
+            <input class="input" type="password" placeholder="••••••••" />
+          </div>
+          <div class="input-group">
+            <label class="input-label">Video URL</label>
+            <input class="input input-error" type="url" value="not-a-valid-url" />
+            <div class="input-error-text">Please enter a valid YouTube URL</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Bars -->
+    <div class="brand-card" style="margin-bottom:24px">
+      <h3>Progress Bars</h3>
+      <div style="display:grid;gap:16px">
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+            <span style="font-weight:700">Source 1 Progress</span>
+            <span style="font-family:var(--cl-font-mono);color:var(--cl-text-tertiary)">34 / 50 attempts</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:68%;background:var(--cl-explore)"></div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+            <span style="font-weight:700">Today's Recall</span>
+            <span style="font-family:var(--cl-font-mono);color:var(--cl-text-tertiary)">5 / 8 completed</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:62.5%;background:var(--cl-primary)"></div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+            <span style="font-weight:700">Mastery Score</span>
+            <span style="font-family:var(--cl-font-mono);color:var(--cl-success)">78%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:78%;background:linear-gradient(90deg, var(--cl-learn), var(--cl-excel))"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="brand-card" style="margin-bottom:24px">
+      <h3>Stat Cards</h3>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--cl-primary)">142</div>
+          <div class="stat-label">Total Recalls</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--cl-success)">78%</div>
+          <div class="stat-label">Pass Rate</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--cl-learn)">23</div>
+          <div class="stat-label">Concepts Active</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--cl-warning)">5</div>
+          <div class="stat-label">Due Today</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="brand-card" style="margin-bottom:24px">
+      <h3>Navigation Tabs</h3>
+      <div style="margin-bottom:16px">
+        <div class="tab-bar" style="max-width:500px">
+          <div class="tab-item active">📥 Capture</div>
+          <div class="tab-item">🧠 Recall</div>
+          <div class="tab-item">📊 Mastery</div>
+          <div class="tab-item">📋 Queue</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="brand-card" style="margin-bottom:24px">
+      <h3>Mobile Bottom Navigation</h3>
+      <div style="max-width:375px;margin:0 auto">
+        <div class="bottom-nav">
+          <div class="bnav-item active">
+            <div class="bnav-icon">🏠</div>
+            <div class="bnav-label" style="color:var(--cl-primary)">Home</div>
+          </div>
+          <div class="bnav-item">
+            <div class="bnav-icon">📥</div>
+            <div class="bnav-label">Capture</div>
+          </div>
+          <div class="bnav-item">
+            <div class="bnav-icon">🧠</div>
+            <div class="bnav-label">Recall</div>
+          </div>
+          <div class="bnav-item">
+            <div class="bnav-icon">📊</div>
+            <div class="bnav-label">Mastery</div>
+          </div>
+          <div class="bnav-item">
+            <div class="bnav-icon">👤</div>
+            <div class="bnav-label">Profile</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Example -->
+    <div class="brand-card" style="margin-bottom:24px">
+      <h3>Content Cards</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <!-- Recall Question Card -->
+        <div class="card">
+          <div class="card-header">
+            <span style="font-size:11px;font-weight:700">Recall Question</span>
+            <span class="badge badge-learn">Learn</span>
+          </div>
+          <div class="card-body">
+            <div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--cl-text-tertiary);margin-bottom:8px">OPEN ANSWER · FACTUAL</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:16px;line-height:1.5">What is the primary purpose of spaced repetition in learning?</div>
+            <textarea class="input" rows="2" placeholder="Type your answer..." style="resize:none;margin-bottom:12px"></textarea>
+            <button class="btn btn-primary btn-sm" style="width:100%">Submit Answer</button>
+          </div>
+        </div>
+
+        <!-- Score Result Card -->
+        <div class="card">
+          <div class="card-header" style="background:var(--cl-success-bg)">
+            <span style="font-size:11px;font-weight:700;color:var(--cl-success)">Result — Passed!</span>
+            <span style="font-family:var(--cl-font-mono);font-size:18px;font-weight:700;color:var(--cl-success)">8/10</span>
+          </div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--cl-text-secondary);line-height:1.6;margin-bottom:12px">
+              Good answer! You correctly identified that spaced repetition optimizes long-term retention. To score higher, mention the forgetting curve specifically.
+            </div>
+            <div style="font-size:9px;color:var(--cl-text-tertiary);padding-top:8px;border-top:1px solid var(--cl-border-light)">
+              SM-2: Next review in <strong style="color:var(--cl-text-secondary)">6 days</strong> · EF: 2.60 · Repetition: 2
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       7. SPACING
+       ══════════════════════════════════ -->
+  <section class="ds-section" id="spacing">
+    <div class="ds-section-title">Section 07</div>
+    <h2>Spacing Scale</h2>
+
+    <div class="brand-card" style="margin-bottom:24px">
+      <div class="space-demo">
+        <div class="space-block">
+          <div class="space-visual" style="width:4px;height:4px"></div>
+          <div class="space-name">xs</div>
+          <div class="space-px">4px</div>
+        </div>
+        <div class="space-block">
+          <div class="space-visual" style="width:8px;height:8px"></div>
+          <div class="space-name">sm</div>
+          <div class="space-px">8px</div>
+        </div>
+        <div class="space-block">
+          <div class="space-visual" style="width:16px;height:16px"></div>
+          <div class="space-name">md</div>
+          <div class="space-px">16px</div>
+        </div>
+        <div class="space-block">
+          <div class="space-visual" style="width:24px;height:24px"></div>
+          <div class="space-name">lg</div>
+          <div class="space-px">24px</div>
+        </div>
+        <div class="space-block">
+          <div class="space-visual" style="width:32px;height:32px"></div>
+          <div class="space-name">xl</div>
+          <div class="space-px">32px</div>
+        </div>
+        <div class="space-block">
+          <div class="space-visual" style="width:48px;height:48px"></div>
+          <div class="space-name">2xl</div>
+          <div class="space-px">48px</div>
+        </div>
+        <div class="space-block">
+          <div class="space-visual" style="width:64px;height:64px"></div>
+          <div class="space-name">3xl</div>
+          <div class="space-px">64px</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="brand-card">
+      <h3>Border Radius</h3>
+      <div style="display:flex;gap:24px;align-items:flex-end;margin-top:16px;flex-wrap:wrap">
+        <div style="text-align:center">
+          <div style="width:48px;height:48px;background:var(--cl-primary-bg);border:2px solid var(--cl-primary);border-radius:var(--cl-radius-sm)"></div>
+          <div style="font-size:9px;color:var(--cl-text-tertiary);margin-top:4px">sm · 4px</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:48px;height:48px;background:var(--cl-primary-bg);border:2px solid var(--cl-primary);border-radius:var(--cl-radius-md)"></div>
+          <div style="font-size:9px;color:var(--cl-text-tertiary);margin-top:4px">md · 8px</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:48px;height:48px;background:var(--cl-primary-bg);border:2px solid var(--cl-primary);border-radius:var(--cl-radius-lg)"></div>
+          <div style="font-size:9px;color:var(--cl-text-tertiary);margin-top:4px">lg · 12px</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:48px;height:48px;background:var(--cl-primary-bg);border:2px solid var(--cl-primary);border-radius:var(--cl-radius-xl)"></div>
+          <div style="font-size:9px;color:var(--cl-text-tertiary);margin-top:4px">xl · 16px</div>
+        </div>
+        <div style="text-align:center">
+          <div style="width:48px;height:48px;background:var(--cl-primary-bg);border:2px solid var(--cl-primary);border-radius:var(--cl-radius-full)"></div>
+          <div style="font-size:9px;color:var(--cl-text-tertiary);margin-top:4px">full · 999px</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       8. ICONOGRAPHY
+       ══════════════════════════════════ -->
+  <section class="ds-section" id="icons">
+    <div class="ds-section-title">Section 08</div>
+    <h2>Iconography</h2>
+
+    <div class="brand-card" style="margin-bottom:24px">
+      <h3>Core UI Icons (Emoji-based MVP — replace with Lucide/Phosphor in production)</h3>
+      <div class="icon-grid">
+        <div class="icon-item"><div class="icon-item-icon">🏠</div><div class="icon-item-name">Home</div></div>
+        <div class="icon-item"><div class="icon-item-icon">📥</div><div class="icon-item-name">Capture</div></div>
+        <div class="icon-item"><div class="icon-item-icon">🧠</div><div class="icon-item-name">Recall</div></div>
+        <div class="icon-item"><div class="icon-item-icon">📊</div><div class="icon-item-name">Mastery</div></div>
+        <div class="icon-item"><div class="icon-item-icon">👤</div><div class="icon-item-name">Profile</div></div>
+        <div class="icon-item"><div class="icon-item-icon">⚙️</div><div class="icon-item-name">Settings</div></div>
+        <div class="icon-item"><div class="icon-item-icon">🔔</div><div class="icon-item-name">Notification</div></div>
+        <div class="icon-item"><div class="icon-item-icon">📋</div><div class="icon-item-name">Queue</div></div>
+        <div class="icon-item"><div class="icon-item-icon">🎯</div><div class="icon-item-name">Target</div></div>
+        <div class="icon-item"><div class="icon-item-icon">🔥</div><div class="icon-item-name">Streak</div></div>
+        <div class="icon-item"><div class="icon-item-icon">✅</div><div class="icon-item-name">Pass</div></div>
+        <div class="icon-item"><div class="icon-item-icon">❌</div><div class="icon-item-name">Fail</div></div>
+      </div>
+    </div>
+
+    <div class="brand-card" style="margin-bottom:24px">
+      <h3>Engagement State Icons</h3>
+      <div class="icon-grid" style="grid-template-columns:repeat(4, 1fr)">
+        <div class="icon-item" style="border-color:var(--cl-explore)">
+          <div class="icon-item-icon">🧭</div>
+          <div class="icon-item-name">Explore</div>
+        </div>
+        <div class="icon-item" style="border-color:var(--cl-learn)">
+          <div class="icon-item-icon">🚂</div>
+          <div class="icon-item-name">Learn</div>
+        </div>
+        <div class="icon-item" style="border-color:var(--cl-grow)">
+          <div class="icon-item-icon">🌱</div>
+          <div class="icon-item-name">Grow</div>
+        </div>
+        <div class="icon-item" style="border-color:var(--cl-excel)">
+          <div class="icon-item-icon">🏆</div>
+          <div class="icon-item-name">Excel</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="brand-card">
+      <h3>Source Icons</h3>
+      <div class="icon-grid" style="grid-template-columns:repeat(3, 1fr)">
+        <div class="icon-item" style="border-color:var(--cl-explore)">
+          <div class="icon-item-icon">🟢</div>
+          <div class="icon-item-name">Source 1 — Beginner</div>
+        </div>
+        <div class="icon-item" style="border-color:var(--cl-learn)">
+          <div class="icon-item-icon">🔵</div>
+          <div class="icon-item-name">Source 2 — Inter.</div>
+        </div>
+        <div class="icon-item" style="border-color:var(--cl-grow)">
+          <div class="icon-item-icon">🟣</div>
+          <div class="icon-item-name">Source 3 — Advanced</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       PHASE ROADMAP
+       ══════════════════════════════════ -->
+  <section class="ds-section" id="roadmap">
+    <div class="ds-section-title">Design Phases</div>
+    <h2>MVP Design Roadmap</h2>
+
+    <div style="display:grid;gap:12px">
+      <div class="state-indicator" style="border-left:4px solid var(--cl-success)">
+        <div class="state-dot" style="background:var(--cl-success)"></div>
+        <div style="flex:1">
+          <div class="state-label">Phase 1: Design System</div>
+          <div class="state-desc">Brand identity, colors, typography, component library, ring system design</div>
+        </div>
+        <span class="badge badge-success">Complete</span>
+      </div>
+      <div class="state-indicator" style="border-left:4px solid var(--cl-primary)">
+        <div class="state-dot" style="background:var(--cl-primary)"></div>
+        <div style="flex:1">
+          <div class="state-label">Phase 2: Onboarding & Auth</div>
+          <div class="state-desc">Splash screen, Sign Up/Login, Profile Setup, Skill & Interest Selection</div>
+        </div>
+        <span class="badge badge-warning">Next</span>
+      </div>
+      <div class="state-indicator" style="border-left:4px solid var(--cl-border)">
+        <div class="state-dot" style="background:var(--cl-border)"></div>
+        <div style="flex:1">
+          <div class="state-label">Phase 3: Dashboard & Home</div>
+          <div class="state-desc">Source progress display, Today's queue, Capture CTA, Recent activity</div>
+        </div>
+        <span class="badge badge-neutral">Planned</span>
+      </div>
+      <div class="state-indicator" style="border-left:4px solid var(--cl-border)">
+        <div class="state-dot" style="background:var(--cl-border)"></div>
+        <div style="flex:1">
+          <div class="state-label">Phase 4: Learning Screens</div>
+          <div class="state-desc">Capture flow, Recall sessions (Open/MCQ/Cloze), Results, Review queue</div>
+        </div>
+        <span class="badge badge-neutral">Planned</span>
+      </div>
+      <div class="state-indicator" style="border-left:4px solid var(--cl-border)">
+        <div class="state-dot" style="background:var(--cl-border)"></div>
+        <div style="flex:1">
+          <div class="state-label">Phase 5: Profile & Settings</div>
+          <div class="state-desc">User profile, Achievements, Source badges, Notification settings, Privacy controls</div>
+        </div>
+        <span class="badge badge-neutral">Planned</span>
+      </div>
+      <div class="state-indicator" style="border-left:4px solid var(--cl-border)">
+        <div class="state-dot" style="background:var(--cl-border)"></div>
+        <div style="flex:1">
+          <div class="state-label">Phase 6: Database Schema</div>
+          <div class="state-desc">Full schema design for production (extending current SQLite v3), API endpoints</div>
+        </div>
+        <span class="badge badge-neutral">Planned</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <div style="text-align:center;padding:48px 0 32px;color:var(--cl-text-tertiary);font-size:10px">
+    <div style="font-weight:800;font-size:14px;color:var(--cl-text-primary);margin-bottom:4px">Co<span style="color:var(--cl-primary)">Learner</span></div>
+    Design System v1.0 · February 2026<br>
+    Learn ambient. Recall on demand.
+  </div>
+
+</div>
+
+</body>
+</html>

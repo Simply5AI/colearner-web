@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoLearner — Phase 4E: Session Summary &amp; Feedback</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #C4621A; --primary-h: #D87430; --primary-d: #A85316;
+  --primary-bg: #FDF0E8; --primary-bg2: #FEF8F3; --primary-glow: rgba(196,98,26,0.12);
+  --explore: #1A7070; --explore-bg: #E8F5F5; --explore-l: #2A9494;
+  --learn: #1E4FA3; --learn-bg: #E8EFF9; --learn-l: #3B6FCA;
+  --grow: #6B3FA0; --grow-bg: #F2ECFB; --grow-l: #8B5FC8;
+  --excel: #2E6B3E; --excel-bg: #EAF2ED; --excel-l: #48A05E;
+  --ok: #16A34A; --ok-bg: #F0FDF4; --err: #DC2626; --err-bg: #FEF2F2;
+  --warn: #D97706; --warn-bg: #FFFBEB; --info: #2563EB; --info-bg: #EFF6FF;
+  --bg: #FAFAF8; --bg2: #F5F3EF; --surface: #FFFFFF;
+  --border: #E5E2DC; --border-lt: #F0EDE8;
+  --t1: #1A1714; --t2: #57534E; --t3: #A8A29E; --t4: #D6D3CD;
+  --font: 'Inter', -apple-system, sans-serif; --mono: 'JetBrains Mono', monospace;
+  --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; --r-full: 999px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { font-family: var(--font); background: #0C0A09; color: var(--t1); -webkit-font-smoothing: antialiased; }
+
+.page-header { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(12,10,9,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.page-header-inner { max-width: 1440px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; height: 48px; gap: 8px; }
+.ph-logo { font-weight: 800; font-size: 14px; color: #fff; }
+.ph-logo span { color: var(--primary-h); }
+.ph-badge { font-size: 8px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary-h); background: rgba(196,98,26,0.12); padding: 3px 8px; border-radius: 99px; }
+
+.main { max-width: 1440px; margin: 0 auto; padding: 68px 24px 80px; }
+.sec-head { margin-bottom: 32px; }
+.sec-num { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--primary-h); }
+.sec-title { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.5px; margin: 2px 0; }
+.sec-desc { font-size: 13px; color: rgba(255,255,255,0.3); max-width: 600px; }
+.frame-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.2); margin-bottom: 10px; text-align: center; }
+.browser-frame { background: #1C1917; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 30px 60px rgba(0,0,0,0.4); margin-bottom: 28px; }
+.browser-bar { background: #292524; padding: 8px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.browser-dots { display: flex; gap: 5px; }
+.browser-dots span { width: 9px; height: 9px; border-radius: 50%; }
+.browser-dots span:nth-child(1) { background: #EF4444; }
+.browser-dots span:nth-child(2) { background: #F59E0B; }
+.browser-dots span:nth-child(3) { background: #22C55E; }
+.browser-url { flex: 1; background: rgba(255,255,255,0.06); border-radius: 5px; padding: 4px 10px; font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.3); }
+.browser-url .lock { color: var(--ok); }
+.browser-body { background: var(--bg); min-height: 720px; }
+
+/* ══ SESSION SUMMARY LAYOUT ══ */
+.summary-layout { min-height: 720px; display: flex; flex-direction: column; }
+.summary-topbar { background: var(--surface); border-bottom: 1px solid var(--border-lt); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+.st-left h1 { font-size: 18px; font-weight: 800; color: var(--t1); }
+.st-left p { font-size: 11px; color: var(--t3); }
+.st-right { display: flex; gap: 10px; }
+.btn-outline { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: 1.5px solid var(--border); border-radius: var(--r-sm); background: var(--surface); font-family: var(--font); font-size: 12px; font-weight: 600; color: var(--t2); cursor: pointer; transition: 150ms var(--ease); }
+.btn-outline:hover { border-color: var(--t3); color: var(--t1); }
+.btn-outline svg { width: 16px; height: 16px; }
+.btn-primary { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: none; border-radius: var(--r-sm); background: var(--primary); font-family: var(--font); font-size: 12px; font-weight: 700; color: white; cursor: pointer; transition: 150ms var(--ease); }
+.btn-primary:hover { background: var(--primary-d); }
+.btn-primary svg { width: 16px; height: 16px; }
+
+.summary-content { flex: 1; padding: 28px 32px; overflow-y: auto; }
+
+/* Celebration hero */
+.celebration { text-align: center; padding: 40px 0 32px; position: relative; }
+.celebration-icon { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--ok-bg), #D1FAE5); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; box-shadow: 0 0 0 8px rgba(22,163,74,0.08), 0 0 0 16px rgba(22,163,74,0.04); }
+.celebration h2 { font-size: 26px; font-weight: 900; color: var(--t1); letter-spacing: -0.4px; margin-bottom: 4px; }
+.celebration p { font-size: 14px; color: var(--t3); }
+
+/* Score Source */
+.score-ring-wrap { position: relative; width: 120px; height: 120px; margin: 0 auto 16px; }
+.score-ring-svg { width: 120px; height: 120px; transform: rotate(-90deg); }
+.score-ring-bg { fill: none; stroke: var(--bg2); stroke-width: 8; }
+.score-ring-fg { fill: none; stroke-width: 8; stroke-linecap: round; }
+.score-ring-fg.good { stroke: var(--ok); }
+.score-ring-fg.ok { stroke: var(--warn); }
+.score-ring-fg.bad { stroke: var(--err); }
+.score-ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+.score-ring-val { font-family: var(--mono); font-size: 32px; font-weight: 900; line-height: 1; }
+.score-ring-label { font-size: 9px; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: 0.1em; }
+
+/* Stats grid */
+.summary-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+.ss-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 18px 16px; text-align: center; }
+.ss-card-icon { font-size: 24px; margin-bottom: 6px; }
+.ss-card-val { font-family: var(--mono); font-size: 22px; font-weight: 800; color: var(--t1); }
+.ss-card-label { font-size: 10px; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+
+/* Question breakdown table */
+.breakdown-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; margin-bottom: 24px; }
+.bc-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border-lt); }
+.bc-title { font-size: 14px; font-weight: 800; color: var(--t1); }
+.bc-table { width: 100%; border-collapse: collapse; }
+.bc-table th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--t3); padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border-lt); background: var(--bg); }
+.bc-table td { font-size: 13px; padding: 14px 16px; border-bottom: 1px solid var(--border-lt); vertical-align: middle; }
+.bc-table tr:last-child td { border-bottom: none; }
+.bc-table tr:hover { background: var(--bg2); }
+.bc-concept { font-weight: 600; color: var(--t1); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bc-type-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: var(--r-full); font-size: 10px; font-weight: 700; }
+.bc-type-badge.open { background: var(--learn-bg); color: var(--learn); }
+.bc-type-badge.mcq { background: var(--explore-bg); color: var(--explore); }
+.bc-type-badge.cloze { background: var(--grow-bg); color: var(--grow); }
+.bc-score { font-family: var(--mono); font-weight: 700; font-size: 14px; }
+.bc-score.pass { color: var(--ok); }
+.bc-score.fail { color: var(--err); }
+.bc-result { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: var(--r-full); font-size: 10px; font-weight: 700; }
+.bc-result.passed { background: var(--ok-bg); color: var(--ok); }
+.bc-result.failed { background: var(--err-bg); color: var(--err); }
+.bc-result.skipped { background: var(--bg2); color: var(--t3); }
+.bc-sm2 { font-family: var(--mono); font-size: 11px; color: var(--t3); }
+.bc-sm2 .up { color: var(--ok); }
+.bc-sm2 .down { color: var(--err); }
+
+/* Source progress update */
+.ring-update { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 24px; margin-bottom: 24px; display: flex; align-items: center; gap: 24px; }
+.ru-ring { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+.ru-ring svg { width: 80px; height: 80px; transform: rotate(-90deg); }
+.ru-ring .bg { fill: none; stroke: var(--bg2); stroke-width: 6; }
+.ru-ring .fg { fill: none; stroke: var(--explore); stroke-width: 6; stroke-linecap: round; }
+.ru-ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 24px; font-weight: 900; color: var(--explore); }
+.ru-info h3 { font-size: 16px; font-weight: 800; color: var(--t1); margin-bottom: 4px; }
+.ru-info p { font-size: 12px; color: var(--t3); line-height: 1.5; margin-bottom: 10px; }
+.ru-progress-bar { height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; max-width: 300px; }
+.ru-progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--explore), var(--explore-l)); transition: 600ms var(--ease); }
+.ru-progress-meta { display: flex; align-items: center; justify-content: space-between; max-width: 300px; margin-top: 4px; font-size: 10px; color: var(--t3); }
+.ru-progress-meta .highlight { color: var(--primary); font-weight: 700; }
+
+/* Feedback all-in-one panel */
+.feedback-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; margin-bottom: 24px; }
+.fp-head { padding: 14px 20px; border-bottom: 1px solid var(--border-lt); display: flex; align-items: center; gap: 8px; }
+.fp-title { font-size: 14px; font-weight: 800; color: var(--t1); }
+.fp-items { padding: 0; }
+.fp-item { padding: 16px 20px; border-bottom: 1px solid var(--border-lt); cursor: pointer; transition: 150ms var(--ease); }
+.fp-item:last-child { border-bottom: none; }
+.fp-item:hover { background: var(--bg); }
+.fp-item-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.fp-item-concept { font-size: 13px; font-weight: 700; color: var(--t1); }
+.fp-item-score { font-family: var(--mono); font-size: 12px; font-weight: 700; margin-left: auto; }
+.fp-item-score.pass { color: var(--ok); }
+.fp-item-score.fail { color: var(--err); }
+.fp-item-feedback { font-size: 12px; color: var(--t2); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fp-item-persona { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; margin-top: 6px; }
+.fp-item-persona.explore { color: var(--explore); }
+.fp-item-persona.learn { color: var(--learn); }
+
+/* Next actions */
+.next-actions { display: flex; gap: 12px; margin-top: 8px; }
+.na-card { flex: 1; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r-md); padding: 20px; cursor: pointer; transition: 200ms var(--ease); }
+.na-card:hover { border-color: var(--primary); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.na-icon { width: 40px; height: 40px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+.na-icon svg { width: 20px; height: 20px; }
+.na-title { font-size: 14px; font-weight: 700; color: var(--t1); margin-bottom: 4px; }
+.na-desc { font-size: 11px; color: var(--t3); line-height: 1.5; }
+
+.dev-notes { margin-top: 20px; }
+.dev-note { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--r-md); padding: 16px 20px; margin-bottom: 8px; }
+.dev-note-title { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); margin-bottom: 4px; }
+.dev-note-body { font-size: 10px; color: rgba(255,255,255,0.25); line-height: 1.7; }
+.dev-note-body code { font-family: var(--mono); background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 3px; font-size: 9px; color: var(--primary-h); }
+
+@media (max-width: 900px) { .summary-stats { grid-template-columns: repeat(2, 1fr); } .next-actions { flex-direction: column; } }
+</style>
+</head>
+<body>
+
+<nav class="page-header">
+  <div class="page-header-inner">
+    <div class="ph-logo">Co<span>Learner</span></div>
+    <span class="ph-badge">Phase 4E · Summary</span>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ════════════════════════════════════════
+     SCREEN: SESSION COMPLETE SUMMARY
+     ════════════════════════════════════════ -->
+<section>
+  <div class="sec-head">
+    <div class="sec-num">Screen 05 · Session Summary</div>
+    <div class="sec-title">Session Complete</div>
+    <div class="sec-desc">After the last question, students see a comprehensive summary: overall score, per-question breakdown, SM-2 updates, ring progress impact, and next actions.</div>
+  </div>
+
+  <div class="frame-label">Recall Session — Complete Summary</div>
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <div class="browser-dots"><span></span><span></span><span></span></div>
+      <div class="browser-url"><span class="lock">&#128274;</span> app.colearner.io/recall/session/summary/abc123</div>
+    </div>
+    <div class="browser-body">
+      <div class="summary-layout">
+        <!-- Top bar -->
+        <div class="summary-topbar">
+          <div class="st-left">
+            <h1>Session Complete</h1>
+            <p>5 questions · Mixed types · Feb 27, 2026 at 2:34 PM</p>
+          </div>
+          <div class="st-right">
+            <button class="btn-outline">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export
+            </button>
+            <button class="btn-primary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+
+        <div class="summary-content">
+          <!-- Celebration -->
+          <div class="celebration">
+            <div class="celebration-icon">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="score-ring-wrap">
+              <svg class="score-ring-svg" viewBox="0 0 120 120">
+                <circle class="score-ring-bg" cx="60" cy="60" r="52"/>
+                <!-- 80% = circumference × 0.8 ≈ 326.7 × 0.8 = 261.4 dash, offset = 326.7 - 261.4 = 65 -->
+                <circle class="score-ring-fg good" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="65"/>
+              </svg>
+              <div class="score-ring-center">
+                <div class="score-ring-val" style="color:var(--ok)">80%</div>
+                <div class="score-ring-label">Pass Rate</div>
+              </div>
+            </div>
+            <h2>Great Session!</h2>
+            <p>You passed 4 out of 5 questions. Keep it up!</p>
+          </div>
+
+          <!-- Quick stats -->
+          <div class="summary-stats">
+            <div class="ss-card">
+              <div class="ss-card-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+              <div class="ss-card-val">4/5</div>
+              <div class="ss-card-label">Passed</div>
+            </div>
+            <div class="ss-card">
+              <div class="ss-card-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div>
+              <div class="ss-card-val">6.8</div>
+              <div class="ss-card-label">Avg Score</div>
+            </div>
+            <div class="ss-card">
+              <div class="ss-card-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--learn)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+              <div class="ss-card-val">4:12</div>
+              <div class="ss-card-label">Total Time</div>
+            </div>
+            <div class="ss-card">
+              <div class="ss-card-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+              <div class="ss-card-val">8</div>
+              <div class="ss-card-label">Day Streak</div>
+            </div>
+          </div>
+
+          <!-- Question Breakdown Table -->
+          <div class="breakdown-card">
+            <div class="bc-head">
+              <div class="bc-title">Question Breakdown</div>
+            </div>
+            <table class="bc-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Concept</th>
+                  <th>Type</th>
+                  <th>Score</th>
+                  <th>Result</th>
+                  <th>SM-2 Update</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-weight:700;color:var(--t3)">1</td>
+                  <td class="bc-concept">Spaced Repetition Fundamentals</td>
+                  <td><span class="bc-type-badge open">Open</span></td>
+                  <td><span class="bc-score pass">8/10</span></td>
+                  <td><span class="bc-result passed"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Passed</span></td>
+                  <td class="bc-sm2">6d → 15d <span class="up">+9d</span></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:700;color:var(--t3)">2</td>
+                  <td class="bc-concept">Neural Network Activation Functions</td>
+                  <td><span class="bc-type-badge mcq">MCQ</span></td>
+                  <td><span class="bc-score pass">8/10</span></td>
+                  <td><span class="bc-result passed"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Passed</span></td>
+                  <td class="bc-sm2">3d → 6d <span class="up">+3d</span></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:700;color:var(--t3)">3</td>
+                  <td class="bc-concept">Gradient Descent Optimization</td>
+                  <td><span class="bc-type-badge cloze">Cloze</span></td>
+                  <td><span class="bc-score pass">7/10</span></td>
+                  <td><span class="bc-result passed"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Passed</span></td>
+                  <td class="bc-sm2">1d → 1d <span class="up">EF +0.26</span></td>
+                </tr>
+                <tr>
+                  <td style="font-weight:700;color:var(--t3)">4</td>
+                  <td class="bc-concept">Transformer Architecture</td>
+                  <td><span class="bc-type-badge cloze">Cloze</span></td>
+                  <td><span class="bc-score pass">6/10</span></td>
+                  <td><span class="bc-result passed"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Passed</span></td>
+                  <td class="bc-sm2">1d → 1d <span class="up">EF +0.04</span></td>
+                </tr>
+                <tr style="background:rgba(220,38,38,0.03)">
+                  <td style="font-weight:700;color:var(--err)">5</td>
+                  <td class="bc-concept" style="color:var(--err)">Backpropagation Algorithm</td>
+                  <td><span class="bc-type-badge mcq">MCQ</span></td>
+                  <td><span class="bc-score fail">3/10</span></td>
+                  <td><span class="bc-result failed"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Failed</span></td>
+                  <td class="bc-sm2">1d → 1d <span class="down">rep → 0</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Source Progress Update -->
+          <div class="ring-update">
+            <div class="ru-ring">
+              <svg viewBox="0 0 80 80">
+                <circle class="bg" cx="40" cy="40" r="34"/>
+                <!-- 78% progress: 213.6 × 0.78 = 166.6, offset = 213.6 - 166.6 = 47 -->
+                <circle class="fg" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="47"/>
+              </svg>
+              <div class="ru-ring-center">1</div>
+            </div>
+            <div class="ru-info">
+              <h3>Source 1 Progress Updated</h3>
+              <p>This session added 5 recall attempts to your Source 1 progress. You're getting closer to unlocking Source 2!</p>
+              <div class="ru-progress-bar"><div class="ru-progress-fill" style="width:78%"></div></div>
+              <div class="ru-progress-meta"><span>39 / 50 attempts</span><span class="highlight">+5 from this session</span></div>
+            </div>
+          </div>
+
+          <!-- Feedback Summary (collapsed) -->
+          <div class="feedback-panel">
+            <div class="fp-head">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <div class="fp-title">Judge Feedback</div>
+            </div>
+            <div class="fp-items">
+              <div class="fp-item">
+                <div class="fp-item-head">
+                  <span class="bc-type-badge open">Open</span>
+                  <span class="fp-item-concept">Spaced Repetition Fundamentals</span>
+                  <span class="fp-item-score pass">8/10</span>
+                </div>
+                <div class="fp-item-feedback">Good answer. You correctly identified the interval progression (1→6→interval×EF) and mentioned the ease factor update. To get full marks, include the EF floor value of 1.3 that prevents the factor from dropping too low.</div>
+                <div class="fp-item-persona learn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg> The Train · Learn</div>
+              </div>
+              <div class="fp-item">
+                <div class="fp-item-head">
+                  <span class="bc-type-badge mcq">MCQ</span>
+                  <span class="fp-item-concept">Neural Network Activation Functions</span>
+                  <span class="fp-item-score pass">8/10</span>
+                </div>
+                <div class="fp-item-feedback">Great choice! ReLU is the go-to activation for hidden layers in modern deep networks. It matters because it solves the vanishing gradient problem that sigmoid and tanh suffer from in deep architectures.</div>
+                <div class="fp-item-persona explore"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></svg> The Guide · Explore</div>
+              </div>
+              <div class="fp-item">
+                <div class="fp-item-head">
+                  <span class="bc-type-badge cloze">Cloze</span>
+                  <span class="fp-item-concept">Gradient Descent Optimization</span>
+                  <span class="fp-item-score pass">7/10</span>
+                </div>
+                <div class="fp-item-feedback">Good job getting "learning rate" correct. For blank #2, "diverge" is related but not precise enough. The specific behavior is overshooting — the algorithm jumps past the minimum on each step.</div>
+                <div class="fp-item-persona learn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg> The Train · Learn</div>
+              </div>
+              <div class="fp-item" style="background:rgba(220,38,38,0.02)">
+                <div class="fp-item-head">
+                  <span class="bc-type-badge mcq">MCQ</span>
+                  <span class="fp-item-concept">Backpropagation Algorithm</span>
+                  <span class="fp-item-score fail">3/10</span>
+                </div>
+                <div class="fp-item-feedback">That's a thoughtful pick, but the chain rule is the mathematical foundation that makes backpropagation work. Without it, you can't compute how each weight contributes to the error...</div>
+                <div class="fp-item-persona explore"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></svg> The Guide · Explore</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Next Actions -->
+          <div style="font-size:15px;font-weight:800;color:var(--t1);margin-bottom:14px">What's Next?</div>
+          <div class="next-actions">
+            <div class="na-card">
+              <div class="na-icon" style="background:var(--primary-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+              <div class="na-title">Start Another Session</div>
+              <div class="na-desc">You still have items in your recall queue. Practice more to improve your mastery.</div>
+            </div>
+            <div class="na-card">
+              <div class="na-icon" style="background:var(--err-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--err)" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div>
+              <div class="na-title">Retry Failed Items</div>
+              <div class="na-desc">1 item failed this session. Retry now while the feedback is fresh.</div>
+            </div>
+            <div class="na-card">
+              <div class="na-icon" style="background:var(--learn-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--learn)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+              <div class="na-title">Capture New Content</div>
+              <div class="na-desc">Feed more knowledge into CoLearner. Paste a YouTube URL to extract concepts.</div>
+            </div>
+            <div class="na-card">
+              <div class="na-icon" style="background:var(--grow-bg)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--grow)" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div>
+              <div class="na-title">View Mastery Analytics</div>
+              <div class="na-desc">See your full mastery breakdown, SM-2 intervals, and concept strength over time.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dev Notes -->
+  <div class="dev-notes">
+    <div class="dev-note">
+      <div class="dev-note-title">Next.js Route</div>
+      <div class="dev-note-body">
+        <code>app/(dashboard)/recall/session/[sessionId]/summary/page.tsx</code> — Server Component.<br>
+        Fetches session results from <code>GET /api/recall/session/:sessionId/summary</code>.<br>
+        Source progress component reads from <code>GET /api/ring/progress</code>.<br>
+        Route group: <code>(dashboard)</code> inherits sidebar layout.
+      </div>
+    </div>
+    <div class="dev-note">
+      <div class="dev-note-title">NestJS Endpoints</div>
+      <div class="dev-note-body">
+        <code>GET /api/recall/session/:sessionId/summary</code> — Returns all question results, scores, feedback, SM-2 deltas.<br>
+        <code>POST /api/recall/session/:sessionId/retry-failed</code> — Creates new session with only failed items from this session.<br>
+        <code>GET /api/mastery/export?sessionId=abc123</code> — Export session results as JSON/CSV.
+      </div>
+    </div>
+    <div class="dev-note">
+      <div class="dev-note-title">SM-2 Delta Tracking</div>
+      <div class="dev-note-body">
+        Each <code>save_recall_result()</code> call returns the before/after SM-2 state:<br>
+        <code>{ before: { interval, repetition, efactor }, after: { interval, repetition, efactor } }</code>.<br>
+        Summary computes deltas: interval change (e.g., 6d → 15d), EF change, repetition count.<br>
+        Source progress: session adds <code>questions_answered</code> to total recall attempts toward Source threshold (50 for Source 1).
+      </div>
+    </div>
+    <div class="dev-note">
+      <div class="dev-note-title">Celebration Logic</div>
+      <div class="dev-note-body">
+        100% pass rate → "Perfect Session!" with confetti animation.<br>
+        &ge;80% pass rate → "Great Session!" with check icon.<br>
+        &ge;60% pass rate → "Good Effort!" with thumbs up.<br>
+        &lt;60% pass rate → "Keep Practicing!" with encouragement.<br>
+        Streak update: if &ge;1 question answered today, increment streak. Use <code>@tanstack/react-query</code> to invalidate dashboard cache.
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>
