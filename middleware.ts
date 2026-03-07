@@ -1,0 +1,12 @@
+export { auth as middleware } from '@/lib/auth/config'
+
+export const config = {
+  matcher: [
+    '/dashboard/:path*',
+    '/recall/:path*',
+    '/extract/:path*',
+    '/settings/:path*',
+    '/login',
+    '/signup',
+  ],
+}

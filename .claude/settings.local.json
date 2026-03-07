@@ -14,7 +14,18 @@
       "Bash(npx -y pnpm-approve-builds@latest --approve=esbuild,sharp,unrs-resolver)",
       "Bash(pnpm install)",
       "Bash(pnpm dlx shadcn@latest init -d --style new-york --base-color slate)",
-      "Bash(pnpm dlx shadcn@latest init -d)"
+      "Bash(pnpm dlx shadcn@latest init -d)",
+      "Bash(pnpm dlx shadcn@latest add card badge input dialog progress toast dropdown-menu avatar separator skeleton tabs scroll-area sheet tooltip -y)",
+      "Bash(pnpm dlx shadcn@latest add card badge input dialog progress sonner dropdown-menu avatar separator skeleton tabs scroll-area sheet tooltip -y)",
+      "Bash(pnpm type-check)",
+      "Bash(pnpm lint)",
+      "Bash(npx next lint)",
+      "Bash(npx next --help)",
+      "Bash(pnpm add -D eslint)",
+      "Bash(pnpm add -D eslint@9)",
+      "Bash(pnpm add -D @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-react-hooks)",
+      "Bash(pnpm build)",
+      "Bash(pnpm test)"
     ]
   }
 }
