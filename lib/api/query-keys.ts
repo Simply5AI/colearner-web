@@ -35,4 +35,34 @@ export const queryKeys = {
     all: ['billing'] as const,
     status: () => [...queryKeys.billing.all, 'status'] as const,
   },
+
+  dashboard: {
+    all: ['dashboard'] as const,
+    stats: () => [...queryKeys.dashboard.all, 'stats'] as const,
+    queue: (filters?: Record<string, string>) =>
+      [...queryKeys.dashboard.all, 'queue', filters] as const,
+    activity: (page?: number) =>
+      [...queryKeys.dashboard.all, 'activity', page] as const,
+    sourceProgress: () =>
+      [...queryKeys.dashboard.all, 'source-progress'] as const,
+    streak: () => [...queryKeys.dashboard.all, 'streak'] as const,
+  },
+
+  capture: {
+    all: ['capture'] as const,
+    stats: () => [...queryKeys.capture.all, 'stats'] as const,
+    progress: (id: string) =>
+      [...queryKeys.capture.all, 'progress', id] as const,
+  },
+
+  masteryAnalytics: {
+    all: ['mastery-analytics'] as const,
+    stats: (range: string) =>
+      [...queryKeys.masteryAnalytics.all, 'stats', range] as const,
+    daily: (range: string) =>
+      [...queryKeys.masteryAnalytics.all, 'daily', range] as const,
+    byType: () => [...queryKeys.masteryAnalytics.all, 'by-type'] as const,
+    ledger: (params?: Record<string, string>) =>
+      [...queryKeys.masteryAnalytics.all, 'ledger', params] as const,
+  },
 }

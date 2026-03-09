@@ -6,6 +6,7 @@ export const config = {
     '/recall/:path*',
     '/extract/:path*',
     '/settings/:path*',
+    '/onboarding/:path*',
     '/login',
     '/signup',
   ],

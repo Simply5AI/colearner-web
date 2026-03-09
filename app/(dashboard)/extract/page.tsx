@@ -1,17 +1,5 @@
-import type { Metadata } from 'next'
-
-export const metadata: Metadata = {
-  title: 'Extract',
-}
+import { redirect } from 'next/navigation'
 
 export default function ExtractPage() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold">Video Extraction</h1>
-      <p className="mt-2 text-muted-foreground">
-        Extract concepts and questions from video content.
-      </p>
-      {/* TODO: VideoExtractor component */}
-    </div>
-  )
+  redirect('/capture')
 }

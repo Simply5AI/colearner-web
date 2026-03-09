@@ -97,7 +97,7 @@ colearner-web/
 
 ```
 NEXT_PUBLIC_API_URL=https://api.colearner.app   # Production
-NEXT_PUBLIC_API_URL=http://localhost:3001         # Development
+NEXT_PUBLIC_API_URL=http://localhost:3000         # Development
 ```
 
 All API calls go to `colearner-platform` NestJS backend. Auth tokens are JWT (15min access, 7d refresh). WebSocket connection for real-time recall session feedback.
@@ -112,8 +112,8 @@ GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 
 # API
-NEXT_PUBLIC_API_URL=http://localhost:3001
-NEXT_PUBLIC_WS_URL=ws://localhost:3001
+NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_WS_URL=ws://localhost:3000
 
 # Analytics
 NEXT_PUBLIC_POSTHOG_KEY=

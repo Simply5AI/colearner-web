@@ -25,7 +25,25 @@
       "Bash(pnpm add -D eslint@9)",
       "Bash(pnpm add -D @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-react-hooks)",
       "Bash(pnpm build)",
-      "Bash(pnpm test)"
+      "Bash(pnpm test)",
+      "Bash(ls -la /c/Projects/CoLearner/colearner-web/app/\\\\\\(dashboard\\\\\\)/)",
+      "WebFetch(domain:localhost)",
+      "Bash(curl -s http://localhost:3000/api/docs)",
+      "Bash(curl -s http://localhost:3000/api/docs/swagger-ui-init.js)",
+      "Bash(pnpm dlx shadcn@latest add checkbox label alert -y)",
+      "Bash(ls /c/Projects/CoLearner/colearner-web/node_modules/next-auth/jwt*)",
+      "Bash(ls /c/Projects/CoLearner/colearner-web/node_modules/@auth/core/jwt*)",
+      "Bash(timeout 15 pnpm dev)",
+      "Bash(curl -s http://localhost:3000/login)",
+      "Bash(curl -sI http://localhost:3000/login)",
+      "Bash(find \"C:\\\\Projects\\\\CoLearner\\\\colearner-web\" -type d -name \"\\(dashboard\\)\" -o -type d -name \"\\(recall\\)\" -o -type d -name \"\\(onboarding\\)\")",
+      "Bash(npx tsc --noEmit)",
+      "Bash(done)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" --connect-timeout 3 http://localhost:3000/api/auth/register -X POST -H \"Content-Type: application/json\" -d '{\"\"test\"\":true}')",
+      "Bash(curl -s -w \"\\\\n%{http_code}\" -X POST http://localhost:3000/api/auth/login -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"alimohammedwajahat@gmail.com\"\",\"\"password\"\":\"\"Abc123@123\"\"}')",
+      "Bash(curl -s http://localhost:3000/api/docs-json)",
+      "Bash(node -e \":*)",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/login -H \"Content-Type: application/json\" -d '{\"\"email\"\":\"\"alimohammedwajahat@gmail.com\"\",\"\"password\"\":\"\"Abc123@123\"\"}')"
     ]
   }
 }
