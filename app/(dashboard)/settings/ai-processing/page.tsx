@@ -69,6 +69,7 @@ export default function AiProcessingPage() {
     if (processingMode === 'local' && ollamaStatus === 'unchecked') {
       testConnection()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processingMode])
 
   const isLocal = processingMode === 'local'

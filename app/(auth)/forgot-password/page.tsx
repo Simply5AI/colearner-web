@@ -43,10 +43,10 @@ function ForgotPasswordForm() {
       }
       await forgotPassword(values.email, recaptchaToken)
       setIsSubmitSuccessful(true)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Forgot password error:', err)
       setError(
-        err?.message || 'Something went wrong. Please try again later.'
+        err instanceof Error ? err.message : 'Something went wrong. Please try again later.'
       )
     }
   }

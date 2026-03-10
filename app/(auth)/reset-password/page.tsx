@@ -55,9 +55,9 @@ function ResetPasswordForm() {
       await resetPassword({ token, newPassword: values.password })
       setIsSubmitSuccessful(true)
       toast.success('Your password has been reset successfully. You can now log in.')
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Reset password error:', err)
-      setError(err?.message || 'Failed to reset password. The link might be expired or invalid.')
+      setError(err instanceof Error ? err.message : 'Failed to reset password. The link might be expired or invalid.')
     }
   }
 
