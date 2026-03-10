@@ -7,6 +7,7 @@ import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { User, Mail, Lock, Eye, EyeOff, Check } from 'lucide-react'
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 
 import { signupSchema, type SignupInput } from '@/lib/validators/auth'
 import { getPasswordStrength } from '@/lib/utils/password-strength'
@@ -28,6 +29,7 @@ export function SignupForm() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const isSubmittingRef = useRef(false)
+  const { executeRecaptcha } = useGoogleReCaptcha()
 
   const {
     register,
@@ -57,11 +59,17 @@ export function SignupForm() {
     setError(null)
 
     try {
+      let recaptchaToken: string | undefined = undefined
+      if (executeRecaptcha) {
+        recaptchaToken = await executeRecaptcha('register')
+      }
+
       await registerUser({
         name: data.name,
         email: data.email,
         password: data.password,
         acceptedTerms: true,
+        recaptchaToken,
       })
 
       // Auto-login after successful registration

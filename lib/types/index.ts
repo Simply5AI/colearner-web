@@ -178,6 +178,102 @@ export interface StreakDay {
   status: 'active' | 'missed' | 'today' | 'future'
 }
 
+// ─── Recall Session Types ───
+
+export type QuestionType = 'MULTIPLE_CHOICE' | 'FREE_TEXT' | 'TRUE_FALSE' | 'CLOZE'
+
+export interface QuestionWithMeta {
+  id: string
+  text: string
+  type: QuestionType
+  options?: string[]
+  clozeTemplate?: string
+  clozeBlankCount?: number
+  hint?: string
+  conceptTitle: string
+  sortOrder: number
+  answered: boolean
+  skipped: boolean
+}
+
+export interface SM2Delta {
+  efBefore: number
+  efAfter: number
+  intervalBefore: number
+  intervalAfter: number
+  repsBefore: number
+  repsAfter: number
+}
+
+export interface AnswerResult {
+  attemptId: string
+  isCorrect: boolean
+  score: number
+  feedback: string
+  correctAnswer?: string
+  sm2Delta: SM2Delta
+  correctCount: number
+  totalAttempts: number
+  accuracy: number
+}
+
+export interface SessionSummaryDetailed {
+  sessionId: string
+  status: string
+  totalQuestions: number
+  answeredCount: number
+  passedCount: number
+  passRate: number
+  avgScore: number
+  totalTimeSeconds: number
+  streakCurrent: number
+  results: SessionQuestionResult[]
+  completedAt: string | null
+}
+
+export interface SessionQuestionResult {
+  questionId: string
+  conceptTitle: string
+  questionType: QuestionType
+  questionText: string
+  sortOrder: number
+  skipped: boolean
+  answered: boolean
+  isCorrect: boolean
+  score: number
+  feedback: string | null
+  userAnswer: string | null
+  timeSpentSeconds: number
+  currentInterval: number
+  currentEF: number
+  nextReviewDate: string | null
+}
+
+export interface QueueStats {
+  totalAvailable: number
+  dueCount: number
+  newCount: number
+  failedCount: number
+  passRate: number
+  typeBreakdown: Array<{ type: QuestionType; count: number }>
+}
+
+export interface RecallSessionConfig {
+  extractionId?: string
+  questionCount?: number
+}
+
+export interface RecallSessionResponse {
+  id: string
+  orgId: string
+  userId: string
+  extractionId: string | null
+  status: string
+  totalQuestions: number
+  startedAt: string
+  createdAt: string
+}
+
 // ─── Capture Types ───
 
 export interface CaptureStats {

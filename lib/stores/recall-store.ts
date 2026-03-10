@@ -1,69 +1,107 @@
 'use client'
 
 import { create } from 'zustand'
-import type { Question, AnswerFeedback, SessionSummary } from '@/lib/types'
+import type {
+  QuestionWithMeta,
+  AnswerResult,
+  SessionSummaryDetailed,
+} from '@/lib/types'
 
 interface RecallState {
+  // Session state
   sessionId: string | null
-  currentQuestion: Question | null
-  questionIndex: number
+  questions: QuestionWithMeta[]
+  currentQuestionIndex: number
   totalQuestions: number
-  isSubmitting: boolean
-  lastFeedback: AnswerFeedback | null
-  showFeedback: boolean
-  isComplete: boolean
-  summary: SessionSummary | null
 
-  startSession: (sessionId: string, totalQuestions: number) => void
-  setQuestion: (question: Question) => void
+  // Answer state
+  isSubmitting: boolean
+  lastResult: AnswerResult | null
+  showFeedback: boolean
+  answerResults: AnswerResult[]
+
+  // UI state
+  hintVisible: boolean
+  timerStartedAt: number | null
+
+  // Completion
+  isComplete: boolean
+  summary: SessionSummaryDetailed | null
+
+  // Actions
+  startSession: (sessionId: string, questions: QuestionWithMeta[]) => void
+  nextQuestion: () => void
   setSubmitting: (isSubmitting: boolean) => void
-  setFeedback: (feedback: AnswerFeedback) => void
+  setResult: (result: AnswerResult) => void
   dismissFeedback: () => void
-  setSessionComplete: (summary: SessionSummary) => void
+  toggleHint: () => void
+  startTimer: () => void
+  setSessionComplete: (summary: SessionSummaryDetailed) => void
+  markQuestionSkipped: (questionId: string) => void
   reset: () => void
 }
 
-export const useRecallStore = create<RecallState>((set) => ({
+const initialState = {
   sessionId: null,
-  currentQuestion: null,
-  questionIndex: 0,
+  questions: [],
+  currentQuestionIndex: 0,
   totalQuestions: 0,
   isSubmitting: false,
-  lastFeedback: null,
+  lastResult: null,
   showFeedback: false,
+  answerResults: [],
+  hintVisible: false,
+  timerStartedAt: null,
   isComplete: false,
   summary: null,
+}
 
-  startSession: (sessionId, totalQuestions) =>
-    set({ sessionId, totalQuestions, questionIndex: 0, isComplete: false }),
+export const useRecallStore = create<RecallState>((set) => ({
+  ...initialState,
 
-  setQuestion: (question) =>
+  startSession: (sessionId, questions) =>
+    set({
+      ...initialState,
+      sessionId,
+      questions,
+      totalQuestions: questions.length,
+      timerStartedAt: Date.now(),
+    }),
+
+  nextQuestion: () =>
     set((state) => ({
-      currentQuestion: question,
-      questionIndex: state.questionIndex + 1,
+      currentQuestionIndex: state.currentQuestionIndex + 1,
       showFeedback: false,
+      lastResult: null,
+      hintVisible: false,
+      timerStartedAt: Date.now(),
     })),
 
   setSubmitting: (isSubmitting) => set({ isSubmitting }),
 
-  setFeedback: (feedback) =>
-    set({ lastFeedback: feedback, showFeedback: true, isSubmitting: false }),
+  setResult: (result) =>
+    set((state) => ({
+      lastResult: result,
+      showFeedback: true,
+      isSubmitting: false,
+      answerResults: [...state.answerResults, result],
+    })),
 
   dismissFeedback: () => set({ showFeedback: false }),
+
+  toggleHint: () => set((state) => ({ hintVisible: !state.hintVisible })),
+
+  startTimer: () => set({ timerStartedAt: Date.now() }),
 
   setSessionComplete: (summary) =>
     set({ isComplete: true, summary, isSubmitting: false }),
 
-  reset: () =>
-    set({
-      sessionId: null,
-      currentQuestion: null,
-      questionIndex: 0,
-      totalQuestions: 0,
-      isSubmitting: false,
-      lastFeedback: null,
-      showFeedback: false,
-      isComplete: false,
-      summary: null,
-    }),
+  markQuestionSkipped: (questionId) =>
+    set((state) => ({
+      questions: state.questions.map((q) =>
+        q.id === questionId ? { ...q, skipped: true } : q
+      ),
+    })),
+
+  reset: () => set(initialState),
 }))

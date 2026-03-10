@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { SignupForm } from '@/components/auth/signup-form'
+import { RecaptchaProvider } from '@/components/auth/recaptcha-provider'
 
 export const metadata: Metadata = {
   title: 'Sign Up | CoLearner',
@@ -18,7 +19,9 @@ export default function SignupPage() {
           Start your learning journey today
         </p>
       </div>
-      <SignupForm />
+      <RecaptchaProvider>
+        <SignupForm />
+      </RecaptchaProvider>
     </div>
   )
 }

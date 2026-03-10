@@ -12,8 +12,10 @@ export const queryKeys = {
   recall: {
     all: ['recall'] as const,
     session: (id: string) => [...queryKeys.recall.all, 'session', id] as const,
+    questions: (id: string) => [...queryKeys.recall.all, 'questions', id] as const,
     history: () => [...queryKeys.recall.all, 'history'] as const,
     summary: (id: string) => [...queryKeys.recall.all, 'summary', id] as const,
+    queueStats: () => [...queryKeys.recall.all, 'queue-stats'] as const,
   },
 
   extraction: {

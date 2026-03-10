@@ -3,10 +3,10 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useRecallStore } from '@/lib/stores/recall-store'
 
-/** WebSocket hook for real-time recall session communication */
+/** WebSocket hook for real-time recall session communication (optional/future use) */
 export function useRecallWebSocket(sessionId: string, token: string) {
   const ws = useRef<WebSocket | null>(null)
-  const { setQuestion, setFeedback, setSessionComplete } = useRecallStore()
+  const { setResult, setSessionComplete } = useRecallStore()
 
   useEffect(() => {
     const WS_URL = process.env.NEXT_PUBLIC_WS_URL!
@@ -18,11 +18,8 @@ export function useRecallWebSocket(sessionId: string, token: string) {
       const data = JSON.parse(event.data)
 
       switch (data.type) {
-        case 'question':
-          setQuestion(data.question)
-          break
         case 'judged':
-          setFeedback({ score: data.score, feedback: data.feedback })
+          setResult(data.result)
           break
         case 'session_complete':
           setSessionComplete(data.summary)
@@ -31,7 +28,7 @@ export function useRecallWebSocket(sessionId: string, token: string) {
     }
 
     return () => ws.current?.close()
-  }, [sessionId, token, setQuestion, setFeedback, setSessionComplete])
+  }, [sessionId, token, setResult, setSessionComplete])
 
   const sendAnswer = useCallback((questionId: string, answer: string) => {
     ws.current?.send(

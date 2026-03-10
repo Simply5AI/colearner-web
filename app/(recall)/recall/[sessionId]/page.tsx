@@ -1,21 +1,29 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
+import { getAuthHeaders } from '@/lib/api/auth-headers'
+import { ApiError } from '@/lib/api/client'
+import { RecallSession } from '@/components/recall/recall-session'
 
 export const metadata: Metadata = {
   title: 'Recall Session',
 }
 
-export default function RecallSessionPage({
-  params: _params,
+export default async function RecallSessionPage({
+  params,
 }: {
   params: Promise<{ sessionId: string }>
 }) {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold">Recall Session</h1>
-      <p className="mt-2 text-muted-foreground">
-        Active recall session will appear here.
-      </p>
-      {/* TODO: RecallSession component with WebSocket */}
-    </div>
-  )
+  const { sessionId } = await params
+
+  let headers: Record<string, string>
+  try {
+    headers = await getAuthHeaders()
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) {
+      redirect('/api/auth/force-signout')
+    }
+    throw err
+  }
+
+  return <RecallSession sessionId={sessionId} authHeaders={headers} />
 }

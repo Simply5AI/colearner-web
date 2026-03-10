@@ -83,6 +83,31 @@ export async function captureVideo(
   return uploadFile('/api/capture/video', headers, formData)
 }
 
+export interface SaveLocalResultsPayload {
+  videoUrl: string
+  title: string
+  concepts: { title: string; description: string; order: number }[]
+  questions: {
+    conceptIndex: number
+    type: string
+    text: string
+    options: string[]
+    correctIndex: number
+    explanation: string
+  }[]
+}
+
+export async function saveLocalResults(
+  headers: Record<string, string>,
+  payload: SaveLocalResultsPayload
+): Promise<{ extractionId: string }> {
+  return apiClient<{ extractionId: string }>('/api/capture/local-results', {
+    method: 'POST',
+    headers,
+    body: payload,
+  })
+}
+
 export function getExtractionProgressSSE(
   extractionId: string,
   onProgress: (data: ExtractionProgress) => void,

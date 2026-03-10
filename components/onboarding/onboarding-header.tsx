@@ -1,4 +1,8 @@
+'use client'
+
 import Link from 'next/link'
+import { signOut } from 'next-auth/react'
+import { LogOut } from 'lucide-react'
 import { StepProgress } from '@/components/onboarding/step-progress'
 
 interface OnboardingHeaderProps {
@@ -27,12 +31,21 @@ export function OnboardingHeader({
 
       <StepProgress currentStep={currentStep} totalSteps={totalSteps} />
 
-      <Link
-        href={skipHref}
-        className="text-xs font-semibold text-muted-foreground transition-colors hover:text-brand-orange"
-      >
-        {skipLabel}
-      </Link>
+      <div className="flex items-center gap-3">
+        <Link
+          href={skipHref}
+          className="text-xs font-semibold text-muted-foreground transition-colors hover:text-brand-orange"
+        >
+          {skipLabel}
+        </Link>
+        <button
+          onClick={() => signOut({ redirectTo: '/login' })}
+          className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-destructive"
+        >
+          <LogOut className="size-3.5" />
+          Sign out
+        </button>
+      </div>
     </div>
   )
 }

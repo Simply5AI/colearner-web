@@ -10,6 +10,7 @@ interface RegisterPayload {
   email: string
   password: string
   acceptedTerms?: boolean
+  recaptchaToken?: string
 }
 
 interface LoginPayload {
@@ -52,12 +53,12 @@ export async function loginUser(payload: LoginPayload): Promise<AuthTokens> {
 /**
  * Forgot password — uses same-origin proxy route to avoid NextAuth catch-all.
  */
-export async function forgotPassword(email: string): Promise<void> {
+export async function forgotPassword(email: string, recaptchaToken?: string): Promise<void> {
   const apiUrl = getApiUrl()
   const res = await fetch(`${apiUrl}/api/auth/forgot-password`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, recaptchaToken }),
   })
 
   if (!res.ok) {
@@ -78,4 +79,22 @@ function getApiUrl() {
   }
   return url
 }
+
+/**
+ * Reset password using the token sent to email.
+ */
+export async function resetPassword(payload: { token: string; newPassword: string }): Promise<void> {
+  const apiUrl = getApiUrl()
+  const res = await fetch(`${apiUrl}/api/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: res.statusText }))
+    throw new ApiError(res.status, error.message)
+  }
+}
+
 

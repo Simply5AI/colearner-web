@@ -191,7 +191,11 @@ const authConfig: NextAuthConfig = {
       return session
     },
     authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user
+      // A user is only fully logged in if they have both their profile and at least one valid token
+      // Without an access token (e.g., if refresh fails), they should be forced to log in again
+      const hasAccessToken = !!(auth as { accessToken?: string })?.accessToken
+      const isLoggedIn = !!auth?.user && hasAccessToken
+
       const isOnboarded = (auth as { user?: { onboardingCompleted?: boolean } })?.user
         ?.onboardingCompleted ?? false
       const isOnboardingPage = nextUrl.pathname.startsWith('/onboarding')

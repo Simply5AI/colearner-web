@@ -57,7 +57,7 @@ export default async function DashboardPage() {
     : (rawQueue as { items?: RecallQueueItem[], queue?: RecallQueueItem[] })?.items || (rawQueue as { items?: RecallQueueItem[], queue?: RecallQueueItem[] })?.queue || []
 
   const dueCount = queue.length
-  const failedCount = queue.filter((q: React.ComponentProps<typeof RecallQueueCard>['queue'][0] | RecallQueueItem) => q.source === 'failed').length
+  const failedCount = queue.filter((q: RecallQueueItem) => q.source === 'failed').length
 
   return (
     <>

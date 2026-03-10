@@ -1,5 +1,43 @@
 import { create } from 'zustand'
 
+interface LocalConfig {
+  baseUrl: string
+  pass1Model: string
+  pass2Model: string
+}
+
+interface LocalProgress {
+  phase: 'transcript' | 'chunking' | 'pass1' | 'pass2' | 'saving'
+  current: number
+  total: number
+  detail?: string
+}
+
+const LOCAL_CONFIG_KEY = 'colearner:ollama-config'
+const PROCESSING_MODE_KEY = 'colearner:processing-mode'
+
+function loadLocalConfig(): LocalConfig {
+  if (typeof window === 'undefined') {
+    return { baseUrl: 'http://localhost:11434', pass1Model: '', pass2Model: '' }
+  }
+  try {
+    const stored = localStorage.getItem(LOCAL_CONFIG_KEY)
+    if (stored) return JSON.parse(stored) as LocalConfig
+  } catch {}
+  return { baseUrl: 'http://localhost:11434', pass1Model: '', pass2Model: '' }
+}
+
+function saveLocalConfig(config: LocalConfig) {
+  try {
+    localStorage.setItem(LOCAL_CONFIG_KEY, JSON.stringify(config))
+  } catch {}
+}
+
+function loadProcessingMode(): 'cloud' | 'local' {
+  if (typeof window === 'undefined') return 'cloud'
+  return (localStorage.getItem(PROCESSING_MODE_KEY) as 'cloud' | 'local') || 'cloud'
+}
+
 interface CaptureState {
   expandedSource: number | null
   activeAudioTab: 'upload' | 'record'
@@ -8,6 +46,14 @@ interface CaptureState {
   selectedFile: File | null
   extractionId: string | null
 
+  // Local Ollama processing
+  processingMode: 'cloud' | 'local'
+  ollamaStatus: 'unchecked' | 'checking' | 'available' | 'unavailable'
+  ollamaModels: string[]
+  localConfig: LocalConfig
+  localProgress: LocalProgress | null
+  localError: string | null
+
   setExpandedSource: (index: number | null) => void
   toggleSource: (index: number) => void
   setActiveAudioTab: (tab: 'upload' | 'record') => void
@@ -15,6 +61,12 @@ interface CaptureState {
   setRecordingDuration: (seconds: number) => void
   setSelectedFile: (file: File | null) => void
   setExtractionId: (id: string | null) => void
+  setProcessingMode: (mode: 'cloud' | 'local') => void
+  setOllamaStatus: (status: CaptureState['ollamaStatus']) => void
+  setOllamaModels: (models: string[]) => void
+  setLocalConfig: (config: Partial<LocalConfig>) => void
+  setLocalProgress: (progress: LocalProgress | null) => void
+  setLocalError: (error: string | null) => void
   reset: () => void
 }
 
@@ -25,6 +77,12 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
   recordingDuration: 0,
   selectedFile: null,
   extractionId: null,
+  processingMode: loadProcessingMode(),
+  ollamaStatus: 'unchecked',
+  ollamaModels: [],
+  localConfig: loadLocalConfig(),
+  localProgress: null,
+  localError: null,
 
   setExpandedSource: (index) => set({ expandedSource: index }),
   toggleSource: (index) =>
@@ -34,6 +92,19 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
   setRecordingDuration: (seconds) => set({ recordingDuration: seconds }),
   setSelectedFile: (file) => set({ selectedFile: file }),
   setExtractionId: (id) => set({ extractionId: id }),
+  setProcessingMode: (mode) => {
+    try { localStorage.setItem(PROCESSING_MODE_KEY, mode) } catch {}
+    set({ processingMode: mode })
+  },
+  setOllamaStatus: (status) => set({ ollamaStatus: status }),
+  setOllamaModels: (models) => set({ ollamaModels: models }),
+  setLocalConfig: (partial) => {
+    const updated = { ...get().localConfig, ...partial }
+    saveLocalConfig(updated)
+    set({ localConfig: updated })
+  },
+  setLocalProgress: (progress) => set({ localProgress: progress }),
+  setLocalError: (error) => set({ localError: error }),
   reset: () =>
     set({
       expandedSource: null,
@@ -42,5 +113,7 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
       recordingDuration: 0,
       selectedFile: null,
       extractionId: null,
+      localProgress: null,
+      localError: null,
     }),
 }))
