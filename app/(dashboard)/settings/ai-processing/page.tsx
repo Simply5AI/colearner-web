@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Server,
   RefreshCw,
@@ -9,8 +9,11 @@ import {
   XCircle,
   Loader2,
 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import { useCaptureStore } from '@/lib/stores/capture-store'
 import { OllamaClient } from '@/lib/ollama/ollama-client'
+import { useProfile } from '@/lib/hooks/use-profile'
+import { updateAISettings } from '@/lib/api/user'
 
 const MODEL_RECOMMENDATIONS = [
   { hardware: '8GB RAM', pass1: 'phi4-mini, llama3.2:3b', pass2: 'Same model' },
@@ -19,6 +22,10 @@ const MODEL_RECOMMENDATIONS = [
 ]
 
 export default function AiProcessingPage() {
+  const { data: session } = useSession()
+  const { data: profile } = useProfile()
+  const hydrated = useRef(false)
+
   const {
     processingMode,
     setProcessingMode,
@@ -28,9 +35,35 @@ export default function AiProcessingPage() {
     setOllamaModels,
     localConfig,
     setLocalConfig,
+    hydrateFromProfile,
   } = useCaptureStore()
 
   const [testing, setTesting] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  // Hydrate store from profile on first load
+  useEffect(() => {
+    if (profile && !hydrated.current) {
+      hydrated.current = true
+      hydrateFromProfile({
+        processingMode: profile.processingMode,
+        ollamaBaseUrl: profile.ollamaBaseUrl,
+        ollamaPass1Model: profile.ollamaPass1Model,
+        ollamaPass2Model: profile.ollamaPass2Model,
+      })
+    }
+  }, [profile, hydrateFromProfile])
+
+  const saveToBackend = async (data: Record<string, unknown>) => {
+    if (!session?.accessToken) return
+    setSaving(true)
+    try {
+      await updateAISettings(session.accessToken, data)
+    } catch {
+      // Silently fail — localStorage still has the value as fallback
+    }
+    setSaving(false)
+  }
 
   const testConnection = async () => {
     setTesting(true)
@@ -74,6 +107,31 @@ export default function AiProcessingPage() {
 
   const isLocal = processingMode === 'local'
 
+  const handleToggleMode = () => {
+    const next = isLocal ? 'cloud' : 'local'
+    setProcessingMode(next)
+    saveToBackend({ processingMode: next })
+    if (next === 'local') testConnection()
+  }
+
+  const handleBaseUrlChange = (value: string) => {
+    setLocalConfig({ baseUrl: value })
+  }
+
+  const handleBaseUrlBlur = () => {
+    saveToBackend({ ollamaBaseUrl: localConfig.baseUrl })
+  }
+
+  const handlePass1Change = (value: string) => {
+    setLocalConfig({ pass1Model: value })
+    saveToBackend({ ollamaPass1Model: value })
+  }
+
+  const handlePass2Change = (value: string) => {
+    setLocalConfig({ pass2Model: value })
+    saveToBackend({ ollamaPass2Model: value })
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -95,22 +153,23 @@ export default function AiProcessingPage() {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => {
-              const next = isLocal ? 'cloud' : 'local'
-              setProcessingMode(next)
-              if (next === 'local') testConnection()
-            }}
-            className={`relative h-6 w-11 rounded-full transition-colors ${
-              isLocal ? 'bg-primary' : 'bg-muted'
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                isLocal ? 'translate-x-5' : 'translate-x-0'
+          <div className="flex items-center gap-2">
+            {saving && (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+            )}
+            <button
+              onClick={handleToggleMode}
+              className={`relative h-6 w-11 rounded-full transition-colors ${
+                isLocal ? 'bg-primary' : 'bg-muted'
               }`}
-            />
-          </button>
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                  isLocal ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -150,7 +209,8 @@ export default function AiProcessingPage() {
                 <input
                   type="url"
                   value={localConfig.baseUrl}
-                  onChange={(e) => setLocalConfig({ baseUrl: e.target.value })}
+                  onChange={(e) => handleBaseUrlChange(e.target.value)}
+                  onBlur={handleBaseUrlBlur}
                   placeholder="http://localhost:11434"
                   className="flex-1 rounded-lg border border-border bg-accent/30 px-3 py-2 font-mono text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
                 />
@@ -216,7 +276,7 @@ export default function AiProcessingPage() {
                     </label>
                     <select
                       value={localConfig.pass1Model}
-                      onChange={(e) => setLocalConfig({ pass1Model: e.target.value })}
+                      onChange={(e) => handlePass1Change(e.target.value)}
                       className="w-full rounded-lg border border-border bg-accent/30 px-3 py-2 font-mono text-xs outline-none focus:border-primary"
                     >
                       {ollamaModels.map((m) => (
@@ -236,7 +296,7 @@ export default function AiProcessingPage() {
                     </label>
                     <select
                       value={localConfig.pass2Model}
-                      onChange={(e) => setLocalConfig({ pass2Model: e.target.value })}
+                      onChange={(e) => handlePass2Change(e.target.value)}
                       className="w-full rounded-lg border border-border bg-accent/30 px-3 py-2 font-mono text-xs outline-none focus:border-primary"
                     >
                       {ollamaModels.map((m) => (

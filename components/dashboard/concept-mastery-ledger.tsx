@@ -115,16 +115,18 @@ export function ConceptMasteryLedger({
                     </span>
                   </td>
                   <td className="px-4 py-3 font-mono text-[11px] text-foreground">
-                    {entry.avgScore.toFixed(1)}
+                    {Number(entry.avgScore ?? 0).toFixed(1)}
                   </td>
                   <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">
-                    {entry.easeFactor.toFixed(2)}
+                    {Number(entry.easeFactor ?? 2.5).toFixed(2)}
                   </td>
                   <td className="px-4 py-3 text-[11px] text-muted-foreground">
-                    {new Date(entry.nextReviewDate).toLocaleDateString(
-                      'en-US',
-                      { month: 'short', day: 'numeric' }
-                    )}
+                    {entry.nextReviewDate
+                      ? new Date(entry.nextReviewDate).toLocaleDateString(
+                          'en-US',
+                          { month: 'short', day: 'numeric' }
+                        )
+                      : 'N/A'}
                   </td>
                   <td className="px-4 py-3">
                     <span

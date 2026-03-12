@@ -8,6 +8,7 @@ import { captureYouTube, saveLocalResults } from '@/lib/api/capture'
 import { useCaptureStore } from '@/lib/stores/capture-store'
 import { runPipeline } from '@/lib/ollama/extraction-pipeline'
 import { LocalExtractionProgress } from '@/components/capture/local-extraction-progress'
+import { ExtractionProgress } from '@/components/capture/extraction-progress'
 
 export function YouTubeSource() {
   const { data: session } = useSession()
@@ -17,6 +18,7 @@ export function YouTubeSource() {
   const [submitting, setSubmitting] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
+  const extractionId = useCaptureStore((s) => s.extractionId)
   const setExtractionId = useCaptureStore((s) => s.setExtractionId)
   const processingMode = useCaptureStore((s) => s.processingMode)
   const localConfig = useCaptureStore((s) => s.localConfig)
@@ -224,6 +226,13 @@ export function YouTubeSource() {
       {/* Local processing progress */}
       {isLocal && (localProgress || localError) && (
         <LocalExtractionProgress onCancel={handleCancel} />
+      )}
+
+      {/* Cloud processing progress */}
+      {!isLocal && extractionId && (
+        <div className="mt-4">
+          <ExtractionProgress />
+        </div>
       )}
     </div>
   )

@@ -44,13 +44,13 @@ export function RecallQueueCard({ items }: RecallQueueCardProps) {
           </p>
         )}
 
-        {displayItems.map((item) => {
+        {displayItems.map((item, idx) => {
           const cfg = typeConfig[item.type] ?? { icon: '📝', bgClass: 'bg-blue-50' }
           const isFailed = item.source === 'failed'
 
           return (
             <div
-              key={item.id}
+              key={`${item.id}-${idx}`}
               className={cn(
                 'flex items-center gap-3 rounded-lg border p-3 transition-colors',
                 isFailed
@@ -68,16 +68,17 @@ export function RecallQueueCard({ items }: RecallQueueCardProps) {
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="truncate text-xs font-semibold text-foreground">
-                  {item.conceptTitle}
+                <div className="flex items-center gap-1.5">
+                  <span className="truncate text-xs font-semibold text-foreground">
+                    {item.conceptTitle}
+                  </span>
+                  {item.dueCount > 1 && (
+                    <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary">
+                      {item.dueCount}
+                    </span>
+                  )}
                 </div>
                 <div className="text-[10px] text-muted-foreground">
-                  {item.type === 'open'
-                    ? 'Open Answer'
-                    : item.type === 'mcq'
-                      ? 'MCQ'
-                      : 'Cloze'}
-                  {' · '}
                   {isFailed ? 'Failed' : 'Due today'}
                   {item.lastScore !== null && (
                     <>

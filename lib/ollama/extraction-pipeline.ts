@@ -2,6 +2,8 @@ import { OllamaClient } from './ollama-client'
 import {
   CONCEPT_EXTRACTION_SYSTEM,
   CONCEPT_EXTRACTION_USER,
+  CONCEPT_RANKING_SYSTEM,
+  CONCEPT_RANKING_USER,
   QUESTION_GENERATION_SYSTEM,
   QUESTION_GENERATION_USER,
 } from './prompts'
@@ -9,6 +11,12 @@ import {
 interface ConceptResult {
   title: string
   description: string
+}
+
+interface RankedConcept {
+  title: string
+  tier: 'core' | 'supporting' | 'supplementary'
+  questionsCount: number
 }
 
 interface QuestionResult {
@@ -30,7 +38,7 @@ interface PipelineConfig {
 }
 
 interface PipelineProgress {
-  phase: 'chunking' | 'pass1' | 'pass2' | 'saving'
+  phase: 'chunking' | 'pass1' | 'ranking' | 'pass2' | 'saving'
   current: number
   total: number
   detail?: string
@@ -126,6 +134,26 @@ async function mapConcurrent<T, R>(
   return results
 }
 
+/** Fallback ranking when the ranking model fails */
+function fallbackRanking(
+  concepts: ConceptResult[],
+  maxConcepts: number
+): RankedConcept[] {
+  const selected = concepts.slice(0, Math.min(maxConcepts, 10))
+  let budget = 30
+  return selected
+    .map((c) => {
+      const count = Math.min(3, budget)
+      budget -= count
+      return {
+        title: c.title,
+        tier: 'core' as const,
+        questionsCount: count,
+      }
+    })
+    .filter((c) => c.questionsCount > 0)
+}
+
 export async function runPipeline(
   config: PipelineConfig,
   onProgress: (progress: PipelineProgress) => void
@@ -137,7 +165,9 @@ export async function runPipeline(
   const chunks = chunkTranscript(config.transcript)
   onProgress({ phase: 'chunking', current: 1, total: 1 })
 
-  // Phase 2: Extract concepts from each chunk (parallel)
+  const transcriptWordCount = config.transcript.split(/\s+/).length
+
+  // Phase 2: Extract concepts from each chunk (parallel, pass1Model = cheap)
   const concurrency = config.concurrency ?? 3
   let pass1Done = 0
 
@@ -193,27 +223,105 @@ export async function runPipeline(
     return true
   })
 
-  // Limit to 15 concepts max
-  const finalConcepts = uniqueConcepts.slice(0, 15)
+  // Phase 2.5: Rank concepts using the smarter model (pass2Model)
+  onProgress({
+    phase: 'ranking',
+    current: 0,
+    total: 1,
+    detail: `Ranking ${uniqueConcepts.length} concepts by importance`,
+  })
 
-  // Phase 3: Generate questions for each concept (parallel)
+  let maxConcepts: number
+  if (transcriptWordCount < 3000) {
+    maxConcepts = 8
+  } else if (transcriptWordCount < 8000) {
+    maxConcepts = 12
+  } else {
+    maxConcepts = 15
+  }
+
+  let rankedConcepts: RankedConcept[]
+  try {
+    const rankResponse = await client.chat({
+      model: config.pass2Model,
+      messages: [
+        { role: 'system', content: CONCEPT_RANKING_SYSTEM(maxConcepts) },
+        { role: 'user', content: CONCEPT_RANKING_USER(uniqueConcepts) },
+      ],
+      maxTokens: 2000,
+      temperature: 0.2,
+      signal: config.signal,
+    })
+
+    const parsed = parseJsonArray<RankedConcept>(rankResponse.content)
+    const validTitles = new Set(
+      uniqueConcepts.map((c) => c.title.toLowerCase().trim())
+    )
+    const validated = parsed.filter(
+      (r) =>
+        validTitles.has(r.title.toLowerCase().trim()) &&
+        ['core', 'supporting', 'supplementary'].includes(r.tier) &&
+        r.questionsCount >= 1 &&
+        r.questionsCount <= 3
+    )
+
+    // Enforce 30 question budget
+    let budget = 30
+    const budgeted: RankedConcept[] = []
+    for (const item of validated) {
+      if (budget <= 0) break
+      const count = Math.min(item.questionsCount, budget)
+      budgeted.push({ ...item, questionsCount: count })
+      budget -= count
+    }
+
+    rankedConcepts =
+      budgeted.length > 0
+        ? budgeted
+        : fallbackRanking(uniqueConcepts, maxConcepts)
+  } catch {
+    rankedConcepts = fallbackRanking(uniqueConcepts, maxConcepts)
+  }
+
+  onProgress({
+    phase: 'ranking',
+    current: 1,
+    total: 1,
+    detail: `Selected ${rankedConcepts.length} concepts from ${uniqueConcepts.length}`,
+  })
+
+  // Build ranked concept map for question counts
+  const rankMap = new Map<string, RankedConcept>()
+  for (const rc of rankedConcepts) {
+    rankMap.set(rc.title.toLowerCase().trim(), rc)
+  }
+
+  // Filter to only ranked concepts
+  const finalConcepts = uniqueConcepts.filter((c) =>
+    rankMap.has(c.title.toLowerCase().trim())
+  )
+
+  // Phase 3: Generate questions per concept (parallel, pass1Model = cheap)
   let pass2Done = 0
 
   const questionsPerConcept = await mapConcurrent(
     finalConcepts,
     concurrency,
     async (concept, i) => {
+      const ranked = rankMap.get(concept.title.toLowerCase().trim())
+      const count = ranked?.questionsCount ?? 3
+
       onProgress({
         phase: 'pass2',
         current: pass2Done,
         total: finalConcepts.length,
-        detail: `Generating questions for "${concept.title}"`,
+        detail: `Generating ${count} question${count === 1 ? '' : 's'} for "${concept.title}"`,
       })
 
       const response = await client.chat({
-        model: config.pass2Model,
+        model: config.pass1Model,
         messages: [
-          { role: 'system', content: QUESTION_GENERATION_SYSTEM },
+          { role: 'system', content: QUESTION_GENERATION_SYSTEM(count) },
           {
             role: 'user',
             content: QUESTION_GENERATION_USER(

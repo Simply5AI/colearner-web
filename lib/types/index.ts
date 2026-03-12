@@ -117,6 +117,11 @@ export interface UserProfile {
   onboardingCompletedAt?: string
   createdAt: string
   updatedAt: string
+  // AI Processing preferences
+  processingMode?: 'cloud' | 'local'
+  ollamaBaseUrl?: string
+  ollamaPass1Model?: string | null
+  ollamaPass2Model?: string | null
 }
 
 // ─── Dashboard Types ───
@@ -138,6 +143,7 @@ export interface RecallQueueItem {
   easeFactor: number
   interval: number
   dueDate: string
+  dueCount: number
 }
 
 export interface ActivityItem {
@@ -258,9 +264,16 @@ export interface QueueStats {
   typeBreakdown: Array<{ type: QuestionType; count: number }>
 }
 
+export type SessionQuestionTypeFilter = 'ALL' | QuestionType
+
+export type SessionOrder = 'sm2' | 'failed_first' | 'random' | 'newest'
+
 export interface RecallSessionConfig {
   extractionId?: string
   questionCount?: number
+  questionType?: SessionQuestionTypeFilter
+  order?: SessionOrder
+  timerSeconds?: number
 }
 
 export interface RecallSessionResponse {
@@ -272,6 +285,53 @@ export interface RecallSessionResponse {
   totalQuestions: number
   startedAt: string
   createdAt: string
+}
+
+// ─── Extraction Types ───
+
+export type ExtractionSourceType = 'YOUTUBE' | 'WEB' | 'DOCUMENT' | 'AUDIO' | 'VIDEO'
+
+export type ExtractionStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED_PASS1' | 'COMPLETED' | 'FAILED'
+
+export interface Extraction {
+  id: string
+  title: string | null
+  description: string | null
+  summary: string | null
+  videoUrl: string
+  sourceType: ExtractionSourceType
+  status: ExtractionStatus
+  conceptCount: number
+  questionCount: number
+  completedAt: string | null
+  createdAt: string
+}
+
+export interface ExtractionListResponse {
+  data: Extraction[]
+  meta: {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+    hasNext: boolean
+    hasPrev: boolean
+  }
+}
+
+// ─── Queue Item Types ───
+
+export interface QueueItem {
+  questionId: string
+  conceptTitle: string
+  questionType: QuestionType
+  source: 'due' | 'failed' | 'new'
+  lastScore: number | null
+  lastAttemptDate: string | null
+  interval: number
+  repetitions: number
+  easinessFactor: number
+  nextReviewDate: string | null
 }
 
 // ─── Capture Types ───
@@ -320,7 +380,13 @@ export interface DailyPassRate {
 }
 
 export interface TypeBreakdown {
-  type: 'open' | 'mcq' | 'cloze'
+  type:
+    | 'open'
+    | 'mcq'
+    | 'cloze'
+    | 'FREE_TEXT'
+    | 'MULTIPLE_CHOICE'
+    | 'TRUE_FALSE'
   passRate: number
   attempts: number
 }

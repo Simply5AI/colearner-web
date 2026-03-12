@@ -25,7 +25,7 @@ export default async function QueuePage({ searchParams }: QueuePageProps) {
 
   return (
     <>
-      <TopBar title="Review Queue" subtitle={`${items.length} items`}>
+      <TopBar title="Review Queue" subtitle={`${items.length} concepts due`}>
         <Link
           href="/recall"
           className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-white transition-colors hover:bg-primary/90"

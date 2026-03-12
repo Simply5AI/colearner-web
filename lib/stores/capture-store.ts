@@ -67,6 +67,12 @@ interface CaptureState {
   setLocalConfig: (config: Partial<LocalConfig>) => void
   setLocalProgress: (progress: LocalProgress | null) => void
   setLocalError: (error: string | null) => void
+  hydrateFromProfile: (settings: {
+    processingMode?: 'cloud' | 'local'
+    ollamaBaseUrl?: string
+    ollamaPass1Model?: string | null
+    ollamaPass2Model?: string | null
+  }) => void
   reset: () => void
 }
 
@@ -105,6 +111,20 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
   },
   setLocalProgress: (progress) => set({ localProgress: progress }),
   setLocalError: (error) => set({ localError: error }),
+  hydrateFromProfile: (settings) => {
+    const mode = settings.processingMode || 'cloud'
+    const config: Partial<LocalConfig> = {}
+    if (settings.ollamaBaseUrl) config.baseUrl = settings.ollamaBaseUrl
+    if (settings.ollamaPass1Model) config.pass1Model = settings.ollamaPass1Model
+    if (settings.ollamaPass2Model) config.pass2Model = settings.ollamaPass2Model
+
+    // Update localStorage cache
+    try { localStorage.setItem(PROCESSING_MODE_KEY, mode) } catch {}
+    const updated = { ...get().localConfig, ...config }
+    saveLocalConfig(updated)
+
+    set({ processingMode: mode, localConfig: updated })
+  },
   reset: () =>
     set({
       expandedSource: null,

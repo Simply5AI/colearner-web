@@ -31,15 +31,26 @@ export async function apiClient<T>(
 ): Promise<T> {
   const { method = 'GET', body, headers = {}, schema } = options
   const apiUrl = getApiUrl()
+  const url = `${apiUrl}${path}`
 
-  const res = await fetch(`${apiUrl}${path}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  })
+  let res: Response
+  try {
+    res = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+  } catch (error) {
+    const detail =
+      error instanceof Error && error.message ? ` ${error.message}` : ''
+    throw new ApiError(
+      503,
+      `Could not reach API at ${url}. Make sure colearner-platform is running and NEXT_PUBLIC_API_URL is correct.${detail}`
+    )
+  }
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: res.statusText }))

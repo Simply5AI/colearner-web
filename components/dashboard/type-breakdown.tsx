@@ -2,16 +2,21 @@ import { cn } from '@/lib/utils'
 import type { TypeBreakdown as TypeBreakdownData } from '@/lib/types'
 
 interface TypeBreakdownProps {
-  data: TypeBreakdownData[]
+  data: TypeBreakdownData[] | null | undefined
 }
 
 const typeConfig: Record<string, { label: string; color: string; bgColor: string }> = {
   open: { label: 'Open Answer', color: 'bg-blue-600', bgColor: 'bg-blue-100' },
+  FREE_TEXT: { label: 'Open Answer', color: 'bg-blue-600', bgColor: 'bg-blue-100' },
   mcq: { label: 'MCQ', color: 'bg-teal-600', bgColor: 'bg-teal-100' },
-  cloze: { label: 'Cloze', color: 'bg-purple-600', bgColor: 'bg-purple-100' },
+  MULTIPLE_CHOICE: { label: 'MCQ', color: 'bg-teal-600', bgColor: 'bg-teal-100' },
+  cloze: { label: 'True / False', color: 'bg-purple-600', bgColor: 'bg-purple-100' },
+  TRUE_FALSE: { label: 'True / False', color: 'bg-purple-600', bgColor: 'bg-purple-100' },
 }
 
 export function TypeBreakdown({ data }: TypeBreakdownProps) {
+  const items = Array.isArray(data) ? data : []
+
   return (
     <div className="rounded-xl border border-border bg-card">
       <div className="border-b border-border/50 px-[18px] py-3.5">
@@ -20,7 +25,7 @@ export function TypeBreakdown({ data }: TypeBreakdownProps) {
         </div>
       </div>
       <div className="space-y-4 p-[18px]">
-        {data.map((item) => {
+        {items.map((item) => {
           const cfg = typeConfig[item.type] ?? { label: 'Unknown', color: 'bg-gray-600', bgColor: 'bg-gray-100' }
           return (
             <div key={item.type}>
@@ -41,6 +46,11 @@ export function TypeBreakdown({ data }: TypeBreakdownProps) {
             </div>
           )
         })}
+        {items.length === 0 ? (
+          <div className="text-xs text-muted-foreground">
+            No type performance data available yet.
+          </div>
+        ) : null}
       </div>
     </div>
   )

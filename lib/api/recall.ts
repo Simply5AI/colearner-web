@@ -6,6 +6,7 @@ import type {
   AnswerResult,
   SessionSummaryDetailed,
   QueueStats,
+  QueueItem,
 } from '@/lib/types'
 
 export async function createRecallSession(
@@ -72,7 +73,17 @@ export async function getSessionSummary(
 }
 
 export async function getQueueStats(
-  headers: Record<string, string>
+  headers: Record<string, string>,
+  extractionId?: string
 ): Promise<QueueStats> {
-  return apiClient<QueueStats>('/api/recall/queue/stats', { headers })
+  const query = extractionId ? `?extractionId=${extractionId}` : ''
+  return apiClient<QueueStats>(`/api/recall/queue/stats${query}`, { headers })
+}
+
+export async function getQueueItems(
+  headers: Record<string, string>,
+  extractionId?: string
+): Promise<QueueItem[]> {
+  const query = extractionId ? `?extractionId=${extractionId}` : ''
+  return apiClient<QueueItem[]>(`/api/recall/queue/items${query}`, { headers })
 }

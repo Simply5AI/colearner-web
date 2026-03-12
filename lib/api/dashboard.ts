@@ -13,6 +13,14 @@ export async function getDashboardStats(
   return apiClient<DashboardStats>('/api/dashboard/stats', { headers })
 }
 
+interface BackendQueueItem {
+  questionId: string
+  conceptTitle: string
+  type: string
+  source: string
+  sm2: { ef: number; interval: number; nextReviewDate: string } | null
+}
+
 export async function getRecallQueue(
   headers: Record<string, string>,
   params?: { type?: string; failed?: boolean }
@@ -21,10 +29,39 @@ export async function getRecallQueue(
   if (params?.type) query.set('type', params.type)
   if (params?.failed) query.set('failed', 'true')
   const qs = query.toString()
-  return apiClient<RecallQueueItem[]>(
+  const res = await apiClient<{ items: BackendQueueItem[]; count: number } | BackendQueueItem[]>(
     `/api/dashboard/recall-queue${qs ? `?${qs}` : ''}`,
     { headers }
   )
+  const raw = Array.isArray(res) ? res : res.items ?? []
+  const mapped = raw.map((r) => ({
+    id: r.questionId,
+    conceptTitle: r.conceptTitle,
+    type: r.type as RecallQueueItem['type'],
+    source: (r.sm2 ? 'sm2_due' : 'failed') as RecallQueueItem['source'],
+    lastScore: null as number | null,
+    easeFactor: r.sm2?.ef ?? 2.5,
+    interval: r.sm2?.interval ?? 0,
+    dueDate: r.sm2?.nextReviewDate ?? new Date().toISOString(),
+    dueCount: 1,
+  }))
+
+  // Group by concept title so each concept appears once
+  const grouped = new Map<string, RecallQueueItem>()
+  for (const item of mapped) {
+    const existing = grouped.get(item.conceptTitle)
+    if (!existing) {
+      grouped.set(item.conceptTitle, item)
+    } else {
+      existing.dueCount++
+      // Keep worst metrics (lowest EF = hardest, shortest interval)
+      if (item.easeFactor < existing.easeFactor) existing.easeFactor = item.easeFactor
+      if (item.interval < existing.interval) existing.interval = item.interval
+      // Prefer failed source if any question failed
+      if (item.source === 'failed') existing.source = 'failed'
+    }
+  }
+  return Array.from(grouped.values())
 }
 
 export async function getActivity(

@@ -29,6 +29,26 @@ export async function getStreak(accessToken: string): Promise<StreakData> {
   })
 }
 
+// --- AI Settings API ---
+
+export interface AISettings {
+  processingMode: 'cloud' | 'local'
+  ollamaBaseUrl: string
+  ollamaPass1Model: string | null
+  ollamaPass2Model: string | null
+}
+
+export async function updateAISettings(
+  accessToken: string,
+  data: Partial<AISettings>
+): Promise<AISettings> {
+  return apiClient<AISettings>('/api/users/me/ai-settings', {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: data,
+  })
+}
+
 // --- Onboarding API ---
 
 const authHeaders = (token: string) => ({ Authorization: `Bearer ${token}` })

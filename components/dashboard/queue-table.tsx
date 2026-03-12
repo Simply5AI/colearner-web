@@ -65,8 +65,17 @@ export function QueueTable({ items }: QueueTableProps) {
                     : 'hover:bg-accent/50'
                 )}
               >
-                <td className="max-w-[250px] truncate px-4 py-3 text-xs font-semibold text-foreground">
-                  {item.conceptTitle}
+                <td className="max-w-[250px] px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-xs font-semibold text-foreground">
+                      {item.conceptTitle}
+                    </span>
+                    {item.dueCount > 1 && (
+                      <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                        {item.dueCount} due
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <span
