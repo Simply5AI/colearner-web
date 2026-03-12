@@ -6,8 +6,9 @@ import { useCaptureStore } from '@/lib/stores/capture-store'
 const PHASE_LABELS: Record<string, string> = {
   transcript: 'Fetching transcript',
   chunking: 'Chunking transcript',
-  pass1: 'Extracting concepts (Pass 1)',
-  pass2: 'Generating questions (Pass 2)',
+  pass1: 'Extracting concepts',
+  ranking: 'Ranking concepts by importance',
+  pass2: 'Generating questions',
   saving: 'Saving results',
 }
 

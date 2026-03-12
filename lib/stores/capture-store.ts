@@ -7,7 +7,7 @@ interface LocalConfig {
 }
 
 interface LocalProgress {
-  phase: 'transcript' | 'chunking' | 'pass1' | 'pass2' | 'saving'
+  phase: 'transcript' | 'chunking' | 'pass1' | 'ranking' | 'pass2' | 'saving'
   current: number
   total: number
   detail?: string

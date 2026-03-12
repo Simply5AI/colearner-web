@@ -16,9 +16,9 @@ import { useProfile } from '@/lib/hooks/use-profile'
 import { updateAISettings } from '@/lib/api/user'
 
 const MODEL_RECOMMENDATIONS = [
-  { hardware: '8GB RAM', pass1: 'phi4-mini, llama3.2:3b', pass2: 'Same model' },
-  { hardware: '16GB RAM', pass1: 'mistral, gemma3:4b', pass2: 'mistral, deepseek-r1:7b' },
-  { hardware: '32GB+ RAM', pass1: 'llama3.1:8b', pass2: 'deepseek-r1:14b, qwen3:14b' },
+  { hardware: '8GB RAM', fast: 'phi4-mini, llama3.2:3b', smart: 'Same model' },
+  { hardware: '16GB RAM', fast: 'mistral, gemma3:4b', smart: 'deepseek-r1:7b, mistral' },
+  { hardware: '32GB+ RAM', fast: 'mistral, llama3.1:8b', smart: 'deepseek-r1:14b, qwen3:14b' },
 ]
 
 export default function AiProcessingPage() {
@@ -272,7 +272,7 @@ export default function AiProcessingPage() {
                 <>
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      Pass 1 — Concept Extraction
+                      Fast Model — Extraction &amp; Questions
                     </label>
                     <select
                       value={localConfig.pass1Model}
@@ -286,13 +286,13 @@ export default function AiProcessingPage() {
                       ))}
                     </select>
                     <p className="mt-1 text-[10px] text-muted-foreground">
-                      Best: mistral, phi4-mini, gemma3 — good at summarization
+                      Used for concept extraction and question generation — pick a fast, cheap model
                     </p>
                   </div>
 
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      Pass 2 — Question Generation
+                      Smart Model — Concept Ranking
                     </label>
                     <select
                       value={localConfig.pass2Model}
@@ -306,7 +306,7 @@ export default function AiProcessingPage() {
                       ))}
                     </select>
                     <p className="mt-1 text-[10px] text-muted-foreground">
-                      Best: deepseek-r1, mistral — strong at reasoning and quiz generation
+                      Ranks concepts by importance and assigns question counts — pick a smart, reasoning model
                     </p>
                   </div>
                 </>
@@ -321,16 +321,16 @@ export default function AiProcessingPage() {
                   <thead>
                     <tr className="text-left text-muted-foreground">
                       <th className="pb-1 font-medium">Hardware</th>
-                      <th className="pb-1 font-medium">Pass 1</th>
-                      <th className="pb-1 font-medium">Pass 2</th>
+                      <th className="pb-1 font-medium">Fast</th>
+                      <th className="pb-1 font-medium">Smart</th>
                     </tr>
                   </thead>
                   <tbody className="text-foreground/80">
                     {MODEL_RECOMMENDATIONS.map((r) => (
                       <tr key={r.hardware}>
                         <td className="py-0.5 font-medium">{r.hardware}</td>
-                        <td className="py-0.5 font-mono">{r.pass1}</td>
-                        <td className="py-0.5 font-mono">{r.pass2}</td>
+                        <td className="py-0.5 font-mono">{r.fast}</td>
+                        <td className="py-0.5 font-mono">{r.smart}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -363,13 +363,19 @@ export default function AiProcessingPage() {
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
                   2
                 </span>
-                Transcript is sent to Ollama on your machine — never leaves your device
+                <strong>Fast model</strong> extracts concepts from transcript chunks locally
               </li>
               <li className="flex gap-2">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
                   3
                 </span>
-                Concepts and questions are generated locally, then saved to your account
+                <strong>Smart model</strong> ranks concepts by importance and assigns question counts
+              </li>
+              <li className="flex gap-2">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                  4
+                </span>
+                <strong>Fast model</strong> generates questions per concept, then results are saved
               </li>
             </ol>
             <p className="mt-3 text-[10px] text-muted-foreground/70">
