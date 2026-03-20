@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { SessionConfigPanel } from '@/components/recall/session-config-panel'
 import { QueuePreviewV2 } from '@/components/recall/queue-preview-v2'
 import type { QueueStats, QueueItem } from '@/lib/types'
