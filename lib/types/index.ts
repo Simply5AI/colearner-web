@@ -324,6 +324,7 @@ export interface ExtractionListResponse {
 export interface QueueItem {
   questionId: string
   conceptTitle: string
+  questionText: string
   questionType: QuestionType
   source: 'due' | 'failed' | 'new'
   lastScore: number | null

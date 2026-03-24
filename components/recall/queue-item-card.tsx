@@ -92,7 +92,7 @@ export function QueueItemCard({ item, selected, onToggle }: QueueItemCardProps) 
           {config.icon}
         </div>
         <div className="min-w-0 flex-1 pr-14">
-          <p className="truncate text-sm font-bold text-foreground">{item.conceptTitle}</p>
+          <p className="truncate text-sm font-bold text-foreground">{item.questionText}</p>
           <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             {config.label}
             <span className="inline-block h-[3px] w-[3px] rounded-full bg-muted-foreground" />
