@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { Upload, Mic, Square, Play, Info, X, FileAudio } from 'lucide-react'
+import { Upload, Mic, Square, Play, Info, X, FileAudio, Cloud, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { captureAudio } from '@/lib/api/capture'
 import { useCaptureStore } from '@/lib/stores/capture-store'
@@ -265,18 +265,16 @@ export function AudioSource() {
       )}
 
       <div className="flex items-center gap-2 rounded-lg bg-accent/50 px-3 py-2 text-[10px] text-muted-foreground">
-        <Info className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
-        <span>
-          Pipeline: Whisper transcription → chunking →{' '}
-          <code className="rounded bg-card px-1.5 py-0.5 font-mono text-[9px] text-primary">
-            llama3.2:3b
-          </code>{' '}
-          →{' '}
-          <code className="rounded bg-card px-1.5 py-0.5 font-mono text-[9px] text-primary">
-            gemma2:9b
-          </code>
-        </span>
+        <Cloud className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+        <span>Cloud processing — Whisper transcription → concept extraction on our servers</span>
       </div>
+
+      {useCaptureStore.getState().processingMode === 'local' && (
+        <div className="mt-2 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-[10px] text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          <span>Audio transcription requires cloud processing. Your audio will be processed on our servers.</span>
+        </div>
+      )}
     </div>
   )
 }

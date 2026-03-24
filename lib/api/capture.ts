@@ -86,6 +86,7 @@ export async function captureVideo(
 export interface SaveLocalResultsPayload {
   videoUrl: string
   title: string
+  sourceType?: string
   concepts: { title: string; description: string; order: number }[]
   questions: {
     conceptIndex: number

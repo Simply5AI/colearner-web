@@ -1,11 +1,14 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { Upload, FileText, X, Play, Info } from 'lucide-react'
+import { Upload, FileText, X, Play, Info, Cloud, Monitor } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { captureDocument } from '@/lib/api/capture'
+import { captureDocument, saveLocalResults } from '@/lib/api/capture'
 import { useCaptureStore } from '@/lib/stores/capture-store'
+import { runPipeline } from '@/lib/ollama/extraction-pipeline'
+import { extractTextFromFile } from '@/lib/extraction/document-extractor'
+import { LocalExtractionProgress } from '@/components/capture/local-extraction-progress'
 
 const ACCEPTED_TYPES = ['.pdf', '.docx', '.doc', '.txt']
 const MAX_SIZE_MB = 25
@@ -17,6 +20,14 @@ export function DocumentSource() {
   const setExtractionId = useCaptureStore((s) => s.setExtractionId)
   const [submitting, setSubmitting] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  const abortRef = useRef<AbortController | null>(null)
+
+  const processingMode = useCaptureStore((s) => s.processingMode)
+  const localConfig = useCaptureStore((s) => s.localConfig)
+  const localProgress = useCaptureStore((s) => s.localProgress)
+  const setLocalProgress = useCaptureStore((s) => s.setLocalProgress)
+  const localError = useCaptureStore((s) => s.localError)
+  const setLocalError = useCaptureStore((s) => s.setLocalError)
 
   const handleFile = useCallback(
     (file: File) => {
@@ -38,17 +49,108 @@ export function DocumentSource() {
     if (file) handleFile(file)
   }
 
+  async function handleCloudSubmit() {
+    if (!selectedFile || !session?.accessToken) return
+    const headers = { Authorization: `Bearer ${session.accessToken}` }
+    const { extractionId } = await captureDocument(headers, selectedFile)
+    setExtractionId(extractionId)
+  }
+
+  async function handleLocalSubmit() {
+    if (!selectedFile || !session?.accessToken) return
+    if (!localConfig.pass1Model || !localConfig.pass2Model) {
+      setLocalError('Select models in Settings > AI Processing first')
+      return
+    }
+
+    const abort = new AbortController()
+    abortRef.current = abort
+
+    // Step 1: Extract text from document client-side
+    setLocalProgress({ phase: 'document-extract', current: 0, total: 1 })
+    const text = await extractTextFromFile(selectedFile)
+    if (!text || text.trim().length === 0) {
+      throw new Error('Could not extract text from document')
+    }
+    setLocalProgress({ phase: 'document-extract', current: 1, total: 1 })
+
+    // Step 2-3: Run extraction pipeline locally
+    const result = await runPipeline(
+      {
+        transcript: text,
+        pass1Model: localConfig.pass1Model,
+        pass2Model: localConfig.pass2Model,
+        ollamaBaseUrl: localConfig.baseUrl,
+        signal: abort.signal,
+      },
+      (progress) => setLocalProgress(progress)
+    )
+
+    // Step 4: Save results to API
+    setLocalProgress({ phase: 'saving', current: 0, total: 1 })
+    const headers = { Authorization: `Bearer ${session.accessToken}` }
+
+    const title = selectedFile.name.replace(/\.[^.]+$/, '')
+    const concepts = result.concepts.map((c, i) => ({
+      title: c.title,
+      description: c.description,
+      order: i,
+    }))
+
+    const questions = result.questions.flatMap((qg) =>
+      qg.questions.map((q) => ({
+        conceptIndex: qg.conceptIndex,
+        type: q.type,
+        text: q.text,
+        options: q.options,
+        correctIndex: q.correctIndex,
+        explanation: q.explanation,
+      }))
+    )
+
+    await saveLocalResults(headers, {
+      videoUrl: `file://${selectedFile.name}`,
+      title,
+      concepts,
+      questions,
+      sourceType: 'DOCUMENT',
+    })
+
+    setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved — ${concepts.length} concepts, ${questions.length} questions` })
+  }
+
   async function handleSubmit() {
     if (!selectedFile || submitting || !session?.accessToken) return
     setSubmitting(true)
+    setLocalError(null)
+    setLocalProgress(null)
+
     try {
-      const headers = { Authorization: `Bearer ${session.accessToken}` }
-      const { extractionId } = await captureDocument(headers, selectedFile)
-      setExtractionId(extractionId)
-    } catch {
+      if (processingMode === 'local') {
+        await handleLocalSubmit()
+      } else {
+        await handleCloudSubmit()
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setLocalError('Processing cancelled')
+      } else {
+        const message = err instanceof Error ? err.message : 'Processing failed'
+        setLocalError(message)
+      }
+    } finally {
       setSubmitting(false)
+      abortRef.current = null
     }
   }
+
+  function handleCancel() {
+    abortRef.current?.abort()
+    setSubmitting(false)
+    setLocalProgress(null)
+  }
+
+  const isLocal = processingMode === 'local'
 
   return (
     <div>
@@ -128,18 +230,34 @@ export function DocumentSource() {
       )}
 
       <div className="flex items-center gap-2 rounded-lg bg-accent/50 px-3 py-2 text-[10px] text-muted-foreground">
-        <Info className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+        {isLocal ? (
+          <Monitor className="h-3.5 w-3.5 shrink-0 text-green-500" />
+        ) : (
+          <Cloud className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+        )}
         <span>
-          Pipeline: Text extraction → chunking →{' '}
-          <code className="rounded bg-card px-1.5 py-0.5 font-mono text-[9px] text-primary">
-            llama3.2:3b
-          </code>{' '}
-          →{' '}
-          <code className="rounded bg-card px-1.5 py-0.5 font-mono text-[9px] text-primary">
-            gemma2:9b
-          </code>
+          {isLocal ? (
+            <>
+              Pipeline: Text extraction → Pass 1{' '}
+              <code className="rounded bg-card px-1.5 py-0.5 font-mono text-[9px] text-primary">
+                {localConfig.pass1Model || 'not set'}
+              </code>{' '}
+              → Pass 2{' '}
+              <code className="rounded bg-card px-1.5 py-0.5 font-mono text-[9px] text-primary">
+                {localConfig.pass2Model || 'not set'}
+              </code>
+              <span className="ml-2 text-green-600 font-medium">Local</span>
+            </>
+          ) : (
+            <>Cloud processing — document text extracted on our servers</>
+          )}
         </span>
       </div>
+
+      {/* Local processing progress */}
+      {isLocal && (localProgress || localError) && (
+        <LocalExtractionProgress onCancel={handleCancel} />
+      )}
     </div>
   )
 }

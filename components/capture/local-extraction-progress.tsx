@@ -5,7 +5,9 @@ import { useCaptureStore } from '@/lib/stores/capture-store'
 
 const PHASE_LABELS: Record<string, string> = {
   transcript: 'Fetching transcript',
-  chunking: 'Chunking transcript',
+  'article-fetch': 'Extracting article text',
+  'document-extract': 'Extracting document text',
+  chunking: 'Chunking text',
   pass1: 'Extracting concepts',
   ranking: 'Ranking concepts by importance',
   pass2: 'Generating questions',
