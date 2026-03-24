@@ -18,98 +18,69 @@ function decodeHtmlEntities(text: string): string {
 }
 
 /**
- * Fetch transcript using YouTube's internal InnerTube API.
- * Works from cloud servers (Vercel, Railway) where scraping-based
- * libraries fail due to IP-based bot detection.
+ * Fetch transcript using Supadata's free transcript API.
+ * Free tier: 100 requests/month, no credit card required.
+ * Works reliably from cloud servers (Vercel, Railway, AWS).
  */
-async function fetchViaInnerTube(
-  videoId: string
+async function fetchViaSupadata(
+  videoUrl: string,
+  apiKey: string
 ): Promise<{ transcript: string; segmentCount: number } | null> {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 15_000)
+  const timeout = setTimeout(() => controller.abort(), 30_000)
 
   try {
-    // Step 1: Get caption tracks from InnerTube player endpoint
-    const playerRes = await fetch(
-      'https://www.youtube.com/youtubei/v1/player?prettyPrint=false',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        },
-        body: JSON.stringify({
-          context: {
-            client: {
-              clientName: 'WEB',
-              clientVersion: '2.20250320.00.00',
-            },
-          },
-          videoId,
-        }),
-        signal: controller.signal,
-      }
-    )
+    const url = `https://api.supadata.ai/v1/transcript?url=${encodeURIComponent(videoUrl)}&text=true`
 
-    if (!playerRes.ok) return null
-
-    const playerData = await playerRes.json()
-    const captionTracks =
-      playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks
-
-    if (
-      !captionTracks ||
-      !Array.isArray(captionTracks) ||
-      captionTracks.length === 0
-    ) {
-      return null
-    }
-
-    // Prefer manual captions over auto-generated, prefer English
-    const track =
-      captionTracks.find(
-        (t: { kind?: string; languageCode?: string }) =>
-          t.kind !== 'asr' && t.languageCode === 'en'
-      ) ??
-      captionTracks.find(
-        (t: { languageCode?: string }) => t.languageCode === 'en'
-      ) ??
-      captionTracks.find((t: { kind?: string }) => t.kind !== 'asr') ??
-      captionTracks[0]
-
-    const baseUrl: string | undefined = track?.baseUrl
-    if (!baseUrl) return null
-
-    // Step 2: Fetch the actual caption content in JSON3 format
-    const captionUrl = baseUrl.includes('fmt=')
-      ? baseUrl
-      : `${baseUrl}&fmt=json3`
-
-    const captionRes = await fetch(captionUrl, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-      },
+    const res = await fetch(url, {
+      headers: { 'x-api-key': apiKey },
       signal: controller.signal,
     })
 
-    if (!captionRes.ok) return null
+    if (res.status === 202) {
+      // Async job for long videos (>20min) — poll for result
+      const { jobId } = (await res.json()) as { jobId: string }
+      console.log(`[supadata] Async job started: ${jobId}`)
 
-    const captionData = await captionRes.json()
-    const events: Array<{ segs?: Array<{ utf8?: string }> }> =
-      captionData?.events ?? []
+      for (let i = 0; i < 30; i++) {
+        await new Promise((r) => setTimeout(r, 2_000))
 
-    const segments = events.filter((e) => e.segs)
-    const text = segments
-      .flatMap((e) => e.segs!.map((s) => s.utf8 ?? ''))
-      .join(' ')
-      .replace(/\s+/g, ' ')
-      .trim()
+        const pollRes = await fetch(
+          `https://api.supadata.ai/v1/transcript/${jobId}`,
+          {
+            headers: { 'x-api-key': apiKey },
+            signal: controller.signal,
+          }
+        )
 
-    if (!text.length) return null
+        const pollData = (await pollRes.json()) as {
+          status: string
+          content?: string
+          error?: string
+        }
 
-    return { transcript: decodeHtmlEntities(text), segmentCount: segments.length }
+        if (pollData.status === 'completed' && pollData.content) {
+          const transcript = decodeHtmlEntities(pollData.content)
+          return { transcript, segmentCount: 1 }
+        }
+        if (pollData.status === 'failed') {
+          console.warn(`[supadata] Job failed: ${pollData.error}`)
+          return null
+        }
+      }
+      return null
+    }
+
+    if (!res.ok) {
+      console.warn(`[supadata] API returned ${res.status}`)
+      return null
+    }
+
+    const data = (await res.json()) as { content?: string }
+    if (data.content) {
+      return { transcript: decodeHtmlEntities(data.content), segmentCount: 1 }
+    }
+    return null
   } finally {
     clearTimeout(timeout)
   }
@@ -143,6 +114,7 @@ export async function POST(req: NextRequest) {
         const transcript = decodeHtmlEntities(
           transcriptItems.map((item) => item.text).join(' ')
         )
+        console.log(`[Transcript] Direct fetch: ${transcript.length} chars`)
         return NextResponse.json({
           transcript,
           videoId,
@@ -151,26 +123,34 @@ export async function POST(req: NextRequest) {
       }
     } catch (directErr) {
       console.warn(
-        `[Transcript] Direct fetch failed for ${videoId}, trying InnerTube:`,
+        `[Transcript] Direct fetch failed for ${videoId}, trying Supadata:`,
         directErr instanceof Error ? directErr.message : directErr
       )
     }
 
-    // Strategy 2: InnerTube API (works from cloud servers)
-    try {
-      const result = await fetchViaInnerTube(videoId)
-      if (result) {
-        return NextResponse.json({
-          transcript: result.transcript,
-          videoId,
-          segmentCount: result.segmentCount,
-        })
+    // Strategy 2: Supadata API (works from cloud servers)
+    const supadataKey = process.env.SUPADATA_API_KEY
+    if (supadataKey) {
+      try {
+        const result = await fetchViaSupadata(body.url, supadataKey)
+        if (result) {
+          console.log(
+            `[Transcript] Supadata fetch: ${result.transcript.length} chars`
+          )
+          return NextResponse.json({
+            transcript: result.transcript,
+            videoId,
+            segmentCount: result.segmentCount,
+          })
+        }
+      } catch (supadataErr) {
+        console.warn(
+          `[Transcript] Supadata failed for ${videoId}:`,
+          supadataErr instanceof Error ? supadataErr.message : supadataErr
+        )
       }
-    } catch (innerTubeErr) {
-      console.warn(
-        `[Transcript] InnerTube failed for ${videoId}:`,
-        innerTubeErr instanceof Error ? innerTubeErr.message : innerTubeErr
-      )
+    } else {
+      console.warn('[Transcript] SUPADATA_API_KEY not set, skipping cloud fallback')
     }
 
     // Both strategies failed
