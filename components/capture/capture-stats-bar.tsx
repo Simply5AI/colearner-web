@@ -8,7 +8,7 @@ interface CaptureStatsBarProps {
 }
 
 export function CaptureStatsBar({ stats }: CaptureStatsBarProps) {
-  const pct = Math.round((stats.todayCount / stats.dailyLimit) * 100)
+  const pct = Math.round((stats.todayCaptures / stats.dailyLimit) * 100)
   const barColor = pct >= 80 ? 'bg-destructive' : pct >= 60 ? 'bg-warning' : 'bg-green-600'
 
   return (
@@ -21,7 +21,7 @@ export function CaptureStatsBar({ stats }: CaptureStatsBarProps) {
         <div>
           <div className="text-[10px] text-muted-foreground">Today</div>
           <div className="text-sm font-extrabold text-foreground">
-            {stats.todayCount} captures
+            {stats.todayCaptures} captures
           </div>
         </div>
       </div>
@@ -52,7 +52,7 @@ export function CaptureStatsBar({ stats }: CaptureStatsBarProps) {
             Daily Limit ({stats.plan === 'free' ? 'Free' : 'Pro'})
           </span>
           <span className="text-[10px] font-bold text-foreground">
-            {stats.todayCount} / {stats.dailyLimit} used
+            {stats.todayCaptures} / {stats.dailyLimit} used
           </span>
         </div>
         <div className="h-[5px] overflow-hidden rounded-full bg-accent">

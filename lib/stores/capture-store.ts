@@ -46,6 +46,9 @@ interface CaptureState {
   selectedFile: File | null
   extractionId: string | null
 
+  // Topic selection
+  selectedTopicIds: string[]
+
   // Local Ollama processing
   processingMode: 'cloud' | 'local'
   ollamaStatus: 'unchecked' | 'checking' | 'available' | 'unavailable'
@@ -61,6 +64,8 @@ interface CaptureState {
   setRecordingDuration: (seconds: number) => void
   setSelectedFile: (file: File | null) => void
   setExtractionId: (id: string | null) => void
+  setSelectedTopicIds: (ids: string[]) => void
+  toggleTopicId: (id: string) => void
   setProcessingMode: (mode: 'cloud' | 'local') => void
   setOllamaStatus: (status: CaptureState['ollamaStatus']) => void
   setOllamaModels: (models: string[]) => void
@@ -83,6 +88,7 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
   recordingDuration: 0,
   selectedFile: null,
   extractionId: null,
+  selectedTopicIds: [],
   processingMode: loadProcessingMode(),
   ollamaStatus: 'unchecked',
   ollamaModels: [],
@@ -98,6 +104,13 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
   setRecordingDuration: (seconds) => set({ recordingDuration: seconds }),
   setSelectedFile: (file) => set({ selectedFile: file }),
   setExtractionId: (id) => set({ extractionId: id }),
+  setSelectedTopicIds: (ids) => set({ selectedTopicIds: ids }),
+  toggleTopicId: (id) =>
+    set((state) => ({
+      selectedTopicIds: state.selectedTopicIds.includes(id)
+        ? state.selectedTopicIds.filter((t) => t !== id)
+        : [...state.selectedTopicIds, id],
+    })),
   setProcessingMode: (mode) => {
     try { localStorage.setItem(PROCESSING_MODE_KEY, mode) } catch {}
     set({ processingMode: mode })
@@ -133,6 +146,7 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
       recordingDuration: 0,
       selectedFile: null,
       extractionId: null,
+      selectedTopicIds: [],
       localProgress: null,
       localError: null,
     }),

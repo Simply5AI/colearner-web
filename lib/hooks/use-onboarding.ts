@@ -1,6 +1,6 @@
 'use client'
 
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import {
   updateOnboardingProfile,
@@ -8,9 +8,26 @@ import {
   updateOnboardingSkills,
   completeOnboarding,
   updateProfile,
+  getTopics,
+  uploadAvatar,
 } from '@/lib/api/user'
 import { queryKeys } from '@/lib/api/query-keys'
+import { useOnboardingStore } from '@/lib/stores/onboarding-store'
 import type { LearningGoal } from '@/lib/types'
+
+export function useTopics() {
+  const { data: session } = useSession()
+
+  return useQuery({
+    queryKey: queryKeys.onboarding.topics(),
+    queryFn: () => {
+      if (!session?.accessToken) throw new Error('Not authenticated')
+      return getTopics(session.accessToken)
+    },
+    enabled: !!session?.accessToken,
+    staleTime: 1000 * 60 * 10, // 10 minutes
+  })
+}
 
 export function useUpdateProfile() {
   const { data: session } = useSession()
@@ -20,10 +37,10 @@ export function useUpdateProfile() {
     mutationFn: async (data: {
       name?: string
       bio?: string
-      profileImageUrl?: string
-      goals?: LearningGoal[]
-      dailyGoalMinutes?: number
-      skillsInterests?: string[]
+      avatarUrl?: string
+      learningGoal?: string
+      dailyTimeMinutes?: number
+      topicSlugs?: string[]
     }) => {
       if (!session?.accessToken) throw new Error('Not authenticated')
       return updateProfile(session.accessToken, data)
@@ -43,22 +60,33 @@ export function useCompleteOnboarding() {
       name: string
       bio?: string
       goals: LearningGoal[]
+      goalTitle?: string
       dailyGoalMinutes: number
       skillsInterests: string[]
     }) => {
       if (!session?.accessToken) throw new Error('Not authenticated')
       const token = session.accessToken
 
+      // Step 0: Upload avatar if one was selected
+      const avatarFile = useOnboardingStore.getState().avatarFile
+      let avatarUrl: string | undefined
+      if (avatarFile) {
+        const result = await uploadAvatar(token, avatarFile)
+        avatarUrl = result.avatarUrl
+      }
+
       // Step 1: Profile
       await updateOnboardingProfile(token, {
         displayName: data.name,
         bio: data.bio,
+        ...(avatarUrl ? { avatarUrl } : {}),
       })
 
       // Step 2: Goal
       await updateOnboardingGoal(token, {
         learningGoal: (data.goals[0] || 'BUILD_KNOWLEDGE').toUpperCase(),
         dailyTimeMinutes: data.dailyGoalMinutes,
+        ...(data.goalTitle ? { goalTitle: data.goalTitle } : {}),
       })
 
       // Step 3: Skills

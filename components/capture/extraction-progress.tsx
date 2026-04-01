@@ -1,155 +1,251 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { getExtractionProgressSSE } from '@/lib/api/capture'
+import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
+import { Loader2, CheckCircle2, XCircle, Play, Clock } from 'lucide-react'
+import { toast } from 'sonner'
 import { useCaptureStore } from '@/lib/stores/capture-store'
+import { useInvalidateCaptureStats } from '@/lib/hooks/use-capture'
+import { getExtractionStatus } from '@/lib/api/capture'
+import { cn } from '@/lib/utils'
 import type { ExtractionProgress as ExtractionProgressType } from '@/lib/types'
 
+const TERMINAL = ['COMPLETED', 'FAILED']
+const POLL_MS = 3000
+
 export function ExtractionProgress() {
+  const router = useRouter()
+  const { data: session } = useSession()
   const extractionId = useCaptureStore((s) => s.extractionId)
   const setExtractionId = useCaptureStore((s) => s.setExtractionId)
+  const invalidateStats = useInvalidateCaptureStats()
   const [progress, setProgress] = useState<ExtractionProgressType | null>(null)
+  const [hasNotified, setHasNotified] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
+  // Poll extraction status
   useEffect(() => {
-    if (!extractionId) return
+    if (!extractionId || !session?.accessToken) return
 
-    const eventSource = getExtractionProgressSSE(
-      extractionId,
-      (data) => {
+    let cancelled = false
+    const headers = { Authorization: `Bearer ${session.accessToken}` }
+
+    async function poll() {
+      try {
+        const data = await getExtractionStatus(headers, extractionId!)
+        if (cancelled) return
         setProgress(data)
-        if (data.status === 'completed' || data.status === 'failed') {
-          // Keep showing the result
-        }
-      },
-      () => {
-        // SSE error
-      }
-    )
 
-    return () => eventSource.close()
-  }, [extractionId])
+        if (TERMINAL.includes(data.status)) return // stop polling
+      } catch {
+        if (cancelled) return
+        // Continue polling on transient errors
+      }
+
+      if (!cancelled) {
+        setTimeout(poll, POLL_MS)
+      }
+    }
+
+    poll()
+    return () => { cancelled = true }
+  }, [extractionId, session?.accessToken])
+
+  // Scroll into view when progress first appears
+  useEffect(() => {
+    if (progress && containerRef.current) {
+      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [!!progress])
+
+  // Toast + stats refresh on completion
+  useEffect(() => {
+    if (!progress || hasNotified) return
+
+    if (progress.status === 'COMPLETED') {
+      toast.success('Extraction complete!', {
+        description: `${progress.conceptCount} concepts, ${progress.questionCount} questions ready for recall.`,
+      })
+      invalidateStats()
+      setHasNotified(true)
+    } else if (progress.status === 'FAILED') {
+      toast.error('Extraction failed', {
+        description: progress.errorMessage || 'An unexpected error occurred.',
+      })
+      setHasNotified(true)
+    }
+  }, [progress?.status])
 
   if (!extractionId || !progress) return null
 
-  const isComplete = progress.status === 'completed'
-  const isFailed = progress.status === 'failed'
+  const status = progress.status
+  const isComplete = status === 'COMPLETED'
+  const isFailed = status === 'FAILED'
+  const isPass1Done = status === 'COMPLETED_PASS1' || isComplete
+  const isProcessing = status === 'PROCESSING' || status === 'COMPLETED_PASS1'
+
+  // Determine progress percentage for the bar
+  let progressPct = 0
+  let statusLabel = ''
+  let StatusIcon = Clock
+
+  if (status === 'PENDING') {
+    progressPct = 0
+    statusLabel = 'Queued — waiting to start...'
+    StatusIcon = Clock
+  } else if (status === 'PROCESSING') {
+    progressPct = 25
+    statusLabel = 'Extracting concepts...'
+    StatusIcon = Loader2
+  } else if (status === 'COMPLETED_PASS1') {
+    progressPct = 60
+    statusLabel = `${progress.conceptCount} concepts found — generating questions...`
+    StatusIcon = Loader2
+  } else if (isComplete) {
+    progressPct = 100
+    statusLabel = `Done! ${progress.conceptCount} concepts, ${progress.questionCount} questions`
+    StatusIcon = CheckCircle2
+  } else if (isFailed) {
+    progressPct = 100
+    statusLabel = 'Extraction failed'
+    StatusIcon = XCircle
+  }
+
+  function handleDismiss() {
+    setExtractionId(null)
+    setProgress(null)
+    setHasNotified(false)
+  }
 
   return (
-    <div className="space-y-4">
-      {/* Progress bars */}
-      <div className="rounded-xl border border-border bg-card">
-        <div className="flex items-center justify-between border-b border-border/50 px-[18px] py-3.5">
-          <div className="flex items-center gap-2 text-[13px] font-bold text-foreground">
-            ⚙️ Extraction Progress
+    <div ref={containerRef} className="rounded-xl border border-border bg-card overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-border/50 px-5 py-3.5">
+        <div className="flex items-center gap-2.5">
+          <StatusIcon
+            className={cn(
+              'h-4 w-4',
+              isComplete && 'text-green-600',
+              isFailed && 'text-destructive',
+              isProcessing && 'animate-spin text-primary',
+              status === 'PENDING' && 'text-muted-foreground'
+            )}
+          />
+          <span className="text-[13px] font-bold text-foreground">
+            {progress.title || 'Extraction Progress'}
+          </span>
+        </div>
+        <span
+          className={cn(
+            'text-[11px] font-semibold',
+            isComplete && 'text-green-600',
+            isFailed && 'text-destructive',
+            isProcessing && 'text-primary',
+            status === 'PENDING' && 'text-muted-foreground'
+          )}
+        >
+          {statusLabel}
+        </span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="px-5 py-4 space-y-4">
+        <div>
+          <div className="mb-2 flex justify-between text-[11px]">
+            <span className="font-semibold text-foreground">
+              {isPass1Done ? 'Concept Extraction' : 'Processing'}
+            </span>
+            <span className="font-mono text-muted-foreground">
+              {isComplete
+                ? `${progress.conceptCount} concepts ✓`
+                : isPass1Done
+                  ? `${progress.conceptCount} concepts`
+                  : status === 'PENDING'
+                    ? 'Waiting...'
+                    : 'Analyzing...'}
+            </span>
           </div>
-          <div className="text-[11px] font-semibold text-primary">
-            {isComplete
-              ? 'Complete!'
-              : isFailed
-                ? 'Failed'
-                : 'Processing...'}
+          <div className="h-2 overflow-hidden rounded-full bg-border">
+            <div
+              className={cn(
+                'h-full rounded-full transition-all duration-700 ease-out',
+                isFailed ? 'bg-destructive' : 'bg-green-600',
+                status === 'PENDING' && 'animate-pulse bg-muted-foreground/30',
+                isProcessing && 'relative overflow-hidden'
+              )}
+              style={{ width: `${progressPct}%` }}
+            >
+              {isProcessing && (
+                <div className="absolute inset-0 animate-pulse bg-white/20" />
+              )}
+            </div>
           </div>
         </div>
-        <div className="p-[18px]">
-          {/* Pass 1 */}
-          <div className="mb-4">
-            <div className="mb-1.5 flex justify-between text-[11px]">
-              <span className="font-semibold text-foreground">
-                Pass 1 — Chunk Extraction
-              </span>
-              <span className="font-mono text-green-600">
-                {progress.pass1CompletedChunks}/{progress.pass1Chunks} chunks
-                {progress.pass1Progress >= 100 && ' ✓'}
-              </span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-border">
-              <div
-                className="h-full rounded-full bg-green-600 transition-all duration-500"
-                style={{ width: `${Math.min(100, progress.pass1Progress)}%` }}
-              />
-            </div>
-          </div>
 
-          {/* Pass 2 */}
+        {/* Question generation progress */}
+        {isPass1Done && (
           <div>
-            <div className="mb-1.5 flex justify-between text-[11px]">
+            <div className="mb-2 flex justify-between text-[11px]">
               <span className="font-semibold text-foreground">
-                Pass 2 — Question Generation
+                Question Generation
               </span>
               <span className="font-mono text-muted-foreground">
-                {progress.pass2Progress > 0
-                  ? `${Math.round(progress.pass2Progress)}%`
-                  : 'Waiting...'}
+                {isComplete
+                  ? `${progress.questionCount} questions ✓`
+                  : 'Generating...'}
               </span>
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-border">
+            <div className="h-2 overflow-hidden rounded-full bg-border">
               <div
-                className="h-full rounded-full bg-blue-600 transition-all duration-500"
-                style={{ width: `${Math.min(100, progress.pass2Progress)}%` }}
-              />
-            </div>
-          </div>
-
-          {isFailed && progress.error && (
-            <div className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {progress.error}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Extracted concepts */}
-      <div className="rounded-xl border border-border bg-card">
-        <div className="border-b border-border/50 px-[18px] py-3.5">
-          <div className="flex items-center gap-2 text-[13px] font-bold text-foreground">
-            💡 Extracted Concepts
-            {progress.conceptsFound > 0 && (
-              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
-                {progress.conceptsFound} found
-                {!isComplete && ' so far'}
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="p-3.5">
-          <div className="grid grid-cols-2 gap-2">
-            {progress.concepts.map((concept) => (
-              <div
-                key={concept.id}
-                className="rounded-lg border border-border/50 px-3.5 py-2.5"
+                className={cn(
+                  'h-full rounded-full transition-all duration-700 ease-out',
+                  isComplete ? 'bg-blue-600' : 'bg-blue-400'
+                )}
+                style={{ width: isComplete ? '100%' : '40%' }}
               >
-                <div className="text-xs font-bold text-foreground">
-                  {concept.title}
-                </div>
-                <div className="text-[10px] text-muted-foreground">
-                  {concept.type} · chunk {concept.chunkIndex + 1}
-                </div>
+                {!isComplete && (
+                  <div className="absolute inset-0 animate-pulse bg-white/20" />
+                )}
               </div>
-            ))}
-            {/* Skeleton placeholders while loading */}
-            {!isComplete &&
-              !isFailed &&
-              Array.from({ length: 2 }).map((_, i) => (
-                <div
-                  key={`skel-${i}`}
-                  className="animate-pulse rounded-lg border border-border/50 px-3.5 py-2.5 opacity-40"
-                >
-                  <div className="mb-1 h-3 w-3/4 rounded bg-border" />
-                  <div className="h-2.5 w-1/2 rounded bg-border" />
-                </div>
-              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Error message */}
+        {isFailed && progress.errorMessage && (
+          <div className="rounded-lg bg-destructive/10 px-3 py-2.5 text-xs text-destructive">
+            {progress.errorMessage}
+          </div>
+        )}
       </div>
 
-      {isComplete && (
-        <div className="flex justify-end">
+      {/* Action buttons */}
+      {(isComplete || isFailed) && (
+        <div className="flex items-center justify-between border-t border-border/50 px-5 py-3.5">
           <button
-            onClick={() => setExtractionId(null)}
-            className="rounded-lg bg-primary px-6 py-2.5 text-xs font-bold text-white transition-colors hover:bg-primary/90"
+            onClick={handleDismiss}
+            className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
           >
-            Done — Back to Sources
+            Dismiss
           </button>
+          {isComplete && (
+            <button
+              onClick={() => router.push(`/recall/start/${extractionId}`)}
+              className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-xs font-bold text-white transition-colors hover:bg-primary/90"
+            >
+              <Play className="h-3.5 w-3.5" />
+              Start Recall
+            </button>
+          )}
+          {isFailed && (
+            <button
+              onClick={handleDismiss}
+              className="rounded-lg bg-muted px-5 py-2 text-xs font-bold text-foreground transition-colors hover:bg-muted/80"
+            >
+              Try Again
+            </button>
+          )}
         </div>
       )}
     </div>

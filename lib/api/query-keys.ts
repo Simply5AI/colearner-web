@@ -25,6 +25,11 @@ export const queryKeys = {
     history: () => [...queryKeys.extraction.all, 'history'] as const,
   },
 
+  onboarding: {
+    all: ['onboarding'] as const,
+    topics: () => [...queryKeys.onboarding.all, 'topics'] as const,
+  },
+
   user: {
     all: ['user'] as const,
     profile: () => [...queryKeys.user.all, 'profile'] as const,
@@ -55,6 +60,12 @@ export const queryKeys = {
     stats: () => [...queryKeys.capture.all, 'stats'] as const,
     progress: (id: string) =>
       [...queryKeys.capture.all, 'progress', id] as const,
+  },
+
+  goals: {
+    all: () => ['goals'] as const,
+    list: () => [...queryKeys.goals.all(), 'list'] as const,
+    detail: (id: string) => [...queryKeys.goals.all(), 'detail', id] as const,
   },
 
   masteryAnalytics: {

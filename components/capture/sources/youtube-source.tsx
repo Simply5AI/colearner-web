@@ -8,7 +8,7 @@ import { captureYouTube, saveLocalResults } from '@/lib/api/capture'
 import { useCaptureStore } from '@/lib/stores/capture-store'
 import { runPipeline } from '@/lib/ollama/extraction-pipeline'
 import { LocalExtractionProgress } from '@/components/capture/local-extraction-progress'
-import { ExtractionProgress } from '@/components/capture/extraction-progress'
+import { CaptureTopicChips } from '@/components/capture/capture-topic-chips'
 
 export function YouTubeSource() {
   const { data: session } = useSession()
@@ -26,14 +26,20 @@ export function YouTubeSource() {
   const setLocalProgress = useCaptureStore((s) => s.setLocalProgress)
   const localError = useCaptureStore((s) => s.localError)
   const setLocalError = useCaptureStore((s) => s.setLocalError)
+  const selectedTopicIds = useCaptureStore((s) => s.selectedTopicIds)
 
   async function handleCloudSubmit() {
     if (!session?.accessToken) return
     const headers = { Authorization: `Bearer ${session.accessToken}` }
-    const { extractionId } = await captureYouTube(headers, url.trim(), {
-      autoTranscript,
-      questionTypes: allTypes ? ['open', 'mcq', 'cloze'] : ['open'],
-    })
+    const { extractionId } = await captureYouTube(
+      headers,
+      url.trim(),
+      {
+        autoTranscript,
+        questionTypes: allTypes ? ['open', 'mcq', 'cloze'] : ['open'],
+      },
+      selectedTopicIds.length > 0 ? selectedTopicIds : undefined,
+    )
     setExtractionId(extractionId)
   }
 
@@ -100,6 +106,7 @@ export function YouTubeSource() {
     await saveLocalResults(headers, {
       videoUrl: url.trim(),
       title: url.trim(),
+      topicIds: selectedTopicIds.length > 0 ? selectedTopicIds : undefined,
       concepts,
       questions,
     })
@@ -198,6 +205,8 @@ export function YouTubeSource() {
         </button>
       </div>
 
+      <CaptureTopicChips />
+
       <div className="flex items-center gap-2 rounded-lg bg-accent/50 px-3 py-2 text-[10px] text-muted-foreground">
         {isLocal ? (
           <Monitor className="h-3.5 w-3.5 shrink-0 text-green-500" />
@@ -228,12 +237,7 @@ export function YouTubeSource() {
         <LocalExtractionProgress onCancel={handleCancel} />
       )}
 
-      {/* Cloud processing progress */}
-      {!isLocal && extractionId && (
-        <div className="mt-4">
-          <ExtractionProgress />
-        </div>
-      )}
+      {/* Cloud progress is shown at page level via ExtractionProgress */}
     </div>
   )
 }

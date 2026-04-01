@@ -104,19 +104,36 @@ export interface BillingStatus {
 
 export type LearningGoal = 'build_knowledge' | 'retain_more' | 'exam_prep' | 'career_growth'
 
+export interface TopicItem {
+  id: string
+  name: string
+  slug: string
+  icon: string | null
+  category?: string | null
+}
+
 export interface UserProfile {
-  userId: string
+  id: string
   email: string
   name: string
+  avatarUrl?: string | null
+  /** @deprecated Use avatarUrl instead */
   profileImageUrl?: string
-  bio?: string
+  bio?: string | null
+  learningGoal?: string | null
+  dailyTimeMinutes?: number | null
+  topics?: TopicItem[]
+  /** @deprecated Use learningGoal instead */
   goals?: LearningGoal[]
+  /** @deprecated Use dailyTimeMinutes instead */
   dailyGoalMinutes?: number
+  /** @deprecated Use topics instead */
   skillsInterests?: string[]
   preferredLanguage?: string
-  onboardingCompletedAt?: string
+  onboardingCompleted?: boolean
+  onboardingCompletedAt?: string | null
   createdAt: string
-  updatedAt: string
+  updatedAt?: string
   // AI Processing preferences
   processingMode?: 'cloud' | 'local'
   ollamaBaseUrl?: string
@@ -293,6 +310,11 @@ export type ExtractionSourceType = 'YOUTUBE' | 'WEB' | 'DOCUMENT' | 'AUDIO' | 'V
 
 export type ExtractionStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED_PASS1' | 'COMPLETED' | 'FAILED'
 
+export interface ExtractionTopicInfo {
+  topic: TopicItem
+  source: 'auto' | 'manual'
+}
+
 export interface Extraction {
   id: string
   title: string | null
@@ -305,6 +327,9 @@ export interface Extraction {
   questionCount: number
   completedAt: string | null
   createdAt: string
+  topics?: ExtractionTopicInfo[]
+  totalRecallSeconds?: number
+  sessionCount?: number
 }
 
 export interface ExtractionListResponse {
@@ -338,7 +363,7 @@ export interface QueueItem {
 // ─── Capture Types ───
 
 export interface CaptureStats {
-  todayCount: number
+  todayCaptures: number
   totalConcepts: number
   dailyLimit: number
   plan: 'free' | 'pro' | 'enterprise'
@@ -348,14 +373,14 @@ export type CaptureSourceType = 'youtube' | 'web' | 'document' | 'audio' | 'vide
 
 export interface ExtractionProgress {
   id: string
-  status: 'pending' | 'pass1' | 'pass2' | 'completed' | 'failed'
-  pass1Progress: number
-  pass1Chunks: number
-  pass1CompletedChunks: number
-  pass2Progress: number
-  conceptsFound: number
-  concepts: ExtractedConcept[]
-  error?: string
+  status: string
+  sourceType?: string
+  title?: string | null
+  conceptCount: number
+  questionCount: number
+  errorMessage?: string | null
+  createdAt?: string
+  completedAt?: string | null
 }
 
 export interface ExtractedConcept {
@@ -401,4 +426,75 @@ export interface ConceptLedgerEntry {
   easeFactor: number
   nextReviewDate: string
   status: 'strong' | 'fair' | 'weak'
+}
+
+// ─── Goal Types ──────────────────────────────────────────────────────────────
+
+export type GoalStatus = 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'ARCHIVED'
+
+export interface Goal {
+  id: string
+  orgId: string
+  userId: string
+  title: string
+  description: string | null
+  targetDate: string | null
+  status: GoalStatus
+  icon: string | null
+  color: string | null
+  learningGoalTag: string | null
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface GoalProgress {
+  goalId: string
+  totalConcepts: number
+  masteredConcepts: number
+  inProgressConcepts: number
+  newConcepts: number
+  progressPercent: number
+  extractionCount: number
+}
+
+export interface GoalWithProgress extends Goal, GoalProgress {}
+
+export interface GoalExtractionLink {
+  id: string
+  goalId: string
+  extractionId: string
+  addedAt: string
+  source: 'manual' | 'ai'
+  extraction: {
+    id: string
+    title: string
+    sourceType: ExtractionSourceType
+    status: ExtractionStatus
+    createdAt: string
+    _count: { concepts: number }
+  }
+}
+
+export interface GoalDetail extends Goal, GoalProgress {
+  extractions: GoalExtractionLink[]
+}
+
+export interface CreateGoalInput {
+  title: string
+  description?: string
+  targetDate?: string
+  icon?: string
+  color?: string
+  learningGoalTag?: string
+}
+
+export interface UpdateGoalInput {
+  title?: string
+  description?: string
+  targetDate?: string
+  status?: GoalStatus
+  icon?: string
+  color?: string
+  sortOrder?: number
 }

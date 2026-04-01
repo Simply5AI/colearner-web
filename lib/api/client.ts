@@ -1,6 +1,6 @@
 import { z } from 'zod/v4'
 
-function getApiUrl(): string {
+export function getApiUrl(): string {
   const url = process.env.NEXT_PUBLIC_API_URL
   if (!url) {
     if (typeof window !== 'undefined') {

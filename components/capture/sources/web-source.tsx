@@ -7,6 +7,7 @@ import { captureWeb, saveLocalResults } from '@/lib/api/capture'
 import { useCaptureStore } from '@/lib/stores/capture-store'
 import { runPipeline } from '@/lib/ollama/extraction-pipeline'
 import { LocalExtractionProgress } from '@/components/capture/local-extraction-progress'
+import { CaptureTopicChips } from '@/components/capture/capture-topic-chips'
 
 export function WebSource() {
   const { data: session } = useSession()
@@ -21,11 +22,16 @@ export function WebSource() {
   const setLocalProgress = useCaptureStore((s) => s.setLocalProgress)
   const localError = useCaptureStore((s) => s.localError)
   const setLocalError = useCaptureStore((s) => s.setLocalError)
+  const selectedTopicIds = useCaptureStore((s) => s.selectedTopicIds)
 
   async function handleCloudSubmit() {
     if (!session?.accessToken) return
     const headers = { Authorization: `Bearer ${session.accessToken}` }
-    const { extractionId } = await captureWeb(headers, url.trim())
+    const { extractionId } = await captureWeb(
+      headers,
+      url.trim(),
+      selectedTopicIds.length > 0 ? selectedTopicIds : undefined,
+    )
     setExtractionId(extractionId)
   }
 
@@ -92,6 +98,7 @@ export function WebSource() {
     await saveLocalResults(headers, {
       videoUrl: url.trim(),
       title: title || url.trim(),
+      topicIds: selectedTopicIds.length > 0 ? selectedTopicIds : undefined,
       concepts,
       questions,
       sourceType: 'WEB',
@@ -161,6 +168,8 @@ export function WebSource() {
           </button>
         </div>
       </div>
+
+      <CaptureTopicChips />
 
       <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
         <Info className="h-3.5 w-3.5 shrink-0" />

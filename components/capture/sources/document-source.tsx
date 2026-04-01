@@ -9,6 +9,7 @@ import { useCaptureStore } from '@/lib/stores/capture-store'
 import { runPipeline } from '@/lib/ollama/extraction-pipeline'
 import { extractTextFromFile } from '@/lib/extraction/document-extractor'
 import { LocalExtractionProgress } from '@/components/capture/local-extraction-progress'
+import { CaptureTopicChips } from '@/components/capture/capture-topic-chips'
 
 const ACCEPTED_TYPES = ['.pdf', '.docx', '.doc', '.txt']
 const MAX_SIZE_MB = 25
@@ -228,6 +229,8 @@ export function DocumentSource() {
           {submitting ? 'Processing...' : 'Start Capture'}
         </button>
       )}
+
+      <CaptureTopicChips />
 
       <div className="flex items-center gap-2 rounded-lg bg-accent/50 px-3 py-2 text-[10px] text-muted-foreground">
         {isLocal ? (

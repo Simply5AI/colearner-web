@@ -10,23 +10,25 @@ export async function getCaptureStats(
 export async function captureYouTube(
   headers: Record<string, string>,
   url: string,
-  options?: { autoTranscript?: boolean; questionTypes?: string[] }
+  options?: { autoTranscript?: boolean; questionTypes?: string[] },
+  topicIds?: string[]
 ): Promise<{ extractionId: string }> {
   return apiClient<{ extractionId: string }>('/api/capture/youtube', {
     method: 'POST',
     headers,
-    body: { url, options },
+    body: { url, options, topicIds },
   })
 }
 
 export async function captureWeb(
   headers: Record<string, string>,
-  url: string
+  url: string,
+  topicIds?: string[]
 ): Promise<{ extractionId: string }> {
   return apiClient<{ extractionId: string }>('/api/capture/web', {
     method: 'POST',
     headers,
-    body: { url },
+    body: { url, topicIds },
   })
 }
 
@@ -87,6 +89,7 @@ export interface SaveLocalResultsPayload {
   videoUrl: string
   title: string
   sourceType?: string
+  topicIds?: string[]
   concepts: { title: string; description: string; order: number }[]
   questions: {
     conceptIndex: number
@@ -109,26 +112,9 @@ export async function saveLocalResults(
   })
 }
 
-export function getExtractionProgressSSE(
-  extractionId: string,
-  onProgress: (data: ExtractionProgress) => void,
-  onError?: (error: Event) => void
-): EventSource {
-  const url = `${getApiUrl()}/api/capture/${extractionId}/status`
-  const eventSource = new EventSource(url)
-
-  eventSource.onmessage = (event) => {
-    const data = JSON.parse(event.data) as ExtractionProgress
-    onProgress(data)
-    if (data.status === 'completed' || data.status === 'failed') {
-      eventSource.close()
-    }
-  }
-
-  eventSource.onerror = (event) => {
-    onError?.(event)
-    eventSource.close()
-  }
-
-  return eventSource
+export async function getExtractionStatus(
+  headers: Record<string, string>,
+  extractionId: string
+): Promise<ExtractionProgress> {
+  return apiClient<ExtractionProgress>(`/api/extractions/${extractionId}`, { headers })
 }

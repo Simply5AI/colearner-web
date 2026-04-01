@@ -42,11 +42,12 @@ export function ProfileForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-7">
       <AvatarUpload
         previewUrl={store.avatarPreviewUrl}
-        onFileSelect={(_file, previewUrl) => {
+        onFileSelect={(file, previewUrl) => {
           store.setProfile({
             displayName: store.displayName,
             bio: store.bio,
             avatarPreviewUrl: previewUrl,
+            avatarFile: file,
           })
         }}
       />

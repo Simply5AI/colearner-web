@@ -1,11 +1,18 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { Youtube, Globe, FileText, Headphones, Video, BookOpen, HelpCircle } from 'lucide-react'
+import { Youtube, Globe, FileText, Headphones, Video, BookOpen, HelpCircle, Trash2, Loader2, Clock } from 'lucide-react'
+import { resolveIcon } from '@/lib/utils/topic-icons'
+import { formatDuration } from '@/lib/utils'
+import { toast } from 'sonner'
+import { useSession } from 'next-auth/react'
+import { deleteExtraction } from '@/lib/api/extraction'
 import type { Extraction } from '@/lib/types'
 
 interface ExtractionCardProps {
   extraction: Extraction
+  onDeleted?: (id: string) => void
 }
 
 const sourceTypeConfig: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
@@ -22,13 +29,11 @@ function getDisplayTitle(extraction: Extraction): string {
   try {
     const url = new URL(extraction.videoUrl)
 
-    // YouTube: show as "YouTube Video (videoId)"
     if (url.hostname.includes('youtube.com') || url.hostname.includes('youtu.be')) {
       const videoId = url.searchParams.get('v') || url.pathname.split('/').pop()
       if (videoId) return `YouTube Video (${videoId})`
     }
 
-    // Other URLs: use path segment as readable name
     const path = url.pathname.replace(/\/$/, '').split('/').pop()
     if (path && path !== '') {
       return decodeURIComponent(path).replace(/[-_]/g, ' ').replace(/\.\w+$/, '')
@@ -39,7 +44,11 @@ function getDisplayTitle(extraction: Extraction): string {
   }
 }
 
-export function ExtractionCard({ extraction }: ExtractionCardProps) {
+export function ExtractionCard({ extraction, onDeleted }: ExtractionCardProps) {
+  const { data: session } = useSession()
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
   const config = sourceTypeConfig[extraction.sourceType] || {
     label: extraction.sourceType,
     icon: <FileText className="h-4 w-4" />,
@@ -54,12 +63,82 @@ export function ExtractionCard({ extraction }: ExtractionCardProps) {
     year: 'numeric',
   })
 
+  async function handleDelete(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (!showConfirm) {
+      setShowConfirm(true)
+      return
+    }
+
+    if (!session?.accessToken) return
+    setDeleting(true)
+
+    try {
+      await deleteExtraction(
+        { Authorization: `Bearer ${session.accessToken}` },
+        extraction.id
+      )
+      toast.success('Extraction removed')
+      onDeleted?.(extraction.id)
+    } catch {
+      toast.error('Failed to remove extraction')
+    } finally {
+      setDeleting(false)
+      setShowConfirm(false)
+    }
+  }
+
+  function handleCancelDelete(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    setShowConfirm(false)
+  }
+
   return (
     <Link
       href={`/recall/start/${extraction.id}`}
-      className="group block rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:border-brand-orange hover:shadow-md hover:-translate-y-0.5"
+      className="group relative block rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:border-brand-orange hover:shadow-md hover:-translate-y-0.5"
     >
-      <div className="flex items-start gap-3.5 mb-3">
+      {/* Delete button — top-right */}
+      <div className="absolute top-3 right-3">
+        {showConfirm ? (
+          <div
+            className="flex items-center gap-1.5"
+            onClick={(e) => e.preventDefault()}
+          >
+            <button
+              onClick={handleCancelDelete}
+              className="rounded-md px-2 py-1 text-[10px] font-semibold text-muted-foreground hover:bg-muted transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex items-center gap-1 rounded-md bg-destructive/10 px-2 py-1 text-[10px] font-semibold text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
+            >
+              {deleting ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Trash2 className="h-3 w-3" />
+              )}
+              Remove
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={handleDelete}
+            className="rounded-md p-1.5 text-muted-foreground/40 opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+            aria-label="Remove extraction"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
+      <div className="flex items-start gap-3.5 mb-3 pr-8">
         <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${config.bg} ${config.color} shrink-0`}>
           {config.icon}
         </div>
@@ -81,6 +160,21 @@ export function ExtractionCard({ extraction }: ExtractionCardProps) {
         <p className="mb-3 text-xs text-muted-foreground line-clamp-2">{extraction.description}</p>
       )}
 
+      {/* Topic badges */}
+      {extraction.topics && extraction.topics.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1">
+          {extraction.topics.map((et) => (
+            <span
+              key={et.topic.slug}
+              className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+            >
+              <span className="text-[10px]">{resolveIcon(et.topic.icon)}</span>
+              {et.topic.name}
+            </span>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <BookOpen className="h-3.5 w-3.5" />
@@ -90,6 +184,12 @@ export function ExtractionCard({ extraction }: ExtractionCardProps) {
           <HelpCircle className="h-3.5 w-3.5" />
           <span><span className="font-semibold text-foreground">{extraction.questionCount}</span> questions</span>
         </div>
+        {extraction.totalRecallSeconds != null && extraction.totalRecallSeconds > 0 && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Clock className="h-3.5 w-3.5" />
+            <span><span className="font-semibold text-foreground">{formatDuration(extraction.totalRecallSeconds)}</span> studied</span>
+          </div>
+        )}
       </div>
     </Link>
   )

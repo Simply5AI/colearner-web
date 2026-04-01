@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { getAuthHeaders } from '@/lib/api/auth-headers'
 import { getDashboardStats, getRecallQueue, getActivity, getSourceProgress, getStreakCalendar } from '@/lib/api/dashboard'
+import { getGoals } from '@/lib/api/goals'
 import { getProfile } from '@/lib/api/user'
 import { ApiError } from '@/lib/api/client'
 import { TopBar } from '@/components/shared/TopBar'
@@ -12,6 +13,7 @@ import { SourceProgressCard } from '@/components/dashboard/source-progress-card'
 import { RecallQueueCard } from '@/components/dashboard/recall-queue-card'
 import { QuickCaptureCard } from '@/components/dashboard/quick-capture-card'
 import { StreakActivityCard } from '@/components/dashboard/streak-activity-card'
+import { GoalTracker } from './components/goal-tracker'
 import { auth } from '@/lib/auth/config'
 import type { RecallQueueItem } from '@/lib/types'
 
@@ -32,16 +34,17 @@ export default async function DashboardPage() {
   const headers = await getAuthHeaders()
   const session = await auth()
 
-  let stats, rawQueue, activity, sourceProgress, streak, profile
+  let stats, rawQueue, activity, sourceProgress, streak, profile, goals
 
   try {
-    ;[stats, rawQueue, activity, sourceProgress, streak, profile] = await Promise.all([
+    ;[stats, rawQueue, activity, sourceProgress, streak, profile, goals] = await Promise.all([
       getDashboardStats(headers),
       getRecallQueue(headers).catch(() => []),
       getActivity(headers).catch(() => []),
       getSourceProgress(headers).catch(() => null),
       getStreakCalendar(headers).catch(() => ({ currentStreak: 0, bestStreak: 0, days: [] })),
       session?.accessToken ? getProfile(session.accessToken).catch(() => null) : Promise.resolve(null),
+      getGoals(headers).catch(() => []),
     ])
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) {
@@ -68,6 +71,8 @@ export default async function DashboardPage() {
           stats={stats}
           dueCount={dueCount}
         />
+
+        <GoalTracker initialGoals={goals || []} />
 
         <StatsRow stats={stats} />
 

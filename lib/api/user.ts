@@ -1,5 +1,5 @@
-import { apiClient } from '@/lib/api/client'
-import type { UserProfile, StreakData } from '@/lib/types'
+import { apiClient, getApiUrl } from '@/lib/api/client'
+import type { UserProfile, StreakData, TopicItem } from '@/lib/types'
 
 export async function getProfile(accessToken: string): Promise<UserProfile> {
   return apiClient<UserProfile>('/api/users/me', {
@@ -12,9 +12,9 @@ export async function updateProfile(
   data: Partial<
     Pick<
       UserProfile,
-      'name' | 'profileImageUrl' | 'bio' | 'goals' | 'dailyGoalMinutes' | 'skillsInterests' | 'preferredLanguage'
+      'name' | 'bio' | 'avatarUrl' | 'learningGoal' | 'dailyTimeMinutes'
     >
-  >
+  > & { topicSlugs?: string[] }
 ): Promise<UserProfile> {
   return apiClient<UserProfile>('/api/users/me', {
     method: 'PATCH',
@@ -66,7 +66,7 @@ export async function updateOnboardingProfile(
 
 export async function updateOnboardingGoal(
   accessToken: string,
-  data: { learningGoal: string; dailyTimeMinutes: number }
+  data: { learningGoal: string; dailyTimeMinutes: number; goalTitle?: string }
 ) {
   return apiClient('/api/onboarding/goal', {
     method: 'PATCH',
@@ -91,4 +91,34 @@ export async function completeOnboarding(accessToken: string) {
     method: 'POST',
     headers: authHeaders(accessToken),
   })
+}
+
+// --- Topics API ---
+
+export async function getTopics(accessToken: string): Promise<TopicItem[]> {
+  return apiClient<TopicItem[]>('/api/onboarding/topics', {
+    headers: authHeaders(accessToken),
+  })
+}
+
+// --- Avatar Upload API ---
+
+export async function uploadAvatar(
+  accessToken: string,
+  file: File
+): Promise<{ avatarUrl: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const apiUrl = getApiUrl()
+  const res = await fetch(`${apiUrl}/api/users/me/avatar`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: formData,
+  })
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: res.statusText }))
+    throw new Error(error.data?.message || error.message || 'Upload failed')
+  }
+  const json = await res.json()
+  return json.data ?? json
 }

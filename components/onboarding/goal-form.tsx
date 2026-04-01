@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useOnboardingStore } from '@/lib/stores/onboarding-store'
 import { GoalCard } from '@/components/onboarding/goal-card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import type { LearningGoal } from '@/lib/types'
@@ -23,7 +24,7 @@ function formatTime(minutes: number): string {
 
 export function GoalForm() {
   const router = useRouter()
-  const { goal, dailyGoalMinutes, setGoal, setDailyGoalMinutes } = useOnboardingStore()
+  const { goal, goalTitle, dailyGoalMinutes, setGoal, setGoalTitle, setDailyGoalMinutes } = useOnboardingStore()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,6 +44,18 @@ export function GoalForm() {
             onClick={() => setGoal(g.id)}
           />
         ))}
+      </div>
+
+      <div className="space-y-2.5">
+        <Label htmlFor="goalTitle" className="text-xs font-semibold">
+          What specifically do you want to master? (optional)
+        </Label>
+        <Input
+          id="goalTitle"
+          placeholder="e.g., Master .NET Core, Learn Docker, Pass AWS Certification"
+          value={goalTitle}
+          onChange={(e) => setGoalTitle(e.target.value)}
+        />
       </div>
 
       <div className="space-y-2.5">
