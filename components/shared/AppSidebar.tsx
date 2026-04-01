@@ -14,6 +14,7 @@ import {
   MoreHorizontal,
   LogOut,
   User,
+  Trophy,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { SourceProgress } from '@/lib/types'
@@ -37,6 +38,7 @@ const mainNavItems: NavItem[] = [
   { href: '/recall', label: 'Recall', icon: Clock },
   { href: '/mastery', label: 'Mastery', icon: BarChart3 },
   { href: '/queue', label: 'Review Queue', icon: CalendarDays },
+  { href: '/trophies', label: 'Trophies', icon: Trophy },
 ]
 
 const settingsNavItems: NavItem[] = [

@@ -4,6 +4,7 @@ import { getAuthHeaders } from '@/lib/api/auth-headers'
 import { getDashboardStats, getRecallQueue, getActivity, getSourceProgress, getStreakCalendar } from '@/lib/api/dashboard'
 import { getGoals } from '@/lib/api/goals'
 import { getProfile } from '@/lib/api/user'
+import { getDailyQuest } from '@/lib/api/gamification'
 import { ApiError } from '@/lib/api/client'
 import { TopBar } from '@/components/shared/TopBar'
 import { GreetingBanner } from '@/components/dashboard/greeting-banner'
@@ -13,6 +14,7 @@ import { SourceProgressCard } from '@/components/dashboard/source-progress-card'
 import { RecallQueueCard } from '@/components/dashboard/recall-queue-card'
 import { QuickCaptureCard } from '@/components/dashboard/quick-capture-card'
 import { StreakActivityCard } from '@/components/dashboard/streak-activity-card'
+import { DailyQuestWidget } from '@/components/dashboard/daily-quest-widget'
 import { GoalTracker } from './components/goal-tracker'
 import { auth } from '@/lib/auth/config'
 import type { RecallQueueItem } from '@/lib/types'
@@ -35,6 +37,7 @@ export default async function DashboardPage() {
   const session = await auth()
 
   let stats, rawQueue, activity, sourceProgress, streak, profile, goals
+  let dailyQuest: import('@/lib/api/gamification').DailyQuest | null = null
 
   try {
     ;[stats, rawQueue, activity, sourceProgress, streak, profile, goals] = await Promise.all([
@@ -45,6 +48,7 @@ export default async function DashboardPage() {
       getStreakCalendar(headers).catch(() => ({ currentStreak: 0, bestStreak: 0, days: [] })),
       session?.accessToken ? getProfile(session.accessToken).catch(() => null) : Promise.resolve(null),
       getGoals(headers).catch(() => []),
+      getDailyQuest(headers).catch(() => null),
     ])
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) {
@@ -85,6 +89,7 @@ export default async function DashboardPage() {
           <RecallQueueCard items={queue} />
           <QuickCaptureCard />
           <StreakActivityCard streak={streak} activity={activity} />
+          <DailyQuestWidget quest={dailyQuest} />
         </div>
       </div>
     </>
