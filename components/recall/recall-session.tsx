@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useRecallStore } from '@/lib/stores/recall-store'
 import { submitRecallAnswer, skipRecallQuestion, completeRecallSession, getSessionQuestions } from '@/lib/api/recall'
@@ -10,6 +10,7 @@ import { OpenAnswerQuestion } from './open-answer-question'
 import { MCQQuestion } from './mcq-question'
 import { ClozeQuestion } from './cloze-question'
 import { AnswerFeedback } from './answer-feedback'
+import { TutoringPanel } from './tutoring-panel'
 import { JudgingSpinner } from './judging-spinner'
 import { Loader2, SkipForward } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ interface RecallSessionProps {
 export function RecallSession({ sessionId, authHeaders }: RecallSessionProps) {
   const router = useRouter()
   const store = useRecallStore()
+  const [tutoringOpen, setTutoringOpen] = useState(false)
 
   // Load questions on mount
   useEffect(() => {
@@ -150,6 +152,13 @@ export function RecallSession({ sessionId, authHeaders }: RecallSessionProps) {
               result={store.lastResult}
               isLastQuestion={isLastQuestion}
               onNext={handleNext}
+              onTutoring={() => setTutoringOpen(true)}
+            />
+            <TutoringPanel
+              questionId={currentQuestion.id}
+              attemptId={store.lastResult.attemptId}
+              isOpen={tutoringOpen}
+              onClose={() => setTutoringOpen(false)}
             />
           </>
         ) : (

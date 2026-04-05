@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { CheckCircle2, XCircle, ArrowRight, SkipForward } from 'lucide-react'
+import { CheckCircle2, XCircle, ArrowRight, SkipForward, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { AnswerResult } from '@/lib/types'
 
@@ -9,9 +9,10 @@ interface AnswerFeedbackProps {
   result: AnswerResult
   isLastQuestion: boolean
   onNext: () => void
+  onTutoring?: () => void
 }
 
-export function AnswerFeedback({ result, isLastQuestion, onNext }: AnswerFeedbackProps) {
+export function AnswerFeedback({ result, isLastQuestion, onNext, onTutoring }: AnswerFeedbackProps) {
   const passed = result.isCorrect
 
   return (
@@ -46,6 +47,18 @@ export function AnswerFeedback({ result, isLastQuestion, onNext }: AnswerFeedbac
             <p className="text-sm mt-2 font-medium text-foreground/90">
               Correct answer: {result.correctAnswer}
             </p>
+          )}
+
+          {!passed && onTutoring && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onTutoring}
+              className="mt-2 text-brand-purple hover:text-brand-purple/90 -ml-2"
+            >
+              <Sparkles className="h-4 w-4 mr-1" />
+              Why was I wrong?
+            </Button>
           )}
         </div>
       </div>
