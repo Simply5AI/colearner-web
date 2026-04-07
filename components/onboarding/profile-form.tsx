@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react'
 
 import { profileStepSchema, type ProfileStepInput } from '@/lib/validators/onboarding'
 import { useOnboardingStore } from '@/lib/stores/onboarding-store'
+import { GRADE_LEVEL_OPTIONS, GENDER_OPTIONS } from '@/lib/constants/profile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -26,6 +27,9 @@ export function ProfileForm() {
     defaultValues: {
       displayName: store.displayName || session?.user?.name || '',
       bio: store.bio || '',
+      dateOfBirth: store.dateOfBirth || undefined,
+      gradeLevel: (store.gradeLevel || undefined) as ProfileStepInput['gradeLevel'],
+      gender: (store.gender || undefined) as ProfileStepInput['gender'],
     },
   })
 
@@ -34,12 +38,15 @@ export function ProfileForm() {
       displayName: data.displayName,
       bio: data.bio || '',
       avatarPreviewUrl: store.avatarPreviewUrl,
+      dateOfBirth: data.dateOfBirth || '',
+      gradeLevel: data.gradeLevel || '',
+      gender: data.gender || '',
     })
     router.push('/onboarding/goal')
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-7">
+    <form onSubmit={handleSubmit(onSubmit as Parameters<typeof handleSubmit>[0])} className="space-y-7">
       <AvatarUpload
         previewUrl={store.avatarPreviewUrl}
         onFileSelect={(file, previewUrl) => {
@@ -83,6 +90,53 @@ export function ProfileForm() {
           style={{ resize: 'vertical' }}
         />
         {errors.bio && <p className="text-[11px] text-destructive">{errors.bio.message}</p>}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="dateOfBirth" className="text-xs font-semibold">
+          Date of Birth <span className="font-normal text-muted-foreground">(Optional)</span>
+        </Label>
+        <Input
+          {...register('dateOfBirth')}
+          id="dateOfBirth"
+          type="date"
+          className="h-11"
+          max={new Date().toISOString().split('T')[0]}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="gradeLevel" className="text-xs font-semibold">
+            Grade / Class <span className="font-normal text-muted-foreground">(Optional)</span>
+          </Label>
+          <select
+            {...register('gradeLevel')}
+            id="gradeLevel"
+            className="flex h-11 w-full rounded-lg border border-input bg-background px-4 py-2 text-sm text-foreground transition-colors focus-visible:border-brand-orange focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-orange/12"
+          >
+            <option value="">Select</option>
+            {GRADE_LEVEL_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="gender" className="text-xs font-semibold">
+            Gender <span className="font-normal text-muted-foreground">(Optional)</span>
+          </Label>
+          <select
+            {...register('gender')}
+            id="gender"
+            className="flex h-11 w-full rounded-lg border border-input bg-background px-4 py-2 text-sm text-foreground transition-colors focus-visible:border-brand-orange focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-orange/12"
+          >
+            <option value="">Select</option>
+            {GENDER_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <Button

@@ -10,8 +10,8 @@ export default function CaptureError({
 }) {
   return (
     <ErrorFallback
-      title="Failed to load Capture"
-      message="We couldn't load the capture page. Please try again."
+      title="Failed to load Library"
+      message="We couldn't load the library page. Please try again."
       onRetry={reset}
     />
   )

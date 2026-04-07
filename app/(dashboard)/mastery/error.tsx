@@ -10,8 +10,8 @@ export default function MasteryError({
 }) {
   return (
     <ErrorFallback
-      title="Failed to load Mastery"
-      message="We couldn't load mastery analytics. Please try again."
+      title="Failed to load Progress"
+      message="We couldn't load your progress. Please try again."
       onRetry={reset}
     />
   )

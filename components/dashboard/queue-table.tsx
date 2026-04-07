@@ -133,7 +133,7 @@ export function QueueTable({ items }: QueueTableProps) {
                         : 'bg-primary hover:bg-primary/90'
                     )}
                   >
-                    {isFailed ? 'Retry' : 'Recall'}
+                    {isFailed ? 'Retry' : 'Practice'}
                   </Link>
                 </td>
               </tr>

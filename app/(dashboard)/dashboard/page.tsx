@@ -20,7 +20,7 @@ import { auth } from '@/lib/auth/config'
 import type { RecallQueueItem } from '@/lib/types'
 
 export const metadata: Metadata = {
-  title: 'Dashboard',
+  title: 'Home',
 }
 
 function formatDate(): string {
@@ -68,7 +68,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <TopBar title="Dashboard" subtitle={formatDate()} />
+      <TopBar title="Home" subtitle={formatDate()} />
       <div className="space-y-6 p-7">
         <GreetingBanner
           userName={userName}

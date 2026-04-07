@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { BYOKProvider } from '@/lib/llm/types'
 
 interface LocalConfig {
   baseUrl: string
@@ -15,6 +16,10 @@ interface LocalProgress {
 
 const LOCAL_CONFIG_KEY = 'colearner:ollama-config'
 const PROCESSING_MODE_KEY = 'colearner:processing-mode'
+const BYOK_PROVIDER_KEY = 'colearner:byok-provider'
+const BYOK_API_KEY_KEY = 'colearner:byok-api-key'
+const BYOK_FAST_MODEL_KEY = 'colearner:byok-fast-model'
+const BYOK_SMART_MODEL_KEY = 'colearner:byok-smart-model'
 
 function loadLocalConfig(): LocalConfig {
   if (typeof window === 'undefined') {
@@ -33,9 +38,24 @@ function saveLocalConfig(config: LocalConfig) {
   } catch {}
 }
 
-function loadProcessingMode(): 'cloud' | 'local' {
+function loadProcessingMode(): 'cloud' | 'local' | 'byok' {
   if (typeof window === 'undefined') return 'cloud'
-  return (localStorage.getItem(PROCESSING_MODE_KEY) as 'cloud' | 'local') || 'cloud'
+  return (localStorage.getItem(PROCESSING_MODE_KEY) as 'cloud' | 'local' | 'byok') || 'cloud'
+}
+
+function loadByokProvider(): BYOKProvider | null {
+  if (typeof window === 'undefined') return null
+  return (localStorage.getItem(BYOK_PROVIDER_KEY) as BYOKProvider) || null
+}
+
+function loadByokApiKey(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(BYOK_API_KEY_KEY) || null
+}
+
+function loadByokModel(key: string): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(key) || null
 }
 
 interface CaptureState {
@@ -50,12 +70,19 @@ interface CaptureState {
   selectedTopicIds: string[]
 
   // Local Ollama processing
-  processingMode: 'cloud' | 'local'
+  processingMode: 'cloud' | 'local' | 'byok'
   ollamaStatus: 'unchecked' | 'checking' | 'available' | 'unavailable'
   ollamaModels: string[]
   localConfig: LocalConfig
   localProgress: LocalProgress | null
   localError: string | null
+
+  // BYOK (Bring Your Own Key)
+  byokProvider: BYOKProvider | null
+  byokApiKey: string | null
+  byokFastModel: string | null
+  byokSmartModel: string | null
+  byokKeyVerified: boolean
 
   setExpandedSource: (index: number | null) => void
   toggleSource: (index: number) => void
@@ -66,14 +93,19 @@ interface CaptureState {
   setExtractionId: (id: string | null) => void
   setSelectedTopicIds: (ids: string[]) => void
   toggleTopicId: (id: string) => void
-  setProcessingMode: (mode: 'cloud' | 'local') => void
+  setProcessingMode: (mode: 'cloud' | 'local' | 'byok') => void
   setOllamaStatus: (status: CaptureState['ollamaStatus']) => void
   setOllamaModels: (models: string[]) => void
   setLocalConfig: (config: Partial<LocalConfig>) => void
   setLocalProgress: (progress: LocalProgress | null) => void
   setLocalError: (error: string | null) => void
+  setByokProvider: (provider: BYOKProvider | null) => void
+  setByokApiKey: (key: string | null) => void
+  setByokFastModel: (model: string | null) => void
+  setByokSmartModel: (model: string | null) => void
+  setByokKeyVerified: (verified: boolean) => void
   hydrateFromProfile: (settings: {
-    processingMode?: 'cloud' | 'local'
+    processingMode?: 'cloud' | 'local' | 'byok'
     ollamaBaseUrl?: string
     ollamaPass1Model?: string | null
     ollamaPass2Model?: string | null
@@ -95,6 +127,12 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
   localConfig: loadLocalConfig(),
   localProgress: null,
   localError: null,
+
+  byokProvider: loadByokProvider(),
+  byokApiKey: loadByokApiKey(),
+  byokFastModel: loadByokModel(BYOK_FAST_MODEL_KEY),
+  byokSmartModel: loadByokModel(BYOK_SMART_MODEL_KEY),
+  byokKeyVerified: false,
 
   setExpandedSource: (index) => set({ expandedSource: index }),
   toggleSource: (index) =>
@@ -124,6 +162,35 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
   },
   setLocalProgress: (progress) => set({ localProgress: progress }),
   setLocalError: (error) => set({ localError: error }),
+  setByokProvider: (provider) => {
+    try {
+      if (provider) localStorage.setItem(BYOK_PROVIDER_KEY, provider)
+      else localStorage.removeItem(BYOK_PROVIDER_KEY)
+    } catch {}
+    set({ byokProvider: provider, byokKeyVerified: false })
+  },
+  setByokApiKey: (key) => {
+    try {
+      if (key) localStorage.setItem(BYOK_API_KEY_KEY, key)
+      else localStorage.removeItem(BYOK_API_KEY_KEY)
+    } catch {}
+    set({ byokApiKey: key, byokKeyVerified: false })
+  },
+  setByokFastModel: (model) => {
+    try {
+      if (model) localStorage.setItem(BYOK_FAST_MODEL_KEY, model)
+      else localStorage.removeItem(BYOK_FAST_MODEL_KEY)
+    } catch {}
+    set({ byokFastModel: model })
+  },
+  setByokSmartModel: (model) => {
+    try {
+      if (model) localStorage.setItem(BYOK_SMART_MODEL_KEY, model)
+      else localStorage.removeItem(BYOK_SMART_MODEL_KEY)
+    } catch {}
+    set({ byokSmartModel: model })
+  },
+  setByokKeyVerified: (verified) => set({ byokKeyVerified: verified }),
   hydrateFromProfile: (settings) => {
     const mode = settings.processingMode || 'cloud'
     const config: Partial<LocalConfig> = {}

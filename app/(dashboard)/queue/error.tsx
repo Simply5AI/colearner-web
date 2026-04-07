@@ -10,8 +10,8 @@ export default function QueueError({
 }) {
   return (
     <ErrorFallback
-      title="Failed to load Queue"
-      message="We couldn't load the review queue. Please try again."
+      title="Failed to load Practice"
+      message="We couldn't load the practice page. Please try again."
       onRetry={reset}
     />
   )

@@ -133,7 +133,7 @@ export function VideoSource() {
         <span>Cloud processing — audio extraction → Whisper transcription → concept extraction on our servers</span>
       </div>
 
-      {useCaptureStore.getState().processingMode === 'local' && (
+      {['local', 'byok'].includes(useCaptureStore.getState().processingMode) && (
         <div className="mt-2 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-[10px] text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
           <span>Video transcription requires cloud processing. Your video will be processed on our servers.</span>

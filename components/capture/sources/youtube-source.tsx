@@ -7,6 +7,9 @@ import { cn } from '@/lib/utils'
 import { captureYouTube, saveLocalResults } from '@/lib/api/capture'
 import { useCaptureStore } from '@/lib/stores/capture-store'
 import { runPipeline } from '@/lib/ollama/extraction-pipeline'
+import { OllamaClient } from '@/lib/ollama/ollama-client'
+import { createByokClient } from '@/lib/llm/provider-factory'
+import { PROVIDER_DEFAULTS } from '@/lib/llm/provider-defaults'
 import { LocalExtractionProgress } from '@/components/capture/local-extraction-progress'
 import { CaptureTopicChips } from '@/components/capture/capture-topic-chips'
 
@@ -27,6 +30,10 @@ export function YouTubeSource() {
   const localError = useCaptureStore((s) => s.localError)
   const setLocalError = useCaptureStore((s) => s.setLocalError)
   const selectedTopicIds = useCaptureStore((s) => s.selectedTopicIds)
+  const byokProvider = useCaptureStore((s) => s.byokProvider)
+  const byokApiKey = useCaptureStore((s) => s.byokApiKey)
+  const byokFastModel = useCaptureStore((s) => s.byokFastModel)
+  const byokSmartModel = useCaptureStore((s) => s.byokSmartModel)
 
   async function handleCloudSubmit() {
     if (!session?.accessToken) return
@@ -71,12 +78,82 @@ export function YouTubeSource() {
     setLocalProgress({ phase: 'transcript', current: 1, total: 1 })
 
     // Step 2-3: Run extraction pipeline locally
+    const client = new OllamaClient(localConfig.baseUrl)
     const result = await runPipeline(
       {
         transcript,
         pass1Model: localConfig.pass1Model,
         pass2Model: localConfig.pass2Model,
-        ollamaBaseUrl: localConfig.baseUrl,
+        client,
+        signal: abort.signal,
+      },
+      (progress) => setLocalProgress(progress)
+    )
+
+    // Step 4: Save results to API
+    setLocalProgress({ phase: 'saving', current: 0, total: 1 })
+    const headers = { Authorization: `Bearer ${session.accessToken}` }
+
+    const concepts = result.concepts.map((c, i) => ({
+      title: c.title,
+      description: c.description,
+      order: i,
+    }))
+
+    const questions = result.questions.flatMap((qg) =>
+      qg.questions.map((q) => ({
+        conceptIndex: qg.conceptIndex,
+        type: q.type,
+        text: q.text,
+        options: q.options,
+        correctIndex: q.correctIndex,
+        explanation: q.explanation,
+      }))
+    )
+
+    await saveLocalResults(headers, {
+      videoUrl: url.trim(),
+      title: url.trim(),
+      topicIds: selectedTopicIds.length > 0 ? selectedTopicIds : undefined,
+      concepts,
+      questions,
+    })
+
+    setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved — ${concepts.length} concepts, ${questions.length} questions` })
+  }
+
+  async function handleByokSubmit() {
+    if (!session?.accessToken || !byokProvider || !byokApiKey) return
+
+    const defaults = PROVIDER_DEFAULTS[byokProvider]
+    const abort = new AbortController()
+    abortRef.current = abort
+
+    // Step 1: Fetch transcript via server proxy
+    setLocalProgress({ phase: 'transcript', current: 0, total: 1 })
+    const transcriptRes = await fetch('/api/transcript', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: url.trim() }),
+      signal: abort.signal,
+    })
+
+    if (!transcriptRes.ok) {
+      const err = await transcriptRes.json().catch(() => ({ error: 'Failed to fetch transcript' }))
+      throw new Error(err.error || 'Failed to fetch transcript')
+    }
+
+    const { transcript } = (await transcriptRes.json()) as { transcript: string }
+    setLocalProgress({ phase: 'transcript', current: 1, total: 1 })
+
+    // Step 2-3: Run extraction pipeline with BYOK client
+    const client = createByokClient(byokProvider, byokApiKey)
+    const result = await runPipeline(
+      {
+        transcript,
+        pass1Model: byokFastModel || defaults.fast,
+        pass2Model: byokSmartModel || defaults.smart,
+        client,
         signal: abort.signal,
       },
       (progress) => setLocalProgress(progress)
@@ -123,6 +200,8 @@ export function YouTubeSource() {
     try {
       if (processingMode === 'local') {
         await handleLocalSubmit()
+      } else if (processingMode === 'byok') {
+        await handleByokSubmit()
       } else {
         await handleCloudSubmit()
       }
@@ -145,7 +224,7 @@ export function YouTubeSource() {
     setLocalProgress(null)
   }
 
-  const isLocal = processingMode === 'local'
+  const isClientSide = processingMode === 'local' || processingMode === 'byok'
 
   return (
     <div>
@@ -208,13 +287,13 @@ export function YouTubeSource() {
       <CaptureTopicChips />
 
       <div className="flex items-center gap-2 rounded-lg bg-accent/50 px-3 py-2 text-[10px] text-muted-foreground">
-        {isLocal ? (
+        {isClientSide ? (
           <Monitor className="h-3.5 w-3.5 shrink-0 text-green-500" />
         ) : (
           <Cloud className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
         )}
         <span>
-          {isLocal ? (
+          {isClientSide ? (
             <>
               Pipeline: Pass 1{' '}
               <code className="rounded bg-card px-1.5 py-0.5 font-mono text-[9px] text-primary">
@@ -233,7 +312,7 @@ export function YouTubeSource() {
       </div>
 
       {/* Local processing progress */}
-      {isLocal && (localProgress || localError) && (
+      {isClientSide && (localProgress || localError) && (
         <LocalExtractionProgress onCancel={handleCancel} />
       )}
 

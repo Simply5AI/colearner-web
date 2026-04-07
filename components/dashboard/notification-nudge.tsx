@@ -23,17 +23,17 @@ export function NotificationNudge({
       <span className="shrink-0 text-[22px]">⏰</span>
       <div className="flex-1">
         <h4 className="text-xs font-bold text-warning">
-          {dueCount} items due for recall
+          {dueCount} items due for review
         </h4>
         <p className="text-[11px] text-muted-foreground">
           {parts.join(', ')}
         </p>
       </div>
       <Link
-        href="/recall"
+        href="/practice"
         className="shrink-0 rounded-lg bg-warning px-3.5 py-1.5 text-[11px] font-bold text-white transition-colors hover:bg-warning/90"
       >
-        Start Recall →
+        Start Practice →
       </Link>
     </div>
   )

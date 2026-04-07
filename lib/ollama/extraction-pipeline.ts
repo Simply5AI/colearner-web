@@ -1,4 +1,4 @@
-import { OllamaClient } from './ollama-client'
+import type { LLMProviderClient } from '@/lib/llm/types'
 import {
   CONCEPT_EXTRACTION_SYSTEM,
   CONCEPT_EXTRACTION_USER,
@@ -31,8 +31,11 @@ interface PipelineConfig {
   transcript: string
   pass1Model: string
   pass2Model: string
-  ollamaBaseUrl: string
-  /** Max concurrent Ollama requests (default 3) */
+  /** LLM provider client (Ollama, OpenAI, Gemini, Anthropic) */
+  client: LLMProviderClient
+  /** @deprecated Use `client` instead. Kept for backwards compatibility. */
+  ollamaBaseUrl?: string
+  /** Max concurrent requests (default 3) */
   concurrency?: number
   signal?: AbortSignal
 }
@@ -158,7 +161,7 @@ export async function runPipeline(
   config: PipelineConfig,
   onProgress: (progress: PipelineProgress) => void
 ): Promise<PipelineResult> {
-  const client = new OllamaClient(config.ollamaBaseUrl)
+  const client = config.client
 
   // Phase 1: Chunk transcript
   onProgress({ phase: 'chunking', current: 0, total: 1 })

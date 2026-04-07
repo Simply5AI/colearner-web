@@ -14,7 +14,7 @@ import { ConceptMasteryLedger } from '@/components/dashboard/concept-mastery-led
 import { MasteryRangePills } from '@/components/dashboard/mastery-range-pills'
 
 export const metadata: Metadata = {
-  title: 'Mastery Analytics',
+  title: 'Progress',
 }
 
 interface MasteryPageProps {
@@ -35,7 +35,7 @@ export default async function MasteryPage({ searchParams }: MasteryPageProps) {
 
   return (
     <>
-      <TopBar title="Mastery Analytics" subtitle="Track your learning progress">
+      <TopBar title="Progress" subtitle="Track your learning progress">
         <MasteryRangePills />
       </TopBar>
       <div className="space-y-6 p-7">

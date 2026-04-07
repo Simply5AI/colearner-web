@@ -8,17 +8,50 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Cloud,
+  Key,
+  ChevronDown,
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useCaptureStore } from '@/lib/stores/capture-store'
 import { OllamaClient } from '@/lib/ollama/ollama-client'
 import { useProfile } from '@/lib/hooks/use-profile'
 import { updateAISettings } from '@/lib/api/user'
+import { createByokClient } from '@/lib/llm/provider-factory'
+import { PROVIDER_DEFAULTS } from '@/lib/llm/provider-defaults'
+import type { BYOKProvider } from '@/lib/llm/types'
 
 const MODEL_RECOMMENDATIONS = [
   { hardware: '8GB RAM', fast: 'phi4-mini, llama3.2:3b', smart: 'Same model' },
   { hardware: '16GB RAM', fast: 'mistral, gemma3:4b', smart: 'deepseek-r1:7b, mistral' },
   { hardware: '32GB+ RAM', fast: 'mistral, llama3.1:8b', smart: 'deepseek-r1:14b, qwen3:14b' },
+]
+
+const PROCESSING_MODES = [
+  {
+    value: 'cloud' as const,
+    label: 'Cloud',
+    description: 'CoLearner AI — uses your plan quota',
+    icon: Cloud,
+  },
+  {
+    value: 'byok' as const,
+    label: 'Bring Your Own Key',
+    description: 'Use your own API key — unlimited',
+    icon: Key,
+  },
+  {
+    value: 'local' as const,
+    label: 'Local LLM (Ollama)',
+    description: 'Free, private, on-device',
+    icon: Server,
+  },
+]
+
+const BYOK_PROVIDERS: { value: BYOKProvider; name: string; description: string }[] = [
+  { value: 'OPENAI', name: 'OpenAI', description: PROVIDER_DEFAULTS.OPENAI.description },
+  { value: 'GEMINI', name: 'Google Gemini', description: PROVIDER_DEFAULTS.GEMINI.description },
+  { value: 'ANTHROPIC', name: 'Anthropic', description: PROVIDER_DEFAULTS.ANTHROPIC.description },
 ]
 
 export default function AiProcessingPage() {
@@ -36,10 +69,24 @@ export default function AiProcessingPage() {
     localConfig,
     setLocalConfig,
     hydrateFromProfile,
+    byokProvider,
+    setByokProvider,
+    byokApiKey,
+    setByokApiKey,
+    byokFastModel,
+    setByokFastModel,
+    byokSmartModel,
+    setByokSmartModel,
+    byokKeyVerified,
+    setByokKeyVerified,
   } = useCaptureStore()
 
   const [testing, setTesting] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [byokTesting, setByokTesting] = useState(false)
+  const [byokTestError, setByokTestError] = useState<string | null>(null)
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [keyVisible, setKeyVisible] = useState(false)
 
   // Hydrate store from profile on first load
   useEffect(() => {
@@ -65,6 +112,8 @@ export default function AiProcessingPage() {
     setSaving(false)
   }
 
+  // ─── Ollama Handlers ────────────────────────────────────────────
+
   const testConnection = async () => {
     setTesting(true)
     setOllamaStatus('checking')
@@ -83,7 +132,6 @@ export default function AiProcessingPage() {
       setOllamaModels(models.map((m) => m.name))
       setOllamaStatus('available')
 
-      // Auto-select first model if none selected
       const firstName = models[0]?.name
       if (!localConfig.pass1Model && firstName) {
         setLocalConfig({ pass1Model: firstName })
@@ -105,13 +153,10 @@ export default function AiProcessingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processingMode])
 
-  const isLocal = processingMode === 'local'
-
-  const handleToggleMode = () => {
-    const next = isLocal ? 'cloud' : 'local'
-    setProcessingMode(next)
-    saveToBackend({ processingMode: next })
-    if (next === 'local') testConnection()
+  const handleModeChange = (mode: 'cloud' | 'local' | 'byok') => {
+    setProcessingMode(mode)
+    saveToBackend({ processingMode: mode })
+    if (mode === 'local') testConnection()
   }
 
   const handleBaseUrlChange = (value: string) => {
@@ -132,47 +177,300 @@ export default function AiProcessingPage() {
     saveToBackend({ ollamaPass2Model: value })
   }
 
+  // ─── BYOK Handlers ────────────────────────────────────────────
+
+  const handleByokProviderChange = (provider: BYOKProvider) => {
+    setByokProvider(provider)
+    setByokTestError(null)
+  }
+
+  const handleByokKeyChange = (value: string) => {
+    setByokApiKey(value || null)
+    setByokTestError(null)
+  }
+
+  const handleByokTest = async () => {
+    if (!byokProvider || !byokApiKey) return
+    setByokTesting(true)
+    setByokTestError(null)
+
+    try {
+      const client = createByokClient(byokProvider, byokApiKey)
+      const valid = await client.testConnection?.()
+      if (valid) {
+        setByokKeyVerified(true)
+      } else {
+        setByokTestError('Key is invalid or the provider is unreachable')
+        setByokKeyVerified(false)
+      }
+    } catch (err) {
+      setByokTestError(err instanceof Error ? err.message : 'Connection test failed')
+      setByokKeyVerified(false)
+    }
+    setByokTesting(false)
+  }
+
+  const handleClearKey = () => {
+    setByokApiKey(null)
+    setByokKeyVerified(false)
+    setByokTestError(null)
+  }
+
+  const isByok = processingMode === 'byok'
+  const isLocal = processingMode === 'local'
+
+  const selectedProviderDefaults = byokProvider ? PROVIDER_DEFAULTS[byokProvider] : null
+
   return (
     <div className="space-y-8">
       <div>
         <h2 className="text-lg font-bold">AI Processing</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Choose how your content is processed — cloud or locally on your machine.
+          Choose how your content is processed — cloud, your own API key, or locally on your machine.
         </p>
       </div>
 
-      {/* Processing Mode Toggle */}
-      <div className="rounded-xl border border-border p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Server className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <p className="text-sm font-semibold">Use Local LLM (Ollama)</p>
-              <p className="text-xs text-muted-foreground">
-                Process content on your machine — free, private, no data leaves your device
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {saving && (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-            )}
+      {/* Processing Mode Selection */}
+      <div className="space-y-2">
+        {PROCESSING_MODES.map((mode) => {
+          const Icon = mode.icon
+          const isActive = processingMode === mode.value
+          return (
             <button
-              onClick={handleToggleMode}
-              className={`relative h-6 w-11 rounded-full transition-colors ${
-                isLocal ? 'bg-primary' : 'bg-muted'
+              key={mode.value}
+              onClick={() => handleModeChange(mode.value)}
+              className={`flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all ${
+                isActive
+                  ? 'border-primary bg-primary/5 ring-2 ring-primary/10'
+                  : 'border-border hover:bg-accent/50'
               }`}
             >
-              <span
-                className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                  isLocal ? 'translate-x-5' : 'translate-x-0'
+              <div
+                className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+                  isActive ? 'bg-primary/10 text-primary' : 'bg-accent text-muted-foreground'
                 }`}
-              />
+              >
+                <Icon className="h-4.5 w-4.5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold">{mode.label}</p>
+                <p className="text-xs text-muted-foreground">{mode.description}</p>
+              </div>
+              <div
+                className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                  isActive ? 'border-primary' : 'border-muted-foreground/30'
+                }`}
+              >
+                {isActive && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
+              </div>
+              {saving && isActive && (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+              )}
             </button>
-          </div>
-        </div>
+          )
+        })}
       </div>
 
+      {/* ─── BYOK Section ──────────────────────────────────────── */}
+      {isByok && (
+        <>
+          {/* Provider Selection */}
+          <div className="rounded-xl border border-border p-5 space-y-4">
+            <h3 className="text-sm font-semibold">Choose Provider</h3>
+            <div className="grid grid-cols-3 gap-3">
+              {BYOK_PROVIDERS.map((p) => {
+                const isSelected = byokProvider === p.value
+                return (
+                  <button
+                    key={p.value}
+                    onClick={() => handleByokProviderChange(p.value)}
+                    className={`rounded-lg border p-3 text-left transition-all ${
+                      isSelected
+                        ? 'border-primary bg-primary/5 ring-2 ring-primary/10'
+                        : 'border-border hover:bg-accent/50'
+                    }`}
+                  >
+                    <p className="text-xs font-semibold">{p.name}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">{p.description}</p>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* API Key Input */}
+          {byokProvider && (
+            <div className="rounded-xl border border-border p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">API Key</h3>
+                <div className="flex items-center gap-2">
+                  {byokKeyVerified && (
+                    <span className="flex items-center gap-1.5 text-xs font-medium text-green-600">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Verified
+                    </span>
+                  )}
+                  {byokTestError && (
+                    <span className="flex items-center gap-1.5 text-xs font-medium text-red-500">
+                      <XCircle className="h-3.5 w-3.5" />
+                      Invalid
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                  {selectedProviderDefaults?.name} API Key
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type={keyVisible ? 'text' : 'password'}
+                    value={byokApiKey ?? ''}
+                    onChange={(e) => handleByokKeyChange(e.target.value)}
+                    placeholder={`Enter your ${selectedProviderDefaults?.name} API key`}
+                    className="flex-1 rounded-lg border border-border bg-accent/30 px-3 py-2 font-mono text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+                  />
+                  <button
+                    onClick={() => setKeyVisible(!keyVisible)}
+                    className="rounded-lg border border-border px-3 py-2 text-xs font-medium transition-colors hover:bg-accent"
+                  >
+                    {keyVisible ? 'Hide' : 'Show'}
+                  </button>
+                  <button
+                    onClick={handleByokTest}
+                    disabled={byokTesting || !byokApiKey}
+                    className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium transition-colors hover:bg-accent disabled:opacity-50"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${byokTesting ? 'animate-spin' : ''}`} />
+                    Test
+                  </button>
+                </div>
+              </div>
+
+              {byokTestError && (
+                <div className="rounded-lg bg-red-50 p-3 text-xs text-red-700 dark:bg-red-950/30 dark:text-red-400">
+                  <p className="font-semibold">Key verification failed</p>
+                  <p className="mt-1">{byokTestError}</p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] text-muted-foreground">
+                  Your key is stored only in this browser — never sent to our servers for storage.
+                </p>
+                <div className="flex gap-3">
+                  {byokApiKey && (
+                    <button
+                      onClick={handleClearKey}
+                      className="text-[10px] font-medium text-red-500 hover:underline"
+                    >
+                      Clear key
+                    </button>
+                  )}
+                  <a
+                    href={selectedProviderDefaults?.docsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[10px] font-medium text-primary hover:underline"
+                  >
+                    Where to get a key
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Advanced: Model Selection */}
+          {byokProvider && byokApiKey && (
+            <div className="rounded-xl border border-border p-5">
+              <button
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex w-full items-center justify-between text-left"
+              >
+                <h3 className="text-sm font-semibold">Advanced: Model Selection</h3>
+                <ChevronDown
+                  className={`h-4 w-4 text-muted-foreground transition-transform ${
+                    showAdvanced ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              {showAdvanced && (
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                      Fast Model — Extraction &amp; Questions
+                    </label>
+                    <input
+                      type="text"
+                      value={byokFastModel ?? ''}
+                      onChange={(e) => setByokFastModel(e.target.value || null)}
+                      placeholder={selectedProviderDefaults?.fast}
+                      className="w-full rounded-lg border border-border bg-accent/30 px-3 py-2 font-mono text-xs outline-none focus:border-primary"
+                    />
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      Leave empty to use default: {selectedProviderDefaults?.fast}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                      Smart Model — Concept Ranking
+                    </label>
+                    <input
+                      type="text"
+                      value={byokSmartModel ?? ''}
+                      onChange={(e) => setByokSmartModel(e.target.value || null)}
+                      placeholder={selectedProviderDefaults?.smart}
+                      className="w-full rounded-lg border border-border bg-accent/30 px-3 py-2 font-mono text-xs outline-none focus:border-primary"
+                    />
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      Leave empty to use default: {selectedProviderDefaults?.smart}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* How It Works */}
+          <div className="rounded-xl border border-border p-5">
+            <h3 className="text-sm font-semibold">How it works</h3>
+            <ol className="mt-3 space-y-2 text-xs text-muted-foreground">
+              <li className="flex gap-2">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                  1
+                </span>
+                Content is fetched via CoLearner&apos;s server (text only, no video/audio data)
+              </li>
+              <li className="flex gap-2">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                  2
+                </span>
+                Your browser sends text to <strong>{selectedProviderDefaults?.name ?? 'the provider'}</strong> using YOUR key
+              </li>
+              <li className="flex gap-2">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                  3
+                </span>
+                Concepts &amp; questions are extracted and saved to your account
+              </li>
+              <li className="flex gap-2">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                  4
+                </span>
+                Your API key stays in this browser — never stored on our servers
+              </li>
+            </ol>
+            <p className="mt-3 text-[10px] text-muted-foreground/70">
+              Keep the browser tab open during processing. Speed depends on the provider and model selected.
+            </p>
+          </div>
+        </>
+      )}
+
+      {/* ─── Local (Ollama) Section ──────────────────────────────── */}
       {isLocal && (
         <>
           {/* Connection Status */}

@@ -3,15 +3,15 @@ import { TopBar } from '@/components/shared/TopBar'
 import { CapturePageClient } from '@/components/capture/capture-page-client'
 
 export const metadata: Metadata = {
-  title: 'Capture',
+  title: 'Library',
 }
 
 export default function CapturePage() {
   return (
     <>
       <TopBar
-        title="Capture Knowledge"
-        subtitle="Choose a source to extract concepts from. We'll generate recall questions automatically."
+        title="Library"
+        subtitle="Add a source to extract concepts from. We'll generate practice questions automatically."
       />
       <CapturePageClient />
     </>

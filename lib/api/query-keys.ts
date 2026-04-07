@@ -28,6 +28,12 @@ export const queryKeys = {
   onboarding: {
     all: ['onboarding'] as const,
     topics: () => [...queryKeys.onboarding.all, 'topics'] as const,
+    suggestionStatus: () => [...queryKeys.onboarding.all, 'suggestion-status'] as const,
+  },
+
+  profile: {
+    all: ['profile'] as const,
+    summary: () => [...queryKeys.profile.all, 'summary'] as const,
   },
 
   user: {
@@ -66,6 +72,22 @@ export const queryKeys = {
     all: () => ['goals'] as const,
     list: () => [...queryKeys.goals.all(), 'list'] as const,
     detail: (id: string) => [...queryKeys.goals.all(), 'detail', id] as const,
+  },
+
+  roadmaps: {
+    all: ['roadmaps'] as const,
+    list: () => [...queryKeys.roadmaps.all, 'list'] as const,
+    detail: (id: string) => [...queryKeys.roadmaps.all, 'detail', id] as const,
+  },
+
+  pods: {
+    all: ['pods'] as const,
+    list: () => [...queryKeys.pods.all, 'list'] as const,
+    detail: (id: string) => [...queryKeys.pods.all, 'detail', id] as const,
+    leaderboard: (id: string) => [...queryKeys.pods.all, 'leaderboard', id] as const,
+    activity: (id: string) => [...queryKeys.pods.all, 'activity', id] as const,
+    captures: (id: string, page?: number) =>
+      [...queryKeys.pods.all, 'captures', id, page] as const,
   },
 
   masteryAnalytics: {

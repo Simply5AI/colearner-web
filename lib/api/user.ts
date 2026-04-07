@@ -12,7 +12,7 @@ export async function updateProfile(
   data: Partial<
     Pick<
       UserProfile,
-      'name' | 'bio' | 'avatarUrl' | 'learningGoal' | 'dailyTimeMinutes'
+      'name' | 'bio' | 'avatarUrl' | 'learningGoal' | 'dailyTimeMinutes' | 'dateOfBirth' | 'gradeLevel' | 'gender'
     >
   > & { topicSlugs?: string[] }
 ): Promise<UserProfile> {
@@ -32,7 +32,7 @@ export async function getStreak(accessToken: string): Promise<StreakData> {
 // --- AI Settings API ---
 
 export interface AISettings {
-  processingMode: 'cloud' | 'local'
+  processingMode: 'cloud' | 'local' | 'byok'
   ollamaBaseUrl: string
   ollamaPass1Model: string | null
   ollamaPass2Model: string | null
@@ -55,7 +55,7 @@ const authHeaders = (token: string) => ({ Authorization: `Bearer ${token}` })
 
 export async function updateOnboardingProfile(
   accessToken: string,
-  data: { displayName: string; bio?: string; avatarUrl?: string }
+  data: { displayName: string; bio?: string; avatarUrl?: string; dateOfBirth?: string; gradeLevel?: string; gender?: string }
 ) {
   return apiClient('/api/onboarding/profile', {
     method: 'PATCH',
@@ -89,6 +89,43 @@ export async function updateOnboardingSkills(
 export async function completeOnboarding(accessToken: string) {
   return apiClient('/api/onboarding/complete', {
     method: 'POST',
+    headers: authHeaders(accessToken),
+  })
+}
+
+// --- Onboarding Education & Certification API ---
+
+export async function updateOnboardingEducation(
+  accessToken: string,
+  data: { educationLevel: string; fieldOfStudy: string; isCurrent?: boolean; institution?: string }
+) {
+  return apiClient('/api/onboarding/education', {
+    method: 'PATCH',
+    headers: authHeaders(accessToken),
+    body: data,
+  })
+}
+
+export async function updateOnboardingCertifications(
+  accessToken: string,
+  data: { certifications: Array<{ name: string; issuingOrg?: string }> }
+) {
+  return apiClient('/api/onboarding/certifications', {
+    method: 'PATCH',
+    headers: authHeaders(accessToken),
+    body: data,
+  })
+}
+
+export async function triggerOnboardingSuggestions(accessToken: string) {
+  return apiClient('/api/onboarding/generate-suggestions', {
+    method: 'POST',
+    headers: authHeaders(accessToken),
+  })
+}
+
+export async function getOnboardingSuggestionStatus(accessToken: string) {
+  return apiClient<import('@/lib/types').SuggestionStatus>('/api/onboarding/suggestion-status', {
     headers: authHeaders(accessToken),
   })
 }

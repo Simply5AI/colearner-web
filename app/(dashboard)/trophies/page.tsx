@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/lib/api/gamification'
 
 export const metadata: Metadata = {
-  title: 'Trophy Room',
+  title: 'Achievements',
 }
 
 const TIER_COLORS: Record<string, string> = {
@@ -88,7 +88,7 @@ export default async function TrophiesPage() {
 
   return (
     <>
-      <TopBar title="Trophy Room" subtitle="Your lifetime achievements" />
+      <TopBar title="Achievements" subtitle="Your lifetime achievements" />
       <div className="space-y-8 p-7 max-w-6xl mx-auto">
         <div className="flex items-center gap-4 bg-primary/10 p-6 rounded-2xl border border-primary/20">
           <div className="bg-primary/20 p-4 rounded-full">

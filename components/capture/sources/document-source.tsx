@@ -7,6 +7,9 @@ import { cn } from '@/lib/utils'
 import { captureDocument, saveLocalResults } from '@/lib/api/capture'
 import { useCaptureStore } from '@/lib/stores/capture-store'
 import { runPipeline } from '@/lib/ollama/extraction-pipeline'
+import { OllamaClient } from '@/lib/ollama/ollama-client'
+import { createByokClient } from '@/lib/llm/provider-factory'
+import { PROVIDER_DEFAULTS } from '@/lib/llm/provider-defaults'
 import { extractTextFromFile } from '@/lib/extraction/document-extractor'
 import { LocalExtractionProgress } from '@/components/capture/local-extraction-progress'
 import { CaptureTopicChips } from '@/components/capture/capture-topic-chips'
@@ -29,6 +32,10 @@ export function DocumentSource() {
   const setLocalProgress = useCaptureStore((s) => s.setLocalProgress)
   const localError = useCaptureStore((s) => s.localError)
   const setLocalError = useCaptureStore((s) => s.setLocalError)
+  const byokProvider = useCaptureStore((s) => s.byokProvider)
+  const byokApiKey = useCaptureStore((s) => s.byokApiKey)
+  const byokFastModel = useCaptureStore((s) => s.byokFastModel)
+  const byokSmartModel = useCaptureStore((s) => s.byokSmartModel)
 
   const handleFile = useCallback(
     (file: File) => {
@@ -76,18 +83,77 @@ export function DocumentSource() {
     setLocalProgress({ phase: 'document-extract', current: 1, total: 1 })
 
     // Step 2-3: Run extraction pipeline locally
+    const client = new OllamaClient(localConfig.baseUrl)
     const result = await runPipeline(
       {
         transcript: text,
         pass1Model: localConfig.pass1Model,
         pass2Model: localConfig.pass2Model,
-        ollamaBaseUrl: localConfig.baseUrl,
+        client,
         signal: abort.signal,
       },
       (progress) => setLocalProgress(progress)
     )
 
     // Step 4: Save results to API
+    setLocalProgress({ phase: 'saving', current: 0, total: 1 })
+    const headers = { Authorization: `Bearer ${session.accessToken}` }
+
+    const title = selectedFile.name.replace(/\.[^.]+$/, '')
+    const concepts = result.concepts.map((c, i) => ({
+      title: c.title,
+      description: c.description,
+      order: i,
+    }))
+
+    const questions = result.questions.flatMap((qg) =>
+      qg.questions.map((q) => ({
+        conceptIndex: qg.conceptIndex,
+        type: q.type,
+        text: q.text,
+        options: q.options,
+        correctIndex: q.correctIndex,
+        explanation: q.explanation,
+      }))
+    )
+
+    await saveLocalResults(headers, {
+      videoUrl: `file://${selectedFile.name}`,
+      title,
+      concepts,
+      questions,
+      sourceType: 'DOCUMENT',
+    })
+
+    setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved — ${concepts.length} concepts, ${questions.length} questions` })
+  }
+
+  async function handleByokSubmit() {
+    if (!selectedFile || !session?.accessToken || !byokProvider || !byokApiKey) return
+
+    const defaults = PROVIDER_DEFAULTS[byokProvider]
+    const abort = new AbortController()
+    abortRef.current = abort
+
+    setLocalProgress({ phase: 'document-extract', current: 0, total: 1 })
+    const text = await extractTextFromFile(selectedFile)
+    if (!text || text.trim().length === 0) {
+      throw new Error('Could not extract text from document')
+    }
+    setLocalProgress({ phase: 'document-extract', current: 1, total: 1 })
+
+    const client = createByokClient(byokProvider, byokApiKey)
+    const result = await runPipeline(
+      {
+        transcript: text,
+        pass1Model: byokFastModel || defaults.fast,
+        pass2Model: byokSmartModel || defaults.smart,
+        client,
+        signal: abort.signal,
+      },
+      (progress) => setLocalProgress(progress)
+    )
+
     setLocalProgress({ phase: 'saving', current: 0, total: 1 })
     const headers = { Authorization: `Bearer ${session.accessToken}` }
 
@@ -129,6 +195,8 @@ export function DocumentSource() {
     try {
       if (processingMode === 'local') {
         await handleLocalSubmit()
+      } else if (processingMode === 'byok') {
+        await handleByokSubmit()
       } else {
         await handleCloudSubmit()
       }
@@ -151,7 +219,7 @@ export function DocumentSource() {
     setLocalProgress(null)
   }
 
-  const isLocal = processingMode === 'local'
+  const isClientSide = processingMode === 'local' || processingMode === 'byok'
 
   return (
     <div>
@@ -233,13 +301,13 @@ export function DocumentSource() {
       <CaptureTopicChips />
 
       <div className="flex items-center gap-2 rounded-lg bg-accent/50 px-3 py-2 text-[10px] text-muted-foreground">
-        {isLocal ? (
+        {isClientSide ? (
           <Monitor className="h-3.5 w-3.5 shrink-0 text-green-500" />
         ) : (
           <Cloud className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
         )}
         <span>
-          {isLocal ? (
+          {isClientSide ? (
             <>
               Pipeline: Text extraction → Pass 1{' '}
               <code className="rounded bg-card px-1.5 py-0.5 font-mono text-[9px] text-primary">
@@ -258,7 +326,7 @@ export function DocumentSource() {
       </div>
 
       {/* Local processing progress */}
-      {isLocal && (localProgress || localError) && (
+      {isClientSide && (localProgress || localError) && (
         <LocalExtractionProgress onCancel={handleCancel} />
       )}
     </div>

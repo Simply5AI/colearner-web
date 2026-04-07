@@ -104,6 +104,62 @@ export interface BillingStatus {
 
 export type LearningGoal = 'build_knowledge' | 'retain_more' | 'exam_prep' | 'career_growth'
 
+// ─── Demographic Types ──────────────────────────────────────────────────
+
+export type Gender = 'MALE' | 'FEMALE' | 'NON_BINARY' | 'PREFER_NOT_TO_SAY' | 'OTHER'
+
+export type GradeLevel =
+  | 'CLASS_1' | 'CLASS_2' | 'CLASS_3' | 'CLASS_4'
+  | 'CLASS_5' | 'CLASS_6' | 'CLASS_7' | 'CLASS_8'
+  | 'CLASS_9' | 'CLASS_10' | 'CLASS_11' | 'CLASS_12'
+  | 'UNDERGRADUATE' | 'POSTGRADUATE' | 'NOT_APPLICABLE'
+
+// ─── Education & Certification Types ──────────────────────────────────────
+
+export type EducationLevel = 'HIGH_SCHOOL' | 'DIPLOMA' | 'BACHELORS' | 'MASTERS' | 'PHD' | 'SELF_TAUGHT' | 'OTHER'
+
+export interface UserEducation {
+  id: string
+  educationLevel: EducationLevel
+  fieldOfStudy: string
+  institution: string | null
+  graduationYear: number | null
+  isCurrent: boolean
+  createdAt: string
+}
+
+export interface UserCertification {
+  id: string
+  name: string
+  issuingOrg: string | null
+  issueDate: string | null
+  expiryDate: string | null
+  credentialUrl: string | null
+  createdAt: string
+}
+
+export interface SuggestedGoal {
+  id: string
+  title: string
+  description: string | null
+  icon: string | null
+  status: GoalStatus
+}
+
+export interface SuggestionStatus {
+  generated: boolean
+  goals: SuggestedGoal[]
+  roadmapId: string | null
+  roadmapStatus: RoadmapStatus | null
+}
+
+export interface ProfileSummary {
+  educations: UserEducation[]
+  certifications: UserCertification[]
+  learningGoal: string | null
+  suggestedGoalsGenerated: boolean
+}
+
 export interface TopicItem {
   id: string
   name: string
@@ -120,6 +176,9 @@ export interface UserProfile {
   /** @deprecated Use avatarUrl instead */
   profileImageUrl?: string
   bio?: string | null
+  dateOfBirth?: string | null
+  gradeLevel?: GradeLevel | null
+  gender?: Gender | null
   learningGoal?: string | null
   dailyTimeMinutes?: number | null
   topics?: TopicItem[]
@@ -132,10 +191,13 @@ export interface UserProfile {
   preferredLanguage?: string
   onboardingCompleted?: boolean
   onboardingCompletedAt?: string | null
+  suggestedGoalsGenerated?: boolean
+  educations?: UserEducation[]
+  certifications?: UserCertification[]
   createdAt: string
   updatedAt?: string
   // AI Processing preferences
-  processingMode?: 'cloud' | 'local'
+  processingMode?: 'cloud' | 'local' | 'byok'
   ollamaBaseUrl?: string
   ollamaPass1Model?: string | null
   ollamaPass2Model?: string | null
@@ -171,6 +233,8 @@ export interface ActivityItem {
   createdAt: string
 }
 
+export type DifficultyLevel = 'beginner' | 'intermediate' | 'master'
+
 export interface SourceProgress {
   currentSource: number
   sourceName: string
@@ -180,8 +244,8 @@ export interface SourceProgress {
   requiredPassRate: number
   masteredConcepts: number
   milestones: SourceMilestone[]
-  engagementState: 'explore' | 'learn' | 'grow' | 'excel'
-  availableStates: string[]
+  engagementState: DifficultyLevel
+  availableStates: DifficultyLevel[]
 }
 
 export interface SourceMilestone {
@@ -291,6 +355,7 @@ export interface RecallSessionConfig {
   questionType?: SessionQuestionTypeFilter
   order?: SessionOrder
   timerSeconds?: number
+  difficultyLevel?: DifficultyLevel
 }
 
 export interface RecallSessionResponse {
@@ -497,4 +562,68 @@ export interface UpdateGoalInput {
   icon?: string
   color?: string
   sortOrder?: number
+}
+
+// ─── Roadmap Types ──────────────────────────────────────────────────────────
+
+export type RoadmapStatus = 'GENERATING' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'
+export type RoadmapItemStatus = 'PENDING' | 'QUEUED' | 'CAPTURED' | 'SKIPPED'
+export type RoadmapMode = 'TOPIC' | 'SYLLABUS' | 'EXAM_PREP'
+
+export interface RoadmapItem {
+  id: string
+  weekId: string
+  title: string
+  url: string | null
+  sourceType: ExtractionSourceType
+  description: string | null
+  durationMin: number | null
+  status: RoadmapItemStatus
+  extractionId: string | null
+  sortOrder: number
+  metadata: Record<string, unknown> | null
+  extraction?: {
+    id: string
+    status: ExtractionStatus
+    title: string | null
+    conceptCount: number
+    questionCount: number
+  } | null
+}
+
+export interface RoadmapWeek {
+  id: string
+  roadmapId: string
+  weekNumber: number
+  title: string
+  description: string | null
+  sortOrder: number
+  items: RoadmapItem[]
+}
+
+export interface Roadmap {
+  id: string
+  orgId: string
+  userId: string
+  title: string
+  description: string | null
+  mode: RoadmapMode
+  status: RoadmapStatus
+  goalId: string | null
+  totalWeeks: number
+  examDate: string | null
+  createdAt: string
+  updatedAt: string
+  weeks: RoadmapWeek[]
+  goal?: { id: string; title: string; icon: string | null; color: string | null } | null
+}
+
+export interface CreateRoadmapInput {
+  mode: RoadmapMode
+  topic: string
+  weeks?: number
+  goalId?: string
+  syllabusText?: string
+  examDate?: string
+  examTopics?: string[]
 }

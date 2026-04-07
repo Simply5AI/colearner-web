@@ -8,13 +8,15 @@ import {
   Download,
   Clock,
   BarChart3,
-  CalendarDays,
+
   Settings,
-  Bell,
+
   MoreHorizontal,
   LogOut,
   User,
   Trophy,
+  BookOpen,
+  Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { SourceProgress } from '@/lib/types'
@@ -33,17 +35,17 @@ interface NavItem {
 }
 
 const mainNavItems: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/capture', label: 'Capture', icon: Download },
-  { href: '/recall', label: 'Recall', icon: Clock },
-  { href: '/mastery', label: 'Mastery', icon: BarChart3 },
-  { href: '/queue', label: 'Review Queue', icon: CalendarDays },
-  { href: '/trophies', label: 'Trophies', icon: Trophy },
+  { href: '/dashboard', label: 'Home', icon: Home },
+  { href: '/capture', label: 'Library', icon: Download },
+  { href: '/roadmaps', label: 'Study Plans', icon: BookOpen },
+  { href: '/practice', label: 'Practice', icon: Clock },
+  { href: '/mastery', label: 'Progress', icon: BarChart3 },
+  { href: '/pods', label: 'Study Groups', icon: Users },
+  { href: '/trophies', label: 'Achievements', icon: Trophy },
 ]
 
 const settingsNavItems: NavItem[] = [
   { href: '/settings', label: 'Settings', icon: Settings },
-  { href: '/settings/notifications', label: 'Notifications', icon: Bell },
 ]
 
 interface AppSidebarProps {
@@ -67,17 +69,16 @@ export function AppSidebar({
 
   function isActive(href: string): boolean {
     if (href === '/dashboard') return pathname === '/dashboard'
+    if (href === '/practice') return pathname.startsWith('/practice') || pathname.startsWith('/recall')
     return pathname.startsWith(href)
   }
 
   function getBadge(item: NavItem): number | undefined {
-    if (item.href === '/recall' && recallDueCount > 0) return recallDueCount
-    if (item.href === '/queue' && failedCount > 0) return failedCount
+    if (item.href === '/practice' && recallDueCount > 0) return recallDueCount
     return undefined
   }
 
-  function getBadgeVariant(item: NavItem): 'default' | 'warning' {
-    if (item.href === '/queue') return 'warning'
+  function getBadgeVariant(_item: NavItem): 'default' | 'warning' {
     return 'default'
   }
 

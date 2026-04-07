@@ -76,10 +76,14 @@ export function useCompleteOnboarding() {
       }
 
       // Step 1: Profile
+      const storeState = useOnboardingStore.getState()
       await updateOnboardingProfile(token, {
         displayName: data.name,
         bio: data.bio,
         ...(avatarUrl ? { avatarUrl } : {}),
+        ...(storeState.dateOfBirth ? { dateOfBirth: storeState.dateOfBirth } : {}),
+        ...(storeState.gradeLevel ? { gradeLevel: storeState.gradeLevel } : {}),
+        ...(storeState.gender ? { gender: storeState.gender } : {}),
       })
 
       // Step 2: Goal

@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
@@ -25,6 +24,7 @@ export function SkillsForm() {
     }
 
     try {
+      // Save profile, goal, and skills via the multi-step API
       await completeMutation.mutateAsync({
         name: displayName,
         bio: bio || undefined,
@@ -33,7 +33,8 @@ export function SkillsForm() {
         dailyGoalMinutes,
         skillsInterests: selectedSkills,
       })
-      router.push('/onboarding/welcome')
+      // Navigate to education step instead of welcome
+      router.push('/onboarding/education')
     } catch {
       toast.error('Something went wrong', {
         description: 'Failed to save your preferences. Please try again.',
@@ -59,7 +60,7 @@ export function SkillsForm() {
         disabled={completeMutation.isPending}
         className="w-full h-12 text-sm font-bold bg-brand-orange hover:bg-brand-orange-dark text-white shadow-[0_2px_8px_rgba(196,98,26,0.2)]"
       >
-        {completeMutation.isPending ? 'Saving...' : 'Complete Setup \u2192'}
+        {completeMutation.isPending ? 'Saving...' : 'Continue \u2192'}
       </Button>
     </form>
   )

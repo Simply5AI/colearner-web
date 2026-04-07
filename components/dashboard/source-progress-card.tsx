@@ -13,29 +13,24 @@ const stateConfig: Record<
   string,
   { emoji: string; label: string; activeClass: string }
 > = {
-  explore: {
+  beginner: {
     emoji: '🧭',
-    label: 'Explore',
+    label: 'Beginner',
     activeClass: 'border-brand-teal bg-brand-teal/10 text-brand-teal',
   },
-  learn: {
+  intermediate: {
     emoji: '🚂',
-    label: 'Learn',
+    label: 'Intermediate',
     activeClass: 'border-blue-600 bg-blue-50 text-blue-600',
   },
-  grow: {
-    emoji: '🌱',
-    label: 'Grow',
-    activeClass: 'border-purple-600 bg-purple-50 text-purple-600',
-  },
-  excel: {
+  master: {
     emoji: '🏆',
-    label: 'Excel',
-    activeClass: 'border-green-700 bg-green-50 text-green-700',
+    label: 'Master',
+    activeClass: 'border-amber-600 bg-amber-50 text-amber-600',
   },
 }
 
-const allStates = ['explore', 'learn', 'grow', 'excel'] as const
+const allStates = ['beginner', 'intermediate', 'master'] as const
 
 export function SourceProgressCard({ progress }: SourceProgressCardProps) {
   const rawPct = Math.round(
@@ -150,7 +145,7 @@ export function SourceProgressCard({ progress }: SourceProgressCardProps) {
         {/* Engagement state pills */}
         <div className="text-[10px] text-muted-foreground">
           <strong className="text-foreground/80">
-            Current engagement state:
+            Current difficulty level:
           </strong>
         </div>
         <div className="mt-1.5 flex gap-1.5">

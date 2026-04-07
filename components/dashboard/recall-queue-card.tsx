@@ -22,7 +22,7 @@ export function RecallQueueCard({ items }: RecallQueueCardProps) {
     <div className="rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border/50 px-[18px] py-3.5">
         <div className="flex items-center gap-2 text-[13px] font-bold text-foreground">
-          📋 Today&apos;s Recall Queue
+          📋 Due for Review
           {dueCount > 0 && (
             <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-bold text-warning">
               {dueCount} due
@@ -30,7 +30,7 @@ export function RecallQueueCard({ items }: RecallQueueCardProps) {
           )}
         </div>
         <Link
-          href="/queue"
+          href="/practice?tab=queue"
           className="text-[11px] font-semibold text-primary hover:underline"
         >
           View all →
@@ -101,7 +101,7 @@ export function RecallQueueCard({ items }: RecallQueueCardProps) {
                 href="/recall"
                 className="shrink-0 rounded-lg bg-primary px-3 py-1 text-[10px] font-bold text-white transition-colors hover:bg-primary/90"
               >
-                {isFailed ? 'Retry' : 'Recall'}
+                {isFailed ? 'Retry' : 'Practice'}
               </Link>
             </div>
           )
