@@ -15,7 +15,7 @@ export function NotificationNudge({
 
   const smDue = dueCount - failedCount
   const parts: string[] = []
-  if (smDue > 0) parts.push(`${smDue} from SM-2 schedule`)
+  if (smDue > 0) parts.push(`${smDue} scheduled for review`)
   if (failedCount > 0) parts.push(`${failedCount} failed items`)
 
   return (

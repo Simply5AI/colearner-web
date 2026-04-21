@@ -49,7 +49,7 @@ function SelectContent({
 }: SelectPrimitive.Popup.Props) {
   return (
     <SelectPrimitive.Portal>
-      <SelectPrimitive.Positioner>
+      <SelectPrimitive.Positioner className="isolate z-50 outline-none">
         <SelectPrimitive.Popup
           data-slot="select-content"
           className={cn(

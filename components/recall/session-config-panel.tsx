@@ -10,17 +10,16 @@ import {
   Compass,
   Flag,
   Trophy,
-  Layers,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createRecallSession } from '@/lib/api/recall'
-import type { QueueStats, SessionQuestionTypeFilter, SessionOrder, DifficultyLevel } from '@/lib/types'
+import type { SessionQuestionTypeFilter, SessionOrder, DifficultyLevel } from '@/lib/types'
 
 interface SessionConfigPanelProps {
-  stats: QueueStats
   extractionId: string
   authHeaders: Record<string, string>
-  selectedCount?: number
+  selectedConceptIds: string[]
+  conceptCount: number
 }
 
 const questionTypeOptions: { value: SessionQuestionTypeFilter; label: string }[] = [
@@ -32,7 +31,7 @@ const questionTypeOptions: { value: SessionQuestionTypeFilter; label: string }[]
 ]
 
 const orderOptions: { value: SessionOrder; label: string }[] = [
-  { value: 'sm2', label: 'SM-2 Priority (Due First)' },
+  { value: 'sm2', label: 'Smart Order (Due First)' },
   { value: 'failed_first', label: 'Failed Items First' },
   { value: 'random', label: 'Random Shuffle' },
   { value: 'newest', label: 'Newest Concepts First' },
@@ -45,47 +44,58 @@ const timerOptions: { value: number; label: string }[] = [
   { value: 90, label: '90s per question' },
 ]
 
-const difficultyLevels: Array<{ id: DifficultyLevel; label: string; icon: typeof Compass; activeClass: string; countKey: (stats: QueueStats) => number }> = [
-  { id: 'beginner', label: 'Beginner', icon: Compass, activeClass: 'border-teal-600 bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-400', countKey: (s) => s.newCount },
-  { id: 'intermediate', label: 'Intermediate', icon: Flag, activeClass: 'border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400', countKey: (s) => s.dueCount - s.failedCount },
-  { id: 'master', label: 'Master', icon: Trophy, activeClass: 'border-amber-600 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400', countKey: (s) => s.failedCount },
+const questionCountOptions = [5, 10, 15, 20]
+
+const difficultyLevels: Array<{
+  id: DifficultyLevel
+  label: string
+  icon: typeof Compass
+  activeClass: string
+  questionsPerConcept: number
+}> = [
+  { id: 'beginner', label: 'Beginner', icon: Compass, activeClass: 'border-teal-600 bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-400', questionsPerConcept: 2 },
+  { id: 'intermediate', label: 'Intermediate', icon: Flag, activeClass: 'border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400', questionsPerConcept: 2 },
+  { id: 'master', label: 'Master', icon: Trophy, activeClass: 'border-amber-600 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400', questionsPerConcept: 3 },
 ]
 
-export function SessionConfigPanel({ stats, extractionId, authHeaders, selectedCount }: SessionConfigPanelProps) {
+export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptIds, conceptCount }: SessionConfigPanelProps) {
   const router = useRouter()
   const [questionType, setQuestionType] = useState<SessionQuestionTypeFilter>('ALL')
   const [order, setOrder] = useState<SessionOrder>('sm2')
   const [timerSeconds, setTimerSeconds] = useState(0)
-  const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevel | null>(null)
+  const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevel>('beginner')
+  const [questionCount, setQuestionCount] = useState(10)
   const [isStarting, setIsStarting] = useState(false)
 
+  const selectedCount = selectedConceptIds.length
+  const currentDifficulty = difficultyLevels.find((d) => d.id === difficultyLevel)!
+  const maxQuestions = selectedCount * currentDifficulty.questionsPerConcept
+  const effectiveQuestionCount = Math.min(questionCount, maxQuestions)
+
   const questionTypeLabel = questionTypeOptions.find((o) => o.value === questionType)?.label ?? 'Mixed'
-  const difficultyLabel = difficultyLevel
-    ? difficultyLevels.find((d) => d.id === difficultyLevel)?.label ?? 'All'
-    : 'All levels'
-  const selectedDifficultyCount = difficultyLevel
-    ? (difficultyLevels.find((d) => d.id === difficultyLevel)?.countKey(stats) ?? 0)
-    : stats.totalAvailable
+  const difficultyLabel = currentDifficulty.label
 
   function handleReset() {
     setQuestionType('ALL')
     setOrder('sm2')
     setTimerSeconds(0)
-    setDifficultyLevel(null)
+    setDifficultyLevel('beginner')
+    setQuestionCount(10)
   }
 
   async function handleStart() {
-    if (isStarting || selectedDifficultyCount === 0) return
+    if (isStarting || selectedCount === 0) return
     setIsStarting(true)
 
     try {
       const session = await createRecallSession(authHeaders, {
         extractionId,
-        questionCount: selectedDifficultyCount,
+        questionCount: effectiveQuestionCount,
         questionType: questionType === 'ALL' ? undefined : questionType,
         order,
         timerSeconds: timerSeconds || undefined,
-        difficultyLevel: difficultyLevel || undefined,
+        difficultyLevel,
+        conceptIds: selectedConceptIds,
       })
       router.push(`/recall/${session.id}`)
     } catch {
@@ -101,12 +111,18 @@ export function SessionConfigPanel({ stats, extractionId, authHeaders, selectedC
       </div>
 
       {/* Config dropdowns */}
-      <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-4">
         <ConfigSelect
           label="Question Types"
           value={questionType}
           onChange={(v) => setQuestionType(v as SessionQuestionTypeFilter)}
           options={questionTypeOptions}
+        />
+        <ConfigSelect
+          label="Questions"
+          value={String(questionCount)}
+          onChange={(v) => setQuestionCount(Number(v))}
+          options={questionCountOptions.map((n) => ({ value: String(n), label: `${n} questions` }))}
         />
         <ConfigSelect
           label="Order"
@@ -128,23 +144,9 @@ export function SessionConfigPanel({ stats, extractionId, authHeaders, selectedC
           Difficulty Level
         </label>
         <div className="flex flex-wrap gap-2">
-          {/* All option */}
-          <button
-            onClick={() => setDifficultyLevel(null)}
-            className={`flex items-center gap-1.5 rounded-full border-[1.5px] px-4 py-2 text-xs font-semibold transition-all duration-150 ${
-              difficultyLevel === null
-                ? 'border-brand-orange bg-brand-orange/10 text-brand-orange dark:bg-brand-orange/20'
-                : 'border-border bg-card text-muted-foreground hover:border-muted-foreground/50'
-            }`}
-          >
-            <Layers className="h-3.5 w-3.5" />
-            All
-            <span className="text-[10px] opacity-70">({stats.totalAvailable})</span>
-          </button>
           {difficultyLevels.map((level) => {
             const Icon = level.icon
             const isActive = difficultyLevel === level.id
-            const count = level.countKey(stats)
             return (
               <button
                 key={level.id}
@@ -157,7 +159,6 @@ export function SessionConfigPanel({ stats, extractionId, authHeaders, selectedC
               >
                 <Icon className="h-3.5 w-3.5" />
                 {level.label}
-                <span className="text-[10px] opacity-70">({count})</span>
               </button>
             )
           })}
@@ -167,7 +168,9 @@ export function SessionConfigPanel({ stats, extractionId, authHeaders, selectedC
       {/* Action bar */}
       <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
-          <strong className="text-foreground">{selectedCount ?? selectedDifficultyCount} items</strong> selected · {questionTypeLabel} · {difficultyLabel}
+          <strong className="text-foreground">{selectedCount}/{conceptCount} concepts</strong> selected
+          {' '}&middot; {effectiveQuestionCount} questions will be generated
+          {' '}&middot; {difficultyLabel}
         </p>
         <div className="flex gap-2.5">
           <Button variant="outline" size="sm" onClick={handleReset}>
@@ -178,17 +181,17 @@ export function SessionConfigPanel({ stats, extractionId, authHeaders, selectedC
             size="sm"
             className="bg-brand-orange hover:bg-brand-orange/90 text-white shadow-md"
             onClick={handleStart}
-            disabled={isStarting || selectedDifficultyCount === 0}
+            disabled={isStarting || selectedCount === 0}
           >
             {isStarting ? (
               <>
                 <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                Starting...
+                Generating questions...
               </>
             ) : (
               <>
                 <Play className="mr-1.5 h-4 w-4" />
-                Start Recall Session
+                Start Practice Session
               </>
             )}
           </Button>

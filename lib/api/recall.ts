@@ -7,6 +7,8 @@ import type {
   SessionSummaryDetailed,
   QueueStats,
   QueueItem,
+  RecallSessionHistoryItem,
+  ConceptMastery,
 } from '@/lib/types'
 
 export async function createRecallSession(
@@ -86,4 +88,20 @@ export async function getQueueItems(
 ): Promise<QueueItem[]> {
   const query = extractionId ? `?extractionId=${extractionId}` : ''
   return apiClient<QueueItem[]>(`/api/recall/queue/items${query}`, { headers })
+}
+
+export async function getConceptMastery(
+  headers: Record<string, string>,
+  extractionId: string,
+): Promise<ConceptMastery[]> {
+  return apiClient<ConceptMastery[]>(
+    `/api/recall/concepts/mastery?extractionId=${extractionId}`,
+    { headers },
+  )
+}
+
+export async function getSessionHistory(
+  headers: Record<string, string>,
+): Promise<RecallSessionHistoryItem[]> {
+  return apiClient<RecallSessionHistoryItem[]>('/api/recall/sessions', { headers })
 }

@@ -9,8 +9,10 @@ import {
   ExternalLink,
   Loader2,
   Play,
+  Plus,
   SkipForward,
   Globe,
+  Youtube,
   CheckCircle2,
   Clock,
   Archive,
@@ -25,8 +27,10 @@ import {
   useSkipRoadmapItem,
   useDeleteRoadmap,
 } from '@/lib/hooks/use-roadmap'
+import { useLearnerTerms } from '@/lib/hooks/use-learner-terms'
+import { RecommendationsSection } from './recommendations-section'
 import { getApiUrl } from '@/lib/api/client'
-import type { RoadmapItem, RoadmapItemStatus, RoadmapWeek } from '@/lib/types'
+import type { RoadmapItem, RoadmapItemStatus, RoadmapPhase } from '@/lib/types'
 
 const itemStatusConfig: Record<RoadmapItemStatus, { label: string; icon: React.ElementType; className: string }> = {
   PENDING: { label: 'Pending', icon: Clock, className: 'text-muted-foreground' },
@@ -42,6 +46,15 @@ function SourceBadge({ type }: { type: string }) {
   return <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">WEB</Badge>
 }
 
+/** Direct video/article URL that the extraction pipeline can process */
+function isCapturableUrl(url: string | null, sourceType: string): boolean {
+  if (!url) return false
+  if (sourceType === 'YOUTUBE') {
+    return url.includes('youtube.com/watch') || url.includes('youtu.be/')
+  }
+  return true // WEB URLs are capturable
+}
+
 function RoadmapItemCard({
   item,
   roadmapId,
@@ -51,88 +64,183 @@ function RoadmapItemCard({
 }) {
   const captureItem = useCaptureRoadmapItem(roadmapId)
   const skipItem = useSkipRoadmapItem(roadmapId)
+  const [showUrlInput, setShowUrlInput] = useState(false)
+  const [manualUrl, setManualUrl] = useState('')
   const config = itemStatusConfig[item.status]
   const StatusIcon = config.icon
+  const capturable = isCapturableUrl(item.url, item.sourceType)
+  const captures = (item.metadata?.captures as Array<{ extractionId: string; url: string }>) || []
+
+  const handleCapture = () => {
+    captureItem.mutate({ itemId: item.id })
+  }
+
+  const handleManualCapture = () => {
+    if (!manualUrl.trim()) return
+    captureItem.mutate({ itemId: item.id, url: manualUrl.trim() }, {
+      onSuccess: () => {
+        setShowUrlInput(false)
+        setManualUrl('')
+      },
+    })
+  }
 
   return (
     <Card className="group">
-      <CardContent className="flex items-start gap-3 py-3 px-4">
-        <SourceBadge type={item.sourceType} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-sm truncate">{item.title}</span>
-            {item.durationMin && (
-              <span className="text-xs text-muted-foreground shrink-0">{item.durationMin} min</span>
+      <CardContent className="py-3 px-4">
+        <div className="flex items-start gap-3">
+          <SourceBadge type={item.sourceType} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-sm truncate">{item.title}</span>
+              {item.durationMin && (
+                <span className="text-xs text-muted-foreground shrink-0">{item.durationMin} min</span>
+              )}
+            </div>
+            {item.description && (
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>
             )}
           </div>
-          {item.description && (
-            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>
-          )}
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className={`flex items-center gap-1 text-xs ${config.className}`}>
-            <StatusIcon className={`h-3.5 w-3.5 ${item.status === 'QUEUED' ? 'animate-spin' : ''}`} />
-            {config.label}
-          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={`flex items-center gap-1 text-xs ${config.className}`}>
+              <StatusIcon className={`h-3.5 w-3.5 ${item.status === 'QUEUED' ? 'animate-spin' : ''}`} />
+              {config.label}
+            </span>
 
-          {item.status === 'PENDING' && item.url && (
-            <>
-              <Button
-                size="sm"
-                variant="default"
-                className="h-7 text-xs"
-                onClick={() => captureItem.mutate(item.id)}
-                disabled={captureItem.isPending}
-              >
-                {captureItem.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-1" />}
-                Capture
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 text-xs"
-                onClick={() => skipItem.mutate(item.id)}
-                disabled={skipItem.isPending}
-              >
-                Skip
-              </Button>
-            </>
-          )}
+            {item.status === 'PENDING' && capturable && (
+              <>
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="h-7 text-xs"
+                  onClick={handleCapture}
+                  disabled={captureItem.isPending}
+                >
+                  {captureItem.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-1" />}
+                  Capture
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs"
+                  onClick={() => skipItem.mutate(item.id)}
+                  disabled={skipItem.isPending}
+                >
+                  Skip
+                </Button>
+              </>
+            )}
 
-          {item.status === 'CAPTURED' && item.extractionId && (
-            <Button size="sm" variant="outline" className="h-7 text-xs" render={<Link href={`/extract?id=${item.extractionId}`} />}>
-              View <ExternalLink className="h-3 w-3 ml-1" />
-            </Button>
-          )}
+            {item.status === 'PENDING' && !capturable && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={() => setShowUrlInput(!showUrlInput)}
+                  disabled={captureItem.isPending}
+                >
+                  {captureItem.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-1" />}
+                  Capture
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs"
+                  onClick={() => skipItem.mutate(item.id)}
+                  disabled={skipItem.isPending}
+                >
+                  Skip
+                </Button>
+              </>
+            )}
+
+            {item.status === 'CAPTURED' && (
+              <>
+                {item.extractionId && (
+                  <Button size="sm" variant="outline" className="h-7 text-xs" render={<Link href={`/extract?id=${item.extractionId}`} />}>
+                    View <ExternalLink className="h-3 w-3 ml-1" />
+                  </Button>
+                )}
+                {captures.length > 1 && (
+                  <span className="text-[10px] text-muted-foreground">{captures.length} sources</span>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs gap-1"
+                  onClick={() => setShowUrlInput(!showUrlInput)}
+                  disabled={captureItem.isPending}
+                >
+                  <Plus className="h-3 w-3" /> Add Source
+                </Button>
+              </>
+            )}
 
           {item.url && (
             <Button size="sm" variant="ghost" className="h-7 w-7 p-0" render={<a href={item.url} target="_blank" rel="noopener noreferrer" />}>
-              <Globe className="h-3.5 w-3.5" />
+              {item.sourceType === 'YOUTUBE' ? (
+                <Youtube className="h-3.5 w-3.5" />
+              ) : (
+                <Globe className="h-3.5 w-3.5" />
+              )}
             </Button>
           )}
+          </div>
         </div>
+
+        {showUrlInput && (
+          <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+            <input
+              type="url"
+              value={manualUrl}
+              onChange={(e) => setManualUrl(e.target.value)}
+              placeholder="Paste the URL of the video or article you studied..."
+              className="flex-1 h-8 rounded-md border border-input bg-background px-3 text-xs placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              onKeyDown={(e) => { if (e.key === 'Enter') handleManualCapture() }}
+            />
+            <Button
+              size="sm"
+              variant="default"
+              className="h-8 text-xs"
+              onClick={handleManualCapture}
+              disabled={!manualUrl.trim() || captureItem.isPending}
+            >
+              {captureItem.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-1" />}
+              Capture
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 text-xs"
+              onClick={() => { setShowUrlInput(false); setManualUrl('') }}
+            >
+              Cancel
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
 }
 
-function WeekSection({ week, roadmapId }: { week: RoadmapWeek; roadmapId: string }) {
-  const captured = week.items.filter((i) => i.status === 'CAPTURED').length
-  const total = week.items.length
+function PhaseSection({ phase, roadmapId }: { phase: RoadmapPhase; roadmapId: string }) {
+  const captured = phase.items.filter((i) => i.status === 'CAPTURED').length
+  const total = phase.items.length
 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-3">
-        <h3 className="font-semibold text-sm">{week.title}</h3>
+        <h3 className="font-semibold text-sm">{phase.title}</h3>
         <span className="text-xs text-muted-foreground">
           {captured}/{total} captured
         </span>
       </div>
-      {week.description && (
-        <p className="text-xs text-muted-foreground">{week.description}</p>
+      {phase.description && (
+        <p className="text-xs text-muted-foreground">{phase.description}</p>
       )}
       <div className="space-y-2">
-        {week.items.map((item) => (
+        {phase.items.map((item) => (
           <RoadmapItemCard key={item.id} item={item} roadmapId={roadmapId} />
         ))}
       </div>
@@ -144,6 +252,7 @@ export function RoadmapDetailClient({ roadmapId }: { roadmapId: string }) {
   const router = useRouter()
   const { data: roadmap, isLoading, refetch } = useRoadmap(roadmapId)
   const deleteRoadmap = useDeleteRoadmap()
+  const terms = useLearnerTerms()
   const [isPolling, setIsPolling] = useState(false)
 
   // Poll while GENERATING
@@ -170,9 +279,9 @@ export function RoadmapDetailClient({ roadmapId }: { roadmapId: string }) {
     return <p className="text-center text-muted-foreground py-12">Roadmap not found</p>
   }
 
-  const totalItems = roadmap.weeks.reduce((s, w) => s + w.items.length, 0)
-  const capturedItems = roadmap.weeks.reduce(
-    (s, w) => s + w.items.filter((i) => i.status === 'CAPTURED').length,
+  const totalItems = roadmap.phases.reduce((s, p) => s + p.items.length, 0)
+  const capturedItems = roadmap.phases.reduce(
+    (s, p) => s + p.items.filter((i) => i.status === 'CAPTURED').length,
     0
   )
 
@@ -181,14 +290,14 @@ export function RoadmapDetailClient({ roadmapId }: { roadmapId: string }) {
       <div className="flex items-start justify-between">
         <div>
           <Button variant="ghost" size="sm" className="mb-2 -ml-2" render={<Link href="/roadmaps" />}>
-            <ArrowLeft className="h-4 w-4 mr-1" /> Roadmaps
+            <ArrowLeft className="h-4 w-4 mr-1" /> {terms.plansLabel}
           </Button>
           <h1 className="text-2xl font-bold tracking-tight">{roadmap.title}</h1>
           {roadmap.description && (
             <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{roadmap.description}</p>
           )}
           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-            <span>{roadmap.totalWeeks} weeks</span>
+            <span>{roadmap.totalPhases} {terms.phasesLabel.toLowerCase()}</span>
             <span>{totalItems} resources</span>
             <span>{capturedItems} captured</span>
             {roadmap.goal && <span>Goal: {roadmap.goal.title}</span>}
@@ -227,10 +336,16 @@ export function RoadmapDetailClient({ roadmapId }: { roadmapId: string }) {
       )}
 
       <div className="space-y-8">
-        {roadmap.weeks.map((week) => (
-          <WeekSection key={week.id} week={week} roadmapId={roadmapId} />
+        {roadmap.phases.map((phase) => (
+          <PhaseSection key={phase.id} phase={phase} roadmapId={roadmapId} />
         ))}
       </div>
+
+      <RecommendationsSection
+        roadmapId={roadmapId}
+        phases={roadmap.phases}
+        roadmapStatus={roadmap.status}
+      />
     </div>
   )
 }

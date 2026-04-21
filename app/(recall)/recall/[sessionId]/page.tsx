@@ -5,7 +5,7 @@ import { ApiError } from '@/lib/api/client'
 import { RecallSession } from '@/components/recall/recall-session'
 
 export const metadata: Metadata = {
-  title: 'Recall Session',
+  title: 'Practice Session',
 }
 
 export default async function RecallSessionPage({

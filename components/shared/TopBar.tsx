@@ -1,6 +1,8 @@
 'use client'
 
-import { Search, Bell, Settings } from 'lucide-react'
+import Link from 'next/link'
+import { Bell, Settings } from 'lucide-react'
+import { CommandSearch } from '@/components/shared/CommandSearch'
 
 interface TopBarProps {
   title: string
@@ -21,20 +23,20 @@ export function TopBar({ title, subtitle, children }: TopBarProps) {
       </div>
       <div className="flex items-center gap-2.5">
         {children}
-        <button className="flex items-center gap-1.5 rounded-lg border border-border bg-accent/50 px-3.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground">
-          <Search className="h-3.5 w-3.5" />
-          <span>Search...</span>
-          <kbd className="ml-1 rounded border border-border bg-card px-1 py-0.5 font-mono text-[9px]">
-            ⌘K
-          </kbd>
-        </button>
-        <button className="relative flex h-[34px] w-[34px] items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground">
+        <CommandSearch />
+        <Link
+          href="/settings/notifications"
+          className="relative flex h-[34px] w-[34px] items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground"
+        >
           <Bell className="h-4 w-4" />
           <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-destructive" />
-        </button>
-        <button className="flex h-[34px] w-[34px] items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground">
+        </Link>
+        <Link
+          href="/settings"
+          className="flex h-[34px] w-[34px] items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground"
+        >
           <Settings className="h-4 w-4" />
-        </button>
+        </Link>
       </div>
     </header>
   )

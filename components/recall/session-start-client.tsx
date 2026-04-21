@@ -1,49 +1,89 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { SessionConfigPanel } from '@/components/recall/session-config-panel'
-import { QueuePreviewV2 } from '@/components/recall/queue-preview-v2'
-import type { QueueStats, QueueItem } from '@/lib/types'
+import { ConceptGrid } from '@/components/recall/concept-grid'
+import { TutorFAB } from '@/components/tutor/tutor-fab'
+import { TutorDrawer } from '@/components/tutor/tutor-drawer'
+import { useTutorStore } from '@/lib/stores/tutor-store'
+import type { ConceptMastery } from '@/lib/types'
 
 interface SessionStartClientProps {
-  stats: QueueStats
-  items: QueueItem[]
+  concepts: ConceptMastery[]
   extractionId: string
+  extractionTitle: string
   authHeaders: Record<string, string>
 }
 
-export function SessionStartClient({ stats, items, extractionId, authHeaders }: SessionStartClientProps) {
-  // Initialize all items as selected
+export function SessionStartClient({
+  concepts,
+  extractionId,
+  extractionTitle,
+  authHeaders,
+}: SessionStartClientProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
-    () => new Set(items.map((i) => i.questionId))
+    () => new Set(concepts.map((c) => c.conceptId)),
+  )
+  const setPinned = useTutorStore((s) => s.setPinned)
+
+  const handleToggle = useCallback(
+    (conceptId: string) => {
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        if (next.has(conceptId)) {
+          next.delete(conceptId)
+        } else {
+          next.add(conceptId)
+          setPinned(conceptId)
+        }
+        return next
+      })
+    },
+    [setPinned],
   )
 
-  const handleToggle = useCallback((questionId: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(questionId)) {
-        next.delete(questionId)
-      } else {
-        next.add(questionId)
-      }
-      return next
-    })
+  const handleSelectAll = useCallback(() => {
+    setSelectedIds(new Set(concepts.map((c) => c.conceptId)))
+  }, [concepts])
+
+  const handleDeselectAll = useCallback(() => {
+    setSelectedIds(new Set())
   }, [])
 
-  const selectedCount = selectedIds.size
+  const selectedConceptIds = useMemo(() => Array.from(selectedIds), [selectedIds])
+
+  const tutorConcepts = useMemo(
+    () => concepts.map((c) => ({ id: c.conceptId, title: c.title })),
+    [concepts],
+  )
+
+  useEffect(() => {
+    return () => {
+      useTutorStore.getState().close()
+      useTutorStore.getState().setPinned(null)
+    }
+  }, [])
 
   return (
     <div className="space-y-6">
       <SessionConfigPanel
-        stats={stats}
         extractionId={extractionId}
         authHeaders={authHeaders}
-        selectedCount={selectedCount}
+        selectedConceptIds={selectedConceptIds}
+        conceptCount={concepts.length}
       />
-      <QueuePreviewV2
-        items={items}
+      <ConceptGrid
+        concepts={concepts}
         selectedIds={selectedIds}
         onToggle={handleToggle}
+        onSelectAll={handleSelectAll}
+        onDeselectAll={handleDeselectAll}
+      />
+      <TutorFAB />
+      <TutorDrawer
+        extractionId={extractionId}
+        extractionTitle={extractionTitle}
+        concepts={tutorConcepts}
       />
     </div>
   )

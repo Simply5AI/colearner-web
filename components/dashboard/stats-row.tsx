@@ -17,19 +17,19 @@ interface StatCardConfig {
 export function StatsRow({ stats }: StatsRowProps) {
   const cards: StatCardConfig[] = [
     {
-      label: 'Total Recalls',
+      label: 'Questions Answered',
       value: stats.totalRecalls,
       icon: '📥',
       iconBg: 'bg-primary/10',
     },
     {
-      label: 'Pass Rate',
+      label: 'Success Rate',
       value: `${stats.passRate}%`,
       icon: '✅',
       iconBg: 'bg-green-50',
     },
     {
-      label: 'Active Concepts',
+      label: 'Active Topics',
       value: stats.activeConcepts,
       icon: '🧠',
       iconBg: 'bg-blue-50',

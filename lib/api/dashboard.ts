@@ -15,6 +15,7 @@ export async function getDashboardStats(
 
 interface BackendQueueItem {
   questionId: string
+  extractionId: string | null
   conceptTitle: string
   type: string
   source: string
@@ -34,31 +35,37 @@ export async function getRecallQueue(
     { headers }
   )
   const raw = Array.isArray(res) ? res : res.items ?? []
-  const mapped = raw.map((r) => ({
-    id: r.questionId,
-    conceptTitle: r.conceptTitle,
-    type: r.type as RecallQueueItem['type'],
-    source: (r.sm2 ? 'sm2_due' : 'failed') as RecallQueueItem['source'],
-    lastScore: null as number | null,
-    easeFactor: r.sm2?.ef ?? 2.5,
-    interval: r.sm2?.interval ?? 0,
-    dueDate: r.sm2?.nextReviewDate ?? new Date().toISOString(),
-    dueCount: 1,
-  }))
 
-  // Group by concept title so each concept appears once
+  // Group by extraction so each source appears once, with the worst mastery signal across its questions
   const grouped = new Map<string, RecallQueueItem>()
-  for (const item of mapped) {
-    const existing = grouped.get(item.conceptTitle)
+  const sourceRank: Record<RecallQueueItem['source'], number> = { weak: 0, new: 1, practiced: 2 }
+  for (const r of raw) {
+    const ef = r.sm2?.ef ?? null
+    let masteryState: RecallQueueItem['source']
+    if (ef === null) masteryState = 'new'
+    else if (ef < 2.0) masteryState = 'weak'
+    else masteryState = 'practiced'
+
+    const key = r.extractionId ?? r.source
+    const existing = grouped.get(key)
     if (!existing) {
-      grouped.set(item.conceptTitle, item)
+      grouped.set(key, {
+        id: r.questionId,
+        extractionId: r.extractionId,
+        conceptTitle: r.source,
+        type: r.type as RecallQueueItem['type'],
+        source: masteryState,
+        lastScore: null,
+        easeFactor: ef ?? 2.5,
+        interval: r.sm2?.interval ?? 0,
+        dueDate: r.sm2?.nextReviewDate ?? '',
+        dueCount: 1,
+      })
     } else {
       existing.dueCount++
-      // Keep worst metrics (lowest EF = hardest, shortest interval)
-      if (item.easeFactor < existing.easeFactor) existing.easeFactor = item.easeFactor
-      if (item.interval < existing.interval) existing.interval = item.interval
-      // Prefer failed source if any question failed
-      if (item.source === 'failed') existing.source = 'failed'
+      if ((ef ?? 2.5) < existing.easeFactor) existing.easeFactor = ef ?? 2.5
+      if ((r.sm2?.interval ?? 0) < existing.interval) existing.interval = r.sm2?.interval ?? 0
+      if (sourceRank[masteryState] < sourceRank[existing.source]) existing.source = masteryState
     }
   }
   return Array.from(grouped.values())

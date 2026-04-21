@@ -13,7 +13,7 @@ export function MasteryStatsRow({ stats }: MasteryStatsRowProps) {
       iconBg: 'bg-primary/10',
     },
     {
-      label: 'Pass Rate',
+      label: 'Success Rate',
       value: `${stats.passRate}%`,
       icon: '✅',
       iconBg: 'bg-green-50',
@@ -25,7 +25,7 @@ export function MasteryStatsRow({ stats }: MasteryStatsRowProps) {
       iconBg: 'bg-blue-50',
     },
     {
-      label: 'Avg EF',
+      label: 'Avg Difficulty',
       value: stats.avgEF.toFixed(2),
       icon: '🧠',
       iconBg: 'bg-purple-50',

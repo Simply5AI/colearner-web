@@ -11,7 +11,6 @@ import { OllamaClient } from '@/lib/ollama/ollama-client'
 import { createByokClient } from '@/lib/llm/provider-factory'
 import { PROVIDER_DEFAULTS } from '@/lib/llm/provider-defaults'
 import { LocalExtractionProgress } from '@/components/capture/local-extraction-progress'
-import { CaptureTopicChips } from '@/components/capture/capture-topic-chips'
 
 export function YouTubeSource() {
   const { data: session } = useSession()
@@ -29,7 +28,7 @@ export function YouTubeSource() {
   const setLocalProgress = useCaptureStore((s) => s.setLocalProgress)
   const localError = useCaptureStore((s) => s.localError)
   const setLocalError = useCaptureStore((s) => s.setLocalError)
-  const selectedTopicIds = useCaptureStore((s) => s.selectedTopicIds)
+  const selectedRoadmapId = useCaptureStore((s) => s.selectedRoadmapId)
   const byokProvider = useCaptureStore((s) => s.byokProvider)
   const byokApiKey = useCaptureStore((s) => s.byokApiKey)
   const byokFastModel = useCaptureStore((s) => s.byokFastModel)
@@ -45,7 +44,8 @@ export function YouTubeSource() {
         autoTranscript,
         questionTypes: allTypes ? ['open', 'mcq', 'cloze'] : ['open'],
       },
-      selectedTopicIds.length > 0 ? selectedTopicIds : undefined,
+      undefined,
+      selectedRoadmapId || undefined,
     )
     setExtractionId(extractionId)
   }
@@ -114,7 +114,6 @@ export function YouTubeSource() {
     await saveLocalResults(headers, {
       videoUrl: url.trim(),
       title: url.trim(),
-      topicIds: selectedTopicIds.length > 0 ? selectedTopicIds : undefined,
       concepts,
       questions,
     })
@@ -183,7 +182,6 @@ export function YouTubeSource() {
     await saveLocalResults(headers, {
       videoUrl: url.trim(),
       title: url.trim(),
-      topicIds: selectedTopicIds.length > 0 ? selectedTopicIds : undefined,
       concepts,
       questions,
     })
@@ -283,8 +281,6 @@ export function YouTubeSource() {
           Generate all 3 types
         </button>
       </div>
-
-      <CaptureTopicChips />
 
       <div className="flex items-center gap-2 rounded-lg bg-accent/50 px-3 py-2 text-[10px] text-muted-foreground">
         {isClientSide ? (

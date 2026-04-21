@@ -19,7 +19,7 @@ import { queryKeys } from '@/lib/api/query-keys'
 export function SuggestionsLoading() {
   const router = useRouter()
   const { data: session } = useSession()
-  const { educationLevel, fieldOfStudy, isCurrent, institution, certifications } =
+  const { educationLevel, fieldOfStudy, isCurrent, institution, graduationYear, certifications } =
     useOnboardingStore()
   const [phase, setPhase] = useState<'submitting' | 'generating' | 'error'>('submitting')
   const [errorMsg, setErrorMsg] = useState('')
@@ -58,6 +58,7 @@ export function SuggestionsLoading() {
             fieldOfStudy,
             isCurrent,
             institution: institution || undefined,
+            graduationYear: graduationYear ?? undefined,
           })
         }
 
@@ -82,7 +83,7 @@ export function SuggestionsLoading() {
     }
 
     run()
-  }, [session, educationLevel, fieldOfStudy, isCurrent, institution, certifications, router])
+  }, [session, educationLevel, fieldOfStudy, isCurrent, institution, graduationYear, certifications, router])
 
   const handleRetry = () => {
     submitted.current = false

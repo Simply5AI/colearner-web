@@ -1,33 +1,97 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { BookOpen, Loader2, Filter } from 'lucide-react'
+import { BookOpen, Loader2, Filter, Clock } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
 import { listExtractions, refreshExtractionMetadata } from '@/lib/api/extraction'
 import { ExtractionCard } from '@/components/recall/extraction-card'
 import { RecallFilters } from '@/components/recall/recall-filters'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { formatDuration } from '@/lib/utils'
+import type { Extraction, ExtractionStatus } from '@/lib/types'
+
+const processingStatuses: ExtractionStatus[] = ['PENDING', 'PROCESSING', 'COMPLETED_PASS1']
+
+const processingLabels: Partial<Record<ExtractionStatus, { label: string; color: string }>> = {
+  PENDING: { label: 'Queued', color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+  PROCESSING: { label: 'Extracting...', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  COMPLETED_PASS1: { label: 'Generating questions...', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+}
+
+function ProcessingCard({ extraction }: { extraction: Extraction }) {
+  const info = processingLabels[extraction.status] || { label: extraction.status, color: '' }
+  return (
+    <Card className="border-dashed">
+      <CardContent className="flex items-center gap-3 py-3 px-4">
+        <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">
+            {extraction.title || 'Processing capture...'}
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Started {new Date(extraction.createdAt).toLocaleTimeString()}
+          </p>
+        </div>
+        <Badge variant="outline" className={`text-[10px] shrink-0 ${info.color}`}>
+          {info.label}
+        </Badge>
+      </CardContent>
+    </Card>
+  )
+}
 
 export function SourceTab() {
   const { data: session } = useSession()
   const queryClient = useQueryClient()
   const searchParams = useSearchParams()
 
-  const topicSlug = searchParams.get('topic') || undefined
   const sourceType = searchParams.get('source') || undefined
+  const roadmapId = searchParams.get('roadmap') || undefined
+
+  // Fetch in-progress extractions (poll every 5s while any exist)
+  const { data: processingData } = useQuery({
+    queryKey: ['extractions', 'processing'],
+    queryFn: async () => {
+      if (!session?.accessToken) throw new Error('Not authenticated')
+      const headers = { Authorization: `Bearer ${session.accessToken}` }
+      const results = await Promise.all(
+        processingStatuses.map((status) =>
+          listExtractions(headers, { status, limit: 20 })
+        )
+      )
+      return results.flatMap((r) => r.data)
+    },
+    enabled: !!session?.accessToken,
+    refetchInterval: (query) => {
+      const items = query.state.data
+      return items && items.length > 0 ? 5000 : false
+    },
+  })
+
+  // When processing count drops to 0, refresh completed list
+  const prevCount = useRef(0)
+  useEffect(() => {
+    const count = processingData?.length ?? 0
+    if (prevCount.current > 0 && count === 0) {
+      queryClient.invalidateQueries({ queryKey: ['extractions', 'completed'] })
+    }
+    prevCount.current = count
+  }, [processingData?.length, queryClient])
 
   const { data, isLoading } = useQuery({
-    queryKey: ['extractions', 'completed', { topicSlug, sourceType }],
+    queryKey: ['extractions', 'completed', { sourceType, roadmapId }],
     queryFn: async () => {
       if (!session?.accessToken) throw new Error('Not authenticated')
       const headers = { Authorization: `Bearer ${session.accessToken}` }
       const result = await listExtractions(headers, {
         status: 'COMPLETED',
         limit: 50,
-        topicSlug,
         sourceType,
+        roadmapId,
       })
 
       // Auto-refresh metadata for extractions missing titles
@@ -54,20 +118,18 @@ export function SourceTab() {
 
   function handleDeleted(id: string) {
     queryClient.setQueryData(
-      ['extractions', 'completed', { topicSlug, sourceType }],
+      ['extractions', 'completed', { sourceType, roadmapId }],
       (old: typeof data) => old?.filter((e) => e.id !== id)
     )
   }
 
   const extractions = data || []
-  const hasFilters = !!topicSlug || !!sourceType
+  const processingExtractions = processingData || []
+  const hasFilters = !!sourceType || !!roadmapId
   const totalRecallTime = extractions.reduce(
     (sum, e) => sum + (e.totalRecallSeconds ?? 0),
     0,
   )
-  const topicCount = new Set(
-    extractions.flatMap((e) => e.topics?.map((t) => t.topic.slug) ?? []),
-  ).size
 
   return (
     <div>
@@ -77,11 +139,6 @@ export function SourceTab() {
           <span>
             <span className="font-semibold text-foreground">{extractions.length}</span> sources
           </span>
-          {topicCount > 0 && (
-            <span>
-              <span className="font-semibold text-foreground">{topicCount}</span> topics
-            </span>
-          )}
           {totalRecallTime > 0 && (
             <span>
               <span className="font-semibold text-foreground">{formatDuration(totalRecallTime)}</span> total study time
@@ -92,12 +149,27 @@ export function SourceTab() {
 
       <RecallFilters />
 
+      {/* In-progress captures */}
+      {processingExtractions.length > 0 && (
+        <div className="mb-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Processing ({processingExtractions.length})
+            </span>
+          </div>
+          {processingExtractions.map((extraction) => (
+            <ProcessingCard key={extraction.id} extraction={extraction} />
+          ))}
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading extractions...
         </div>
-      ) : extractions.length === 0 ? (
+      ) : extractions.length === 0 && processingExtractions.length === 0 ? (
         hasFilters ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card py-16 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted mb-4">
@@ -105,7 +177,7 @@ export function SourceTab() {
             </div>
             <h2 className="text-base font-bold text-foreground mb-1">No matches</h2>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-              No captures match the current filters. Try adjusting your topic or source type selection.
+              No captures match the current filters. Try adjusting your source type or study plan.
             </p>
             <Link
               href="/practice"

@@ -15,7 +15,7 @@ export function SessionHero({ stats }: SessionHeroProps) {
           <Brain className="h-5 w-5 text-brand-teal" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">Ready to Recall?</h1>
+          <h1 className="text-2xl font-bold">Ready to Practice?</h1>
           <p className="text-sm text-muted-foreground">
             Choose how many questions and start your session
           </p>
@@ -46,7 +46,7 @@ export function SessionHero({ stats }: SessionHeroProps) {
         />
         <StatCard
           icon={<TrendingUp className="h-4 w-4" />}
-          label="Pass Rate"
+          label="Success Rate"
           value={`${stats.passRate}%`}
           color="text-brand-teal"
           bgColor="bg-brand-teal/10"

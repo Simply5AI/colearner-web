@@ -117,15 +117,15 @@ export function QueueItemCard({ item, selected, onToggle }: QueueItemCardProps) 
       <div className="flex items-center gap-3 border-t border-border/60 pt-3">
         <div className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground">
           <Calendar className="h-3 w-3" />
-          Interval: <span className="font-mono text-foreground/70">{formatInterval(item.interval)}</span>
+          Next in: <span className="font-mono text-foreground/70">{formatInterval(item.interval)}</span>
         </div>
         <div className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground">
           <Eye className="h-3 w-3" />
-          Reps: <span className="font-mono text-foreground/70">{item.repetitions}</span>
+          Reviews: <span className="font-mono text-foreground/70">{item.repetitions}</span>
         </div>
         <div className={`flex items-center gap-1 text-[10px] font-semibold ${isFailed ? 'text-destructive' : 'text-muted-foreground'}`}>
           <Zap className="h-3 w-3" />
-          EF: <span className={`font-mono ${isFailed ? 'text-destructive' : 'text-foreground/70'}`}>{item.easinessFactor}</span>
+          Difficulty: <span className={`font-mono ${isFailed ? 'text-destructive' : 'text-foreground/70'}`}>{item.easinessFactor}</span>
         </div>
       </div>
     </div>

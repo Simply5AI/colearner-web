@@ -6,21 +6,31 @@ import type {
   ConceptLedgerEntry,
 } from '@/lib/types'
 
+function appendRoadmap(qs: URLSearchParams, roadmapId?: string) {
+  if (roadmapId) qs.set('roadmapId', roadmapId)
+}
+
 export async function getMasteryStats(
   headers: Record<string, string>,
-  range: '7d' | '30d' | 'all' = '30d'
+  range: '7d' | '30d' | 'all' = '30d',
+  roadmapId?: string
 ): Promise<MasteryAnalyticsStats> {
+  const qs = new URLSearchParams({ range })
+  appendRoadmap(qs, roadmapId)
   return apiClient<MasteryAnalyticsStats>(
-    `/api/mastery/stats?range=${range}`,
+    `/api/mastery/stats?${qs.toString()}`,
     { headers }
   )
 }
 
 export async function getDailyPassRates(
   headers: Record<string, string>,
-  range: '7d' | '30d' = '30d'
+  range: '7d' | '30d' = '30d',
+  roadmapId?: string
 ): Promise<DailyPassRate[]> {
-  return apiClient<DailyPassRate[]>(`/api/mastery/daily?range=${range}`, {
+  const qs = new URLSearchParams({ range })
+  appendRoadmap(qs, roadmapId)
+  return apiClient<DailyPassRate[]>(`/api/mastery/daily?${qs.toString()}`, {
     headers,
   })
 }
@@ -127,10 +137,14 @@ function normalizeConceptLedger(
 }
 
 export async function getTypeBreakdown(
-  headers: Record<string, string>
+  headers: Record<string, string>,
+  roadmapId?: string
 ): Promise<TypeBreakdown[]> {
+  const qs = new URLSearchParams()
+  appendRoadmap(qs, roadmapId)
+  const queryString = qs.toString()
   const response = await apiClient<TypeBreakdown[] | LegacyTypeBreakdownResponse>(
-    '/api/mastery/by-type',
+    `/api/mastery/by-type${queryString ? `?${queryString}` : ''}`,
     { headers }
   )
 
@@ -139,12 +153,13 @@ export async function getTypeBreakdown(
 
 export async function getConceptLedger(
   headers: Record<string, string>,
-  params?: { page?: number; sort?: string; order?: 'asc' | 'desc' }
+  params?: { page?: number; sort?: string; order?: 'asc' | 'desc'; roadmapId?: string }
 ): Promise<{ data: ConceptLedgerEntry[]; total: number; page: number }> {
   const query = new URLSearchParams()
   if (params?.page) query.set('page', String(params.page))
   if (params?.sort) query.set('sort', params.sort)
   if (params?.order) query.set('order', params.order)
+  appendRoadmap(query, params?.roadmapId)
   const qs = query.toString()
   const response = await apiClient<
     { data: ConceptLedgerEntry[]; total: number; page: number } | LegacyConceptLedgerResponse

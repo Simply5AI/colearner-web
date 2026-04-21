@@ -5,6 +5,7 @@ import { useCaptureStats } from '@/lib/hooks/use-capture'
 import { CaptureStatsBar } from '@/components/capture/capture-stats-bar'
 import { CaptureSourceAccordion } from '@/components/capture/capture-source-accordion'
 import { ExtractionProgress } from '@/components/capture/extraction-progress'
+import { StudyPlanCapturePicker } from '@/components/capture/study-plan-capture-picker'
 
 export function CapturePageClient() {
   const { data: stats, isLoading } = useCaptureStats()
@@ -19,6 +20,7 @@ export function CapturePageClient() {
       ) : (
         <CaptureStatsBar stats={stats} />
       )}
+      <StudyPlanCapturePicker />
       <ExtractionProgress />
       <CaptureSourceAccordion />
     </div>

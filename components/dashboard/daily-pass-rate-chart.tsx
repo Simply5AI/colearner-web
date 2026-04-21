@@ -36,7 +36,7 @@ export function DailyPassRateChart({ data }: DailyPassRateChartProps) {
     <div className="rounded-xl border border-border bg-card">
       <div className="border-b border-border/50 px-[18px] py-3.5">
         <div className="text-[13px] font-bold text-foreground">
-          📊 Daily Pass Rate
+          📊 Daily Success Rate
         </div>
       </div>
       <div className="p-[18px]">
@@ -66,7 +66,7 @@ export function DailyPassRateChart({ data }: DailyPassRateChartProps) {
                 borderRadius: 8,
                 border: '1px solid var(--color-border)',
               }}
-              formatter={(value) => [`${value}%`, 'Pass Rate']}
+              formatter={(value) => [`${value}%`, 'Success Rate']}
             />
             <Bar dataKey="passRate" radius={[4, 4, 0, 0]}>
               {chartData.map((entry, index) => (

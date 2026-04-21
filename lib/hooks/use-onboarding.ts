@@ -5,7 +5,6 @@ import { useSession } from 'next-auth/react'
 import {
   updateOnboardingProfile,
   updateOnboardingGoal,
-  updateOnboardingSkills,
   completeOnboarding,
   updateProfile,
   getTopics,
@@ -61,13 +60,10 @@ export function useCompleteOnboarding() {
       bio?: string
       goals: LearningGoal[]
       goalTitle?: string
-      dailyGoalMinutes: number
-      skillsInterests: string[]
     }) => {
       if (!session?.accessToken) throw new Error('Not authenticated')
       const token = session.accessToken
 
-      // Step 0: Upload avatar if one was selected
       const avatarFile = useOnboardingStore.getState().avatarFile
       let avatarUrl: string | undefined
       if (avatarFile) {
@@ -75,7 +71,6 @@ export function useCompleteOnboarding() {
         avatarUrl = result.avatarUrl
       }
 
-      // Step 1: Profile
       const storeState = useOnboardingStore.getState()
       await updateOnboardingProfile(token, {
         displayName: data.name,
@@ -84,24 +79,16 @@ export function useCompleteOnboarding() {
         ...(storeState.dateOfBirth ? { dateOfBirth: storeState.dateOfBirth } : {}),
         ...(storeState.gradeLevel ? { gradeLevel: storeState.gradeLevel } : {}),
         ...(storeState.gender ? { gender: storeState.gender } : {}),
+        ...(storeState.learnerType ? { learnerType: storeState.learnerType } : {}),
       })
 
-      // Step 2: Goal
       await updateOnboardingGoal(token, {
         learningGoal: (data.goals[0] || 'BUILD_KNOWLEDGE').toUpperCase(),
-        dailyTimeMinutes: data.dailyGoalMinutes,
         ...(data.goalTitle ? { goalTitle: data.goalTitle } : {}),
       })
 
-      // Step 3: Skills
-      await updateOnboardingSkills(token, {
-        topicIds: data.skillsInterests,
-      })
-
-      // Step 4: Mark complete
       await completeOnboarding(token)
 
-      // Step 5: Refresh session so middleware sees onboardingCompleted: true
       await update({ onboardingCompleted: true })
     },
     onSuccess: () => {

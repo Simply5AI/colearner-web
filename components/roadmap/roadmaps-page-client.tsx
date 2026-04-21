@@ -1,14 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { Plus, BookOpen, GraduationCap, Clock, Archive, Loader2 } from 'lucide-react'
+import { Plus, BookOpen, GraduationCap, Clock, Loader2, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { useRoadmaps, useDeleteRoadmap } from '@/lib/hooks/use-roadmap'
+import { toast } from 'sonner'
+import { useUnifiedRoadmaps, useCreateRoadmap, useDeleteRoadmap } from '@/lib/hooks/use-roadmap'
+import { useDeleteGoal } from '@/lib/hooks/use-goals'
+import { useLearnerTerms } from '@/lib/hooks/use-learner-terms'
 import { CreateRoadmapModal } from './create-roadmap-modal'
-import type { Roadmap, RoadmapStatus, RoadmapMode } from '@/lib/types'
+import type { Roadmap, Goal, RoadmapStatus, RoadmapMode } from '@/lib/types'
 
 const statusConfig: Record<RoadmapStatus, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
   GENERATING: { label: 'Generating...', variant: 'secondary' },
@@ -24,12 +28,26 @@ const modeLabels: Record<RoadmapMode, string> = {
 }
 
 function RoadmapCard({ roadmap }: { roadmap: Roadmap }) {
-  const totalItems = roadmap.weeks.reduce((sum, w) => sum + w.items.length, 0)
-  const capturedItems = roadmap.weeks.reduce(
-    (sum, w) => sum + w.items.filter((i) => i.status === 'CAPTURED').length,
+  const deleteMutation = useDeleteRoadmap()
+  const terms = useLearnerTerms()
+  const totalItems = roadmap.phases.reduce((sum, p) => sum + p.items.length, 0)
+  const capturedItems = roadmap.phases.reduce(
+    (sum, p) => sum + p.items.filter((i) => i.status === 'CAPTURED').length,
     0
   )
   const config = statusConfig[roadmap.status]
+  const canRemove = capturedItems === 0 && roadmap.status !== 'GENERATING'
+
+  const handleRemove = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    try {
+      await deleteMutation.mutateAsync(roadmap.id)
+      toast.success(`${terms.planLabel} removed`)
+    } catch {
+      toast.error(`Failed to remove ${terms.planLabel.toLowerCase()}`)
+    }
+  }
 
   return (
     <Link href={`/roadmaps/${roadmap.id}`}>
@@ -37,9 +55,24 @@ function RoadmapCard({ roadmap }: { roadmap: Roadmap }) {
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
             <CardTitle className="text-lg">{roadmap.title}</CardTitle>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs">{modeLabels[roadmap.mode]}</Badge>
               <Badge variant={config.variant}>{config.label}</Badge>
+              {canRemove && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                  onClick={handleRemove}
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -50,7 +83,7 @@ function RoadmapCard({ roadmap }: { roadmap: Roadmap }) {
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <BookOpen className="h-3 w-3" />
-              {roadmap.totalWeeks} weeks
+              {roadmap.totalPhases} phases
             </span>
             <span className="flex items-center gap-1">
               <GraduationCap className="h-3 w-3" />
@@ -80,9 +113,77 @@ function RoadmapCard({ roadmap }: { roadmap: Roadmap }) {
   )
 }
 
+function OrphanGoalCard({ goal }: { goal: Goal }) {
+  const createRoadmap = useCreateRoadmap()
+  const deleteGoal = useDeleteGoal()
+  const queryClient = useQueryClient()
+  const terms = useLearnerTerms()
+
+  const handleGenerate = async () => {
+    await createRoadmap.mutateAsync({
+      mode: 'TOPIC',
+      topic: goal.title,
+      goalId: goal.id,
+    })
+  }
+
+  const handleRemoveGoal = async () => {
+    try {
+      await deleteGoal.mutateAsync(goal.id)
+      queryClient.invalidateQueries({ queryKey: ['roadmaps'] })
+      toast.success(`${terms.goalLabel} removed`)
+    } catch {
+      toast.error(`Failed to remove ${terms.goalLabel.toLowerCase()}`)
+    }
+  }
+
+  return (
+    <Card className="border-dashed border-primary/30 bg-primary/5">
+      <CardContent className="flex items-center justify-between py-4 px-5">
+        <div className="flex items-center gap-3">
+          <span className="text-xl">{goal.icon || '\u{1F3AF}'}</span>
+          <div>
+            <p className="font-medium text-sm">{goal.title}</p>
+            {goal.description && (
+              <p className="text-xs text-muted-foreground line-clamp-1">{goal.description}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={handleGenerate}
+            disabled={createRoadmap.isPending}
+          >
+            {createRoadmap.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+            Generate {terms.planLabel}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+            onClick={handleRemoveGoal}
+            disabled={deleteGoal.isPending}
+          >
+            {deleteGoal.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" />
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 export function RoadmapsPageClient() {
   const [showCreate, setShowCreate] = useState(false)
-  const { data: roadmaps, isLoading } = useRoadmaps()
+  const { data, isLoading } = useUnifiedRoadmaps()
+  const terms = useLearnerTerms()
+
+  const roadmaps = data?.roadmaps ?? []
+  const orphanGoals = data?.goalsWithoutRoadmap ?? []
 
   if (isLoading) {
     return (
@@ -92,34 +193,56 @@ export function RoadmapsPageClient() {
     )
   }
 
+  const hasContent = roadmaps.length > 0 || orphanGoals.length > 0
+
   return (
     <>
       <div className="flex justify-end mb-6">
         <Button onClick={() => setShowCreate(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          New Roadmap
+          {terms.newPlanLabel}
         </Button>
       </div>
 
-      {!roadmaps?.length ? (
+      {!hasContent ? (
         <Card className="py-12">
           <CardContent className="flex flex-col items-center text-center">
             <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No roadmaps yet</h3>
+            <h3 className="text-lg font-semibold mb-2">No {terms.plansLabel.toLowerCase()} yet</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-md">
-              Create an AI-generated learning path, import your course syllabus, or build an exam prep plan.
+              {terms.pageSubtitle}
             </p>
             <Button onClick={() => setShowCreate(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Create Your First Roadmap
+              Create Your First {terms.planLabel}
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {roadmaps.map((roadmap) => (
-            <RoadmapCard key={roadmap.id} roadmap={roadmap} />
-          ))}
+        <div className="space-y-6">
+          {orphanGoals.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                {terms.goalsLabel} without {terms.plansLabel.toLowerCase()}
+              </p>
+              {orphanGoals.map((goal) => (
+                <OrphanGoalCard key={goal.id} goal={goal} />
+              ))}
+            </div>
+          )}
+
+          {roadmaps.length > 0 && (
+            <div className="space-y-4">
+              {orphanGoals.length > 0 && (
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Your {terms.plansLabel}
+                </p>
+              )}
+              {roadmaps.map((roadmap) => (
+                <RoadmapCard key={roadmap.id} roadmap={roadmap} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -11,7 +11,7 @@ interface PrivacySettingsProps {
 }
 
 const privacyOptions = [
-  { key: 'showRecallScores' as const, label: 'Show recall scores', description: 'Let pod members see your weekly scores on the leaderboard' },
+  { key: 'showRecallScores' as const, label: 'Show practice scores', description: 'Let pod members see your weekly scores on the leaderboard' },
   { key: 'showStreaks' as const, label: 'Show streaks', description: 'Display your current learning streak to other members' },
   { key: 'showActivityFeed' as const, label: 'Show activity', description: 'Show your learning activity in the pod feed' },
 ]

@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useCallback, useState } from 'react'
+import { useEffect, useCallback, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
 import { useRecallStore } from '@/lib/stores/recall-store'
 import { submitRecallAnswer, skipRecallQuestion, completeRecallSession, getSessionQuestions } from '@/lib/api/recall'
+import { getExtraction } from '@/lib/api/extraction'
 import { RecallProgressBar } from './recall-progress-bar'
 import { RecallQuestionShell } from './recall-question-shell'
 import { OpenAnswerQuestion } from './open-answer-question'
@@ -12,6 +14,9 @@ import { ClozeQuestion } from './cloze-question'
 import { AnswerFeedback } from './answer-feedback'
 import { TutoringPanel } from './tutoring-panel'
 import { JudgingSpinner } from './judging-spinner'
+import { TutorFAB } from '@/components/tutor/tutor-fab'
+import { TutorDrawer } from '@/components/tutor/tutor-drawer'
+import { useTutorStore } from '@/lib/stores/tutor-store'
 import { Loader2, SkipForward } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { QuestionWithMeta } from '@/lib/types'
@@ -40,6 +45,39 @@ export function RecallSession({ sessionId, authHeaders }: RecallSessionProps) {
     store.questions[store.currentQuestionIndex]
 
   const isLastQuestion = store.currentQuestionIndex >= store.totalQuestions - 1
+
+  const extractionId = currentQuestion?.extractionId
+
+  const tutorConcepts = useMemo(() => {
+    const seen = new Map<string, { id: string; title: string }>()
+    for (const q of store.questions as QuestionWithMeta[]) {
+      if (q.conceptId && !seen.has(q.conceptId)) {
+        seen.set(q.conceptId, { id: q.conceptId, title: q.conceptTitle })
+      }
+    }
+    return Array.from(seen.values())
+  }, [store.questions])
+
+  const { data: extractionMeta } = useQuery({
+    queryKey: ['extraction', extractionId],
+    queryFn: () => getExtraction(authHeaders, extractionId as string),
+    enabled: Boolean(extractionId),
+    staleTime: 5 * 60_000,
+  })
+
+  const extractionTitle = extractionMeta?.title ?? 'Practice Session'
+
+  const setPinned = useTutorStore((s) => s.setPinned)
+  useEffect(() => {
+    if (currentQuestion?.conceptId) setPinned(currentQuestion.conceptId)
+  }, [currentQuestion?.conceptId, setPinned])
+
+  useEffect(() => {
+    return () => {
+      useTutorStore.getState().close()
+      useTutorStore.getState().setPinned(null)
+    }
+  }, [])
 
   const handleSubmit = useCallback(
     async (answer: string) => {
@@ -188,6 +226,17 @@ export function RecallSession({ sessionId, authHeaders }: RecallSessionProps) {
         <span className="mx-2">·</span>
         <kbd className="rounded border px-1.5 py-0.5 text-[10px]">Esc</kbd> exit
       </div>
+
+      {extractionId && (
+        <>
+          <TutorFAB />
+          <TutorDrawer
+            extractionId={extractionId}
+            extractionTitle={extractionTitle}
+            concepts={tutorConcepts}
+          />
+        </>
+      )}
     </div>
   )
 }

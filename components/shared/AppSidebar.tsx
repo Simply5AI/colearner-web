@@ -17,8 +17,10 @@ import {
   Trophy,
   BookOpen,
   Users,
+  History,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useLearnerTerms } from '@/lib/hooks/use-learner-terms'
 import type { SourceProgress } from '@/lib/types'
 import {
   DropdownMenu,
@@ -34,15 +36,18 @@ interface NavItem {
   icon: React.ElementType
 }
 
-const mainNavItems: NavItem[] = [
-  { href: '/dashboard', label: 'Home', icon: Home },
-  { href: '/capture', label: 'Library', icon: Download },
-  { href: '/roadmaps', label: 'Study Plans', icon: BookOpen },
-  { href: '/practice', label: 'Practice', icon: Clock },
-  { href: '/mastery', label: 'Progress', icon: BarChart3 },
-  { href: '/pods', label: 'Study Groups', icon: Users },
-  { href: '/trophies', label: 'Achievements', icon: Trophy },
-]
+function getMainNavItems(plansLabel: string): NavItem[] {
+  return [
+    { href: '/dashboard', label: 'Home', icon: Home },
+    { href: '/capture', label: 'Library', icon: Download },
+    { href: '/roadmaps', label: plansLabel, icon: BookOpen },
+    { href: '/practice', label: 'Practice', icon: Clock },
+    { href: '/dashboard/history', label: 'History', icon: History },
+    { href: '/mastery', label: 'Progress', icon: BarChart3 },
+    { href: '/pods', label: 'Study Groups', icon: Users },
+    { href: '/trophies', label: 'Achievements', icon: Trophy },
+  ]
+}
 
 const settingsNavItems: NavItem[] = [
   { href: '/settings', label: 'Settings', icon: Settings },
@@ -66,6 +71,7 @@ export function AppSidebar({
   failedCount = 0,
 }: AppSidebarProps) {
   const pathname = usePathname()
+  const terms = useLearnerTerms()
 
   function isActive(href: string): boolean {
     if (href === '/dashboard') return pathname === '/dashboard'
@@ -93,7 +99,7 @@ export function AppSidebar({
 
       {/* Nav */}
       <nav className="flex-1 space-y-1 px-2.5 pt-3">
-        {mainNavItems.map((item) => {
+        {getMainNavItems(terms.plansLabel).map((item) => {
           const active = isActive(item.href)
           const badge = getBadge(item)
           const variant = getBadgeVariant(item)
@@ -175,7 +181,7 @@ export function AppSidebar({
                   Source {sourceProgress.currentSource} — {sourceProgress.sourceName}
                 </p>
                 <p className="text-[10px] text-muted-foreground">
-                  {sourceProgress.totalAttempts} / {sourceProgress.requiredAttempts} recall attempts
+                  {sourceProgress.totalAttempts} / {sourceProgress.requiredAttempts} practice attempts
                 </p>
               </div>
             </div>

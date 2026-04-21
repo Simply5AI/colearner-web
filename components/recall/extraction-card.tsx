@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Youtube, Globe, FileText, Headphones, Video, BookOpen, HelpCircle, Trash2, Loader2, Clock } from 'lucide-react'
+import { Youtube, Globe, FileText, Headphones, Video, BookOpen, HelpCircle, Trash2, Loader2, Clock, Map } from 'lucide-react'
 import { resolveIcon } from '@/lib/utils/topic-icons'
 import { formatDuration } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -175,6 +175,24 @@ export function ExtractionCard({ extraction, onDeleted }: ExtractionCardProps) {
         </div>
       )}
 
+      {/* Study plan badges */}
+      {extraction.roadmaps && extraction.roadmaps.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1">
+          {extraction.roadmaps.map((rm) => (
+            <Link
+              key={rm.id}
+              href={`/roadmaps/${rm.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 rounded-full bg-brand-orange/10 px-2 py-0.5 text-[10px] font-medium text-brand-orange hover:bg-brand-orange/20 transition-colors"
+            >
+              <Map className="h-2.5 w-2.5" />
+              {rm.title}
+              <span className="text-brand-orange/60">· {rm.phaseTitle}</span>
+            </Link>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <BookOpen className="h-3.5 w-3.5" />
@@ -182,7 +200,7 @@ export function ExtractionCard({ extraction, onDeleted }: ExtractionCardProps) {
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <HelpCircle className="h-3.5 w-3.5" />
-          <span><span className="font-semibold text-foreground">{extraction.questionCount}</span> questions</span>
+          <span><span className="font-semibold text-foreground">{extraction.questionCount || extraction.conceptCount}</span> {extraction.questionCount ? 'questions' : 'concepts ready'}</span>
         </div>
         {extraction.totalRecallSeconds != null && extraction.totalRecallSeconds > 0 && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

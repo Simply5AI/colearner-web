@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function PracticePage() {
   return (
     <>
-      <TopBar title="Practice" subtitle="Choose a source or review due concepts" />
+      <TopBar title="Practice" subtitle="Pick a source to practice" />
       <PracticePageClient />
     </>
   )

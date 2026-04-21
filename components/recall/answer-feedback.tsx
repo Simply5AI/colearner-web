@@ -66,11 +66,11 @@ export function AnswerFeedback({ result, isLastQuestion, onNext, onTutoring }: A
       {/* SM-2 Update */}
       <div className="text-xs text-muted-foreground border-t pt-2 mt-2">
         <span>
-          Interval: {formatInterval(result.sm2Delta.intervalBefore)} → {formatInterval(result.sm2Delta.intervalAfter)}
+          Next review: {formatInterval(result.sm2Delta.intervalBefore)} → {formatInterval(result.sm2Delta.intervalAfter)}
         </span>
         <span className="mx-2">·</span>
         <span>
-          EF: {result.sm2Delta.efBefore.toFixed(2)} → {result.sm2Delta.efAfter.toFixed(2)}
+          Difficulty: {result.sm2Delta.efBefore.toFixed(2)} → {result.sm2Delta.efAfter.toFixed(2)}
         </span>
       </div>
 

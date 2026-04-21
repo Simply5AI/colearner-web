@@ -13,12 +13,14 @@ export function CertificationsForm() {
   const { certifications, addCertification, removeCertification } = useOnboardingStore()
   const [certName, setCertName] = useState('')
   const [certOrg, setCertOrg] = useState('')
+  const [certUrl, setCertUrl] = useState('')
 
   const handleAdd = () => {
     if (!certName.trim()) return
-    addCertification({ name: certName.trim(), issuingOrg: certOrg.trim() })
+    addCertification({ name: certName.trim(), issuingOrg: certOrg.trim(), credentialUrl: certUrl.trim() || undefined })
     setCertName('')
     setCertOrg('')
+    setCertUrl('')
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -50,6 +52,9 @@ export function CertificationsForm() {
                 <p className="text-sm font-medium">{cert.name}</p>
                 {cert.issuingOrg && (
                   <p className="text-xs text-muted-foreground">{cert.issuingOrg}</p>
+                )}
+                {cert.credentialUrl && (
+                  <p className="text-xs text-muted-foreground truncate max-w-[250px]">{cert.credentialUrl}</p>
                 )}
               </div>
               <button
@@ -84,6 +89,18 @@ export function CertificationsForm() {
             onChange={(e) => setCertOrg(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="e.g., Amazon Web Services, PMI"
+            className="h-11"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold">
+            Credential URL <span className="font-normal text-muted-foreground">(optional)</span>
+          </Label>
+          <Input
+            value={certUrl}
+            onChange={(e) => setCertUrl(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="https://..."
             className="h-11"
           />
         </div>

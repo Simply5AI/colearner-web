@@ -9,14 +9,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { AvatarUpload } from '@/components/ui/avatar-upload'
-import { TopicSelector } from '@/components/shared/TopicSelector'
 import { EducationCard } from '@/components/profile/education-card'
 import { CertificationCard } from '@/components/profile/certification-card'
 import { AddEducationDialog } from '@/components/profile/add-education-dialog'
 import { AddCertificationDialog } from '@/components/profile/add-certification-dialog'
 import { RegenerateButton } from '@/components/profile/regenerate-button'
 import { useProfile, useUpdateProfileMutation, useUploadAvatar, useProfileSummary } from '@/lib/hooks/use-profile'
-import { useTopics } from '@/lib/hooks/use-onboarding'
 import { GRADE_LEVEL_OPTIONS, GENDER_OPTIONS } from '@/lib/constants/profile'
 import { cn } from '@/lib/utils'
 import type { UserEducation, UserCertification, UserProfile } from '@/lib/types'
@@ -28,17 +26,10 @@ const GOALS: { id: string; emoji: string; name: string; description: string }[] 
   { id: 'CAREER_GROWTH', emoji: '\u{1F4BC}', name: 'Career Growth', description: 'Level up professionally' },
 ]
 
-const TIME_OPTIONS = [5, 15, 30, 60] as const
-
-function formatTime(minutes: number): string {
-  return minutes >= 60 ? `${minutes / 60} hour` : `${minutes} min`
-}
-
 export default function ProfilePage() {
   const { data: session } = useSession()
   const { data: profile, isLoading } = useProfile()
   const { data: profileSummary } = useProfileSummary()
-  const { data: fetchedTopics } = useTopics()
   const updateProfile = useUpdateProfileMutation()
   const uploadAvatarMutation = useUploadAvatar()
 
@@ -55,8 +46,6 @@ export default function ProfilePage() {
   const [gradeLevel, setGradeLevel] = useState('')
   const [gender, setGender] = useState('')
   const [learningGoal, setLearningGoal] = useState<string | null>(null)
-  const [dailyTimeMinutes, setDailyTimeMinutes] = useState<number>(15)
-  const [selectedTopicSlugs, setSelectedTopicSlugs] = useState<string[]>([])
 
   useEffect(() => {
     if (profile) {
@@ -67,10 +56,6 @@ export default function ProfilePage() {
       setGradeLevel(profile.gradeLevel || '')
       setGender(profile.gender || '')
       setLearningGoal(profile.learningGoal || null)
-      setDailyTimeMinutes(profile.dailyTimeMinutes || 15)
-      setSelectedTopicSlugs(
-        profile.topics?.map((t) => t.slug) || []
-      )
     }
   }, [profile])
 
@@ -95,20 +80,12 @@ export default function ProfilePage() {
         ...(gradeLevel ? { gradeLevel: gradeLevel as UserProfile['gradeLevel'] } : {}),
         ...(gender ? { gender: gender as UserProfile['gender'] } : {}),
         ...(learningGoal ? { learningGoal } : {}),
-        dailyTimeMinutes,
-        topicSlugs: selectedTopicSlugs.length > 0 ? selectedTopicSlugs : undefined,
       })
 
       toast.success('Profile updated')
     } catch {
       toast.error('Failed to update profile')
     }
-  }
-
-  function handleToggleTopic(slug: string) {
-    setSelectedTopicSlugs((prev) =>
-      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
-    )
   }
 
   if (isLoading) {
@@ -245,52 +222,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div>
-                <Label className="text-sm font-semibold">Daily Learning Time</Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  How much time do you want to spend learning per day?
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {TIME_OPTIONS.map((minutes) => (
-                  <button
-                    key={minutes}
-                    type="button"
-                    onClick={() => setDailyTimeMinutes(minutes)}
-                    className={cn(
-                      'rounded-full border-[1.5px] px-5 py-2.5 text-[13px] font-semibold transition-all duration-200',
-                      dailyTimeMinutes === minutes
-                        ? 'border-brand-orange bg-brand-orange text-white'
-                        : 'border-border bg-background text-muted-foreground hover:border-brand-orange/50'
-                    )}
-                  >
-                    {formatTime(minutes)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t border-border" />
-
-            <div className="space-y-3">
-              <div>
-                <Label className="text-sm font-semibold">Topics of Interest</Label>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Select the topics you're interested in learning about.
-                </p>
-              </div>
-              <TopicSelector
-                topics={fetchedTopics}
-                selectedSlugs={selectedTopicSlugs}
-                onToggle={handleToggleTopic}
-                onRemove={(slug) =>
-                  setSelectedTopicSlugs((prev) => prev.filter((s) => s !== slug))
-                }
-                showSearch
-                showChips
-              />
-            </div>
           </div>
         </TabsContent>
 

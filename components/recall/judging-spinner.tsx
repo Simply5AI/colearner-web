@@ -7,7 +7,7 @@ export function JudgingSpinner() {
     <div className="flex flex-col items-center justify-center py-8">
       <Loader2 className="h-8 w-8 animate-spin text-brand-teal mb-3" />
       <p className="text-sm font-medium text-muted-foreground">
-        Judging your answer...
+        Checking your answer...
       </p>
     </div>
   )

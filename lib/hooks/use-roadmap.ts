@@ -6,10 +6,15 @@ import { queryKeys } from '@/lib/api/query-keys'
 import {
   getRoadmaps,
   getRoadmap,
+  getUnifiedRoadmaps,
   createRoadmap,
   deleteRoadmap,
   captureRoadmapItem,
   skipRoadmapItem,
+  getRecommendations,
+  generateRecommendations,
+  acceptRecommendation,
+  dismissRecommendation,
 } from '@/lib/api/roadmap'
 import type { CreateRoadmapInput } from '@/lib/types'
 
@@ -68,7 +73,8 @@ export function useCaptureRoadmapItem(roadmapId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (itemId: string) => captureRoadmapItem(headers!, roadmapId, itemId),
+    mutationFn: ({ itemId, url }: { itemId: string; url?: string }) =>
+      captureRoadmapItem(headers!, roadmapId, itemId, url),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.roadmaps.detail(roadmapId) })
     },
@@ -83,6 +89,68 @@ export function useSkipRoadmapItem(roadmapId: string) {
     mutationFn: (itemId: string) => skipRoadmapItem(headers!, roadmapId, itemId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.roadmaps.detail(roadmapId) })
+    },
+  })
+}
+
+// ─── Unified ────────────────────────────────────────────────────────────────
+
+export function useUnifiedRoadmaps() {
+  const headers = useAuthHeaders()
+  return useQuery({
+    queryKey: queryKeys.roadmaps.unified(),
+    queryFn: () => getUnifiedRoadmaps(headers!),
+    enabled: !!headers,
+  })
+}
+
+// ─── Recommendations ────────────────────────────────────────────────────────
+
+export function useRecommendations(roadmapId: string) {
+  const headers = useAuthHeaders()
+  return useQuery({
+    queryKey: queryKeys.roadmaps.recommendations(roadmapId),
+    queryFn: () => getRecommendations(headers!, roadmapId),
+    enabled: !!headers && !!roadmapId,
+    select: (data) => data.recommendations,
+  })
+}
+
+export function useGenerateRecommendations(roadmapId: string) {
+  const headers = useAuthHeaders()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => generateRecommendations(headers!, roadmapId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.roadmaps.recommendations(roadmapId) })
+    },
+  })
+}
+
+export function useAcceptRecommendation(roadmapId: string) {
+  const headers = useAuthHeaders()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ recommendationId, phaseId }: { recommendationId: string; phaseId: string }) =>
+      acceptRecommendation(headers!, roadmapId, recommendationId, phaseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.roadmaps.recommendations(roadmapId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.roadmaps.detail(roadmapId) })
+    },
+  })
+}
+
+export function useDismissRecommendation(roadmapId: string) {
+  const headers = useAuthHeaders()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (recommendationId: string) =>
+      dismissRecommendation(headers!, roadmapId, recommendationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.roadmaps.recommendations(roadmapId) })
     },
   })
 }

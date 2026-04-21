@@ -12,7 +12,6 @@ import { createByokClient } from '@/lib/llm/provider-factory'
 import { PROVIDER_DEFAULTS } from '@/lib/llm/provider-defaults'
 import { extractTextFromFile } from '@/lib/extraction/document-extractor'
 import { LocalExtractionProgress } from '@/components/capture/local-extraction-progress'
-import { CaptureTopicChips } from '@/components/capture/capture-topic-chips'
 
 const ACCEPTED_TYPES = ['.pdf', '.docx', '.doc', '.txt']
 const MAX_SIZE_MB = 25
@@ -36,6 +35,7 @@ export function DocumentSource() {
   const byokApiKey = useCaptureStore((s) => s.byokApiKey)
   const byokFastModel = useCaptureStore((s) => s.byokFastModel)
   const byokSmartModel = useCaptureStore((s) => s.byokSmartModel)
+  const selectedRoadmapId = useCaptureStore((s) => s.selectedRoadmapId)
 
   const handleFile = useCallback(
     (file: File) => {
@@ -60,7 +60,11 @@ export function DocumentSource() {
   async function handleCloudSubmit() {
     if (!selectedFile || !session?.accessToken) return
     const headers = { Authorization: `Bearer ${session.accessToken}` }
-    const { extractionId } = await captureDocument(headers, selectedFile)
+    const { extractionId } = await captureDocument(
+      headers,
+      selectedFile,
+      selectedRoadmapId || undefined,
+    )
     setExtractionId(extractionId)
   }
 
@@ -297,8 +301,6 @@ export function DocumentSource() {
           {submitting ? 'Processing...' : 'Start Capture'}
         </button>
       )}
-
-      <CaptureTopicChips />
 
       <div className="flex items-center gap-2 rounded-lg bg-accent/50 px-3 py-2 text-[10px] text-muted-foreground">
         {isClientSide ? (

@@ -10,7 +10,6 @@ import { OllamaClient } from '@/lib/ollama/ollama-client'
 import { createByokClient } from '@/lib/llm/provider-factory'
 import { PROVIDER_DEFAULTS } from '@/lib/llm/provider-defaults'
 import { LocalExtractionProgress } from '@/components/capture/local-extraction-progress'
-import { CaptureTopicChips } from '@/components/capture/capture-topic-chips'
 
 export function WebSource() {
   const { data: session } = useSession()
@@ -25,7 +24,7 @@ export function WebSource() {
   const setLocalProgress = useCaptureStore((s) => s.setLocalProgress)
   const localError = useCaptureStore((s) => s.localError)
   const setLocalError = useCaptureStore((s) => s.setLocalError)
-  const selectedTopicIds = useCaptureStore((s) => s.selectedTopicIds)
+  const selectedRoadmapId = useCaptureStore((s) => s.selectedRoadmapId)
   const byokProvider = useCaptureStore((s) => s.byokProvider)
   const byokApiKey = useCaptureStore((s) => s.byokApiKey)
   const byokFastModel = useCaptureStore((s) => s.byokFastModel)
@@ -37,7 +36,8 @@ export function WebSource() {
     const { extractionId } = await captureWeb(
       headers,
       url.trim(),
-      selectedTopicIds.length > 0 ? selectedTopicIds : undefined,
+      undefined,
+      selectedRoadmapId || undefined,
     )
     setExtractionId(extractionId)
   }
@@ -106,7 +106,6 @@ export function WebSource() {
     await saveLocalResults(headers, {
       videoUrl: url.trim(),
       title: title || url.trim(),
-      topicIds: selectedTopicIds.length > 0 ? selectedTopicIds : undefined,
       concepts,
       questions,
       sourceType: 'WEB',
@@ -173,7 +172,6 @@ export function WebSource() {
     await saveLocalResults(headers, {
       videoUrl: url.trim(),
       title: title || url.trim(),
-      topicIds: selectedTopicIds.length > 0 ? selectedTopicIds : undefined,
       concepts,
       questions,
       sourceType: 'WEB',
@@ -245,8 +243,6 @@ export function WebSource() {
           </button>
         </div>
       </div>
-
-      <CaptureTopicChips />
 
       <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
         <Info className="h-3.5 w-3.5 shrink-0" />

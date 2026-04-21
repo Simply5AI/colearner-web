@@ -3,7 +3,7 @@ import type { Extraction, ExtractionListResponse, TopicItem } from '@/lib/types'
 
 export async function listExtractions(
   headers: Record<string, string>,
-  params?: { status?: string; page?: number; limit?: number; topicSlug?: string; sourceType?: string }
+  params?: { status?: string; page?: number; limit?: number; topicSlug?: string; sourceType?: string; roadmapId?: string }
 ): Promise<ExtractionListResponse> {
   const searchParams = new URLSearchParams()
   if (params?.status) searchParams.set('status', params.status)
@@ -11,6 +11,7 @@ export async function listExtractions(
   if (params?.limit) searchParams.set('limit', String(params.limit))
   if (params?.topicSlug) searchParams.set('topicSlug', params.topicSlug)
   if (params?.sourceType) searchParams.set('sourceType', params.sourceType)
+  if (params?.roadmapId) searchParams.set('roadmapId', params.roadmapId)
 
   const query = searchParams.toString() ? `?${searchParams.toString()}` : ''
   return apiClient<ExtractionListResponse>(`/api/extractions${query}`, {
@@ -22,6 +23,12 @@ export async function getExtractionTopics(
   headers: Record<string, string>,
 ): Promise<TopicItem[]> {
   return apiClient<TopicItem[]>('/api/extractions/topics', { headers })
+}
+
+export async function getExtractionRoadmaps(
+  headers: Record<string, string>,
+): Promise<{ id: string; title: string; status: string }[]> {
+  return apiClient<{ id: string; title: string; status: string }[]>('/api/extractions/roadmaps', { headers })
 }
 
 export async function getExtraction(

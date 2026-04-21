@@ -40,6 +40,7 @@ export function AddEducationDialog({ open, onOpenChange, editData }: AddEducatio
   const [educationLevel, setEducationLevel] = useState<EducationLevel>('BACHELORS')
   const [fieldOfStudy, setFieldOfStudy] = useState('')
   const [institution, setInstitution] = useState('')
+  const [graduationYear, setGraduationYear] = useState<number | null>(null)
   const [isCurrent, setIsCurrent] = useState(false)
 
   useEffect(() => {
@@ -47,11 +48,13 @@ export function AddEducationDialog({ open, onOpenChange, editData }: AddEducatio
       setEducationLevel(editData.educationLevel)
       setFieldOfStudy(editData.fieldOfStudy)
       setInstitution(editData.institution || '')
+      setGraduationYear(editData.graduationYear ?? null)
       setIsCurrent(editData.isCurrent)
     } else {
       setEducationLevel('BACHELORS')
       setFieldOfStudy('')
       setInstitution('')
+      setGraduationYear(null)
       setIsCurrent(false)
     }
   }, [editData, open])
@@ -68,6 +71,7 @@ export function AddEducationDialog({ open, onOpenChange, editData }: AddEducatio
       educationLevel,
       fieldOfStudy: fieldOfStudy.trim(),
       institution: institution.trim() || undefined,
+      graduationYear: graduationYear ?? undefined,
       isCurrent,
     }
 
@@ -129,6 +133,19 @@ export function AddEducationDialog({ open, onOpenChange, editData }: AddEducatio
               value={institution}
               onChange={(e) => setInstitution(e.target.value)}
               placeholder="e.g. MIT"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="graduation-year">Graduation Year (optional)</Label>
+            <Input
+              id="graduation-year"
+              type="number"
+              value={graduationYear ?? ''}
+              onChange={(e) => setGraduationYear(e.target.value ? parseInt(e.target.value, 10) : null)}
+              placeholder="e.g. 2024"
+              min={1950}
+              max={2040}
             />
           </div>
 

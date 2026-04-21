@@ -108,9 +108,34 @@ const authConfig: NextAuthConfig = {
         t.onboardingCompleted = true
       }
 
-      if (account?.provider === 'google') {
-        t.accessToken = account.access_token as string
-        t.accessTokenExpires = Date.now() + 14 * 60 * 1000
+      if (account?.provider === 'google' && user) {
+        // Exchange Google profile with backend to get backend JWTs
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL
+          const res = await fetch(`${API_URL}/api/auth/google/token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: user.email,
+              name: user.name,
+              image: user.image,
+              googleId: account.providerAccountId,
+            }),
+          })
+          if (res.ok) {
+            const json = await res.json()
+            const tokens = json.data ?? json
+            t.accessToken = tokens.accessToken
+            t.refreshToken = tokens.refreshToken
+            t.accessTokenExpires = Date.now() + 14 * 60 * 1000
+          } else {
+            console.error('[auth:jwt] Google token exchange failed:', res.status)
+            t.accessToken = undefined
+          }
+        } catch (err) {
+          console.error('[auth:jwt] Google token exchange error:', err)
+          t.accessToken = undefined
+        }
       }
       if (user) {
         if (user.accessToken) {
@@ -234,11 +259,11 @@ const authConfig: NextAuthConfig = {
         return Response.redirect(new URL('/onboarding/profile', nextUrl))
       }
 
-      // Redirect away from onboarding if already completed (except welcome page)
-      if (isOnboardingPage && isLoggedIn && isOnboarded) {
-        if (nextUrl.pathname === '/onboarding/welcome') return true
-        return Response.redirect(new URL('/dashboard', nextUrl))
-      }
+      // TODO: Re-enable after testing — temporarily allowing access to onboarding pages
+      // if (isOnboardingPage && isLoggedIn && isOnboarded) {
+      //   if (nextUrl.pathname === '/onboarding/welcome') return true
+      //   return Response.redirect(new URL('/dashboard', nextUrl))
+      // }
 
       return true
     },

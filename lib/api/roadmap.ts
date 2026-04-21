@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api/client'
-import type { Roadmap, CreateRoadmapInput } from '@/lib/types'
+import type { Roadmap, Goal, CreateRoadmapInput, Recommendation } from '@/lib/types'
 
 export async function getRoadmaps(
   headers: Record<string, string>
@@ -47,11 +47,13 @@ export async function deleteRoadmap(
 export async function captureRoadmapItem(
   headers: Record<string, string>,
   roadmapId: string,
-  itemId: string
+  itemId: string,
+  url?: string
 ): Promise<{ extraction: { id: string; status: string } }> {
   return apiClient(`/api/roadmaps/${roadmapId}/items/${itemId}/capture`, {
     method: 'POST',
     headers,
+    ...(url ? { body: { url } } : {}),
   })
 }
 
@@ -61,6 +63,57 @@ export async function skipRoadmapItem(
   itemId: string
 ): Promise<void> {
   await apiClient(`/api/roadmaps/${roadmapId}/items/${itemId}/skip`, {
+    method: 'POST',
+    headers,
+  })
+}
+
+// ─── Unified ────────────────────────────────────────────────────────────────
+
+export async function getUnifiedRoadmaps(
+  headers: Record<string, string>
+): Promise<{ roadmaps: Roadmap[]; goalsWithoutRoadmap: Goal[] }> {
+  return apiClient<{ roadmaps: Roadmap[]; goalsWithoutRoadmap: Goal[] }>('/api/roadmaps/unified', { headers })
+}
+
+// ─── Recommendations ────────────────────────────────────────────────────────
+
+export async function getRecommendations(
+  headers: Record<string, string>,
+  roadmapId: string
+): Promise<{ recommendations: Recommendation[] }> {
+  return apiClient<{ recommendations: Recommendation[] }>(`/api/roadmaps/${roadmapId}/recommendations`, { headers })
+}
+
+export async function generateRecommendations(
+  headers: Record<string, string>,
+  roadmapId: string
+): Promise<{ status: string }> {
+  return apiClient<{ status: string }>(`/api/roadmaps/${roadmapId}/recommendations/generate`, {
+    method: 'POST',
+    headers,
+  })
+}
+
+export async function acceptRecommendation(
+  headers: Record<string, string>,
+  roadmapId: string,
+  recommendationId: string,
+  phaseId: string
+): Promise<{ item: unknown }> {
+  return apiClient(`/api/roadmaps/${roadmapId}/recommendations/${recommendationId}/accept`, {
+    method: 'POST',
+    headers,
+    body: { phaseId },
+  })
+}
+
+export async function dismissRecommendation(
+  headers: Record<string, string>,
+  roadmapId: string,
+  recommendationId: string
+): Promise<{ dismissed: boolean }> {
+  return apiClient<{ dismissed: boolean }>(`/api/roadmaps/${roadmapId}/recommendations/${recommendationId}/dismiss`, {
     method: 'POST',
     headers,
   })

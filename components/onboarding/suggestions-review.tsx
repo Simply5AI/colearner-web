@@ -28,6 +28,7 @@ export function SuggestionsReview() {
   })
 
   const [goals, setGoals] = useState<SuggestedGoal[]>([])
+  const [acceptedIds, setAcceptedIds] = useState<Set<string>>(new Set())
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
 
@@ -53,7 +54,7 @@ export function SuggestionsReview() {
   })
 
   const handleAccept = (goalId: string) => {
-    // Goal is already created in DB, just visual feedback
+    setAcceptedIds((prev) => new Set(prev).add(goalId))
     toast.success('Goal accepted!')
   }
 
@@ -118,10 +119,12 @@ export function SuggestionsReview() {
 
       {/* Goal cards */}
       <div className="space-y-3">
-        {goals.map((goal) => (
+        {goals.map((goal) => {
+          const isAccepted = acceptedIds.has(goal.id)
+          return (
           <div
             key={goal.id}
-            className="rounded-lg border p-4 transition-colors hover:border-brand-orange/30"
+            className={`rounded-lg border p-4 transition-colors ${isAccepted ? 'border-green-500 bg-green-50/50' : 'hover:border-brand-orange/30'}`}
           >
             <div className="flex items-start gap-3">
               <span className="text-xl">{goal.icon || '\u{1F3AF}'}</span>
@@ -160,34 +163,43 @@ export function SuggestionsReview() {
 
             {editingId !== goal.id && (
               <div className="flex gap-2 mt-3 ml-8">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleAccept(goal.id)}
-                  className="h-7 text-xs"
-                >
-                  <Check className="size-3 mr-1" /> Accept
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleStartEdit(goal)}
-                  className="h-7 text-xs"
-                >
-                  <Pencil className="size-3 mr-1" /> Edit
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleDismiss(goal.id)}
-                  className="h-7 text-xs text-muted-foreground hover:text-destructive"
-                >
-                  <X className="size-3 mr-1" /> Dismiss
-                </Button>
+                {isAccepted ? (
+                  <span className="inline-flex items-center h-7 text-xs font-medium text-green-700">
+                    <Check className="size-3 mr-1" /> Accepted
+                  </span>
+                ) : (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleAccept(goal.id)}
+                      className="h-7 text-xs"
+                    >
+                      <Check className="size-3 mr-1" /> Accept
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleStartEdit(goal)}
+                      className="h-7 text-xs"
+                    >
+                      <Pencil className="size-3 mr-1" /> Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleDismiss(goal.id)}
+                      className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="size-3 mr-1" /> Dismiss
+                    </Button>
+                  </>
+                )}
               </div>
             )}
           </div>
-        ))}
+          )
+        })}
 
         {goals.length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-8">

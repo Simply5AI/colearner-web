@@ -1,75 +1,83 @@
-import { Download, Brain, TrendingUp } from 'lucide-react'
+import { Download, Clock, BarChart3 } from 'lucide-react'
 
-const features = [
+const steps = [
   {
+    number: '01',
     icon: Download,
-    title: 'Ambient Capture',
-    description: 'Learn from videos, articles, and docs without effort',
-    bgClass: 'bg-brand-teal/15',
-    textClass: 'text-brand-teal',
+    title: 'Capture',
+    description: 'Import videos, articles, and docs — AI extracts the key concepts for you',
   },
   {
-    icon: Brain,
-    title: 'Smart Recall',
-    description: 'AI-generated questions with spaced repetition',
-    bgClass: 'bg-brand-blue/15',
-    textClass: 'text-brand-blue',
+    number: '02',
+    icon: Clock,
+    title: 'Practice',
+    description: 'AI-generated recall questions adapt to your pace with spaced repetition',
   },
   {
-    icon: TrendingUp,
-    title: '3 Sources of Mastery',
-    description: 'Progress from Beginner to Advanced with real metrics',
-    bgClass: 'bg-brand-purple/15',
-    textClass: 'text-brand-purple',
+    number: '03',
+    icon: BarChart3,
+    title: 'Master',
+    description: 'Track real progress across topics and reach mastery with proven metrics',
   },
 ]
 
 export function BrandPanel() {
   return (
     <aside className="hidden lg:flex relative overflow-hidden flex-col items-center justify-center bg-gradient-to-br from-[#1C1410] via-[#0F0D0B] to-[#1A120E]">
-      {/* Animated pulsing rings */}
-      <div className="absolute top-1/2 left-1/2 w-[240px] h-[240px] rounded-full border border-brand-orange/12 animate-pulse-ring-1" />
-      <div className="absolute top-1/2 left-1/2 w-[380px] h-[380px] rounded-full border border-brand-orange/8 animate-pulse-ring-2" />
-      <div className="absolute top-1/2 left-1/2 w-[520px] h-[520px] rounded-full border border-brand-orange/8 animate-pulse-ring-3" />
+      {/* Subtle background glow */}
+      <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[400px] h-[400px] rounded-full bg-brand-orange/[0.04] blur-[100px]" />
 
-      <div className="relative z-10 flex flex-col items-center text-center max-w-[360px] px-12">
+      <div className="relative z-10 flex flex-col items-center max-w-[380px] px-10">
         {/* Logo mark */}
         <div className="animate-float mb-5">
-          <div className="w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-brand-orange to-brand-orange-hover flex items-center justify-center shadow-[0_8px_24px_rgba(196,98,26,0.3)]">
-            <span className="text-[28px] font-black text-white tracking-tight">CL</span>
+          <div className="w-[64px] h-[64px] rounded-2xl bg-gradient-to-br from-brand-orange to-brand-orange-hover flex items-center justify-center shadow-[0_8px_24px_rgba(196,98,26,0.3)]">
+            <span className="text-[24px] font-black text-white tracking-tight">CL</span>
           </div>
         </div>
 
         {/* Wordmark */}
-        <h1 className="text-[32px] font-black text-white tracking-tight mb-1.5">
+        <h1 className="text-[28px] font-black text-white tracking-tight mb-1">
           Co<span className="text-brand-orange-hover">Learner</span>
         </h1>
-        <p className="text-sm font-medium text-white/40 mb-10">
+        <p className="text-[13px] font-medium text-white/40 mb-12">
           Learn ambient. Recall on demand.
         </p>
 
-        {/* Feature bullets */}
-        <div className="w-full text-left space-y-0">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="flex items-start gap-3.5 py-3.5 border-t border-white/[0.04] first:border-t-0"
-            >
-              <div
-                className={`w-9 h-9 rounded-[10px] flex-shrink-0 flex items-center justify-center ${feature.bgClass}`}
-              >
-                <feature.icon className={`size-4 ${feature.textClass}`} />
-              </div>
-              <div>
-                <div className="text-[13px] font-bold text-white/85">
-                  {feature.title}
+        {/* Journey steps */}
+        <div className="w-full relative">
+          {/* Connecting line */}
+          <div className="absolute left-[19px] top-10 bottom-10 w-px bg-white/15" />
+
+          <div className="space-y-5">
+            {steps.map((step) => {
+              const Icon = step.icon
+              return (
+                <div key={step.number} className="relative flex gap-4">
+                  {/* Step dot */}
+                  <div className="relative z-10 flex-shrink-0 mt-1">
+                    <div className="w-[38px] h-[38px] rounded-xl bg-white/10 border border-white/15 flex items-center justify-center">
+                      <Icon className="size-4 text-white" />
+                    </div>
+                  </div>
+
+                  {/* Step content card */}
+                  <div className="flex-1 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-[10px] font-bold tracking-widest text-white/50">
+                        STEP {step.number}
+                      </span>
+                    </div>
+                    <div className="text-[14px] font-bold text-white/90 mb-1">
+                      {step.title}
+                    </div>
+                    <div className="text-[11.5px] leading-relaxed text-white/35">
+                      {step.description}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-[11px] text-white/35 mt-0.5">
-                  {feature.description}
-                </div>
-              </div>
-            </div>
-          ))}
+              )
+            })}
+          </div>
         </div>
       </div>
     </aside>

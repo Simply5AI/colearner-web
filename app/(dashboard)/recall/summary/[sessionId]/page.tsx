@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { getAuthHeaders } from '@/lib/api/auth-headers'
 import { getSessionSummary } from '@/lib/api/recall'
 import { ApiError } from '@/lib/api/client'
+import { TopBar } from '@/components/shared/TopBar'
 import { CelebrationHero } from '@/components/recall/celebration-hero'
 import { SummaryStatsGrid } from '@/components/recall/summary-stats-grid'
 import { QuestionBreakdownTable } from '@/components/recall/question-breakdown-table'
@@ -33,23 +34,29 @@ export default async function SessionSummaryPage({
   const hasFailedQuestions = summary.results.some((r) => !r.isCorrect && !r.skipped)
 
   return (
-    <div className="space-y-6">
-      <CelebrationHero passRate={summary.passRate} avgScore={summary.avgScore} />
-
-      <SummaryStatsGrid
-        passedCount={summary.passedCount}
-        totalQuestions={summary.totalQuestions}
-        avgScore={summary.avgScore}
-        totalTimeSeconds={summary.totalTimeSeconds}
-        streak={summary.streakCurrent}
+    <>
+      <TopBar
+        title="Session Summary"
+        subtitle="Review your practice session results"
       />
+      <div className="space-y-6 p-7">
+        <CelebrationHero passRate={summary.passRate} avgScore={summary.avgScore} />
 
-      <QuestionBreakdownTable results={summary.results} />
+        <SummaryStatsGrid
+          passedCount={summary.passedCount}
+          totalQuestions={summary.totalQuestions}
+          avgScore={summary.avgScore}
+          totalTimeSeconds={summary.totalTimeSeconds}
+          streak={summary.streakCurrent}
+        />
 
-      <NextActionsGrid
-        sessionId={sessionId}
-        hasFailedQuestions={hasFailedQuestions}
-      />
-    </div>
+        <QuestionBreakdownTable results={summary.results} />
+
+        <NextActionsGrid
+          sessionId={sessionId}
+          hasFailedQuestions={hasFailedQuestions}
+        />
+      </div>
+    </>
   )
 }

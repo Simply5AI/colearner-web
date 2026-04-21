@@ -116,7 +116,7 @@ export function QuestionCountSelector({ stats, authHeaders }: QuestionCountSelec
         ) : (
           <>
             <Play className="mr-2 h-4 w-4" />
-            Start Recall ({count} questions)
+            Start Practice ({count} questions)
           </>
         )}
       </Button>

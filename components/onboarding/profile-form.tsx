@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
 import { useRouter } from 'next/navigation'
@@ -7,6 +8,7 @@ import { useSession } from 'next-auth/react'
 
 import { profileStepSchema, type ProfileStepInput } from '@/lib/validators/onboarding'
 import { useOnboardingStore } from '@/lib/stores/onboarding-store'
+import { useProfile } from '@/lib/hooks/use-profile'
 import { GRADE_LEVEL_OPTIONS, GENDER_OPTIONS } from '@/lib/constants/profile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,10 +19,14 @@ export function ProfileForm() {
   const router = useRouter()
   const { data: session } = useSession()
   const store = useOnboardingStore()
+  const { data: profile } = useProfile()
+  const hydrated = useRef(false)
 
   const {
     register,
     handleSubmit,
+    reset,
+    watch,
     formState: { errors },
   } = useForm<ProfileStepInput>({
     resolver: standardSchemaResolver(profileStepSchema),
@@ -30,8 +36,24 @@ export function ProfileForm() {
       dateOfBirth: store.dateOfBirth || undefined,
       gradeLevel: (store.gradeLevel || undefined) as ProfileStepInput['gradeLevel'],
       gender: (store.gender || undefined) as ProfileStepInput['gender'],
+      learnerType: (store.learnerType || undefined) as ProfileStepInput['learnerType'],
     },
   })
+
+  useEffect(() => {
+    if (profile && !hydrated.current && !store.displayName) {
+      hydrated.current = true
+      store.hydrate(profile)
+      reset({
+        displayName: profile.name || session?.user?.name || '',
+        bio: profile.bio || '',
+        dateOfBirth: profile.dateOfBirth ? profile.dateOfBirth.split('T')[0] : undefined,
+        gradeLevel: (profile.gradeLevel || undefined) as ProfileStepInput['gradeLevel'],
+        gender: (profile.gender || undefined) as ProfileStepInput['gender'],
+        learnerType: (profile.learnerType || undefined) as ProfileStepInput['learnerType'],
+      })
+    }
+  }, [profile, store, reset, session])
 
   const onSubmit = (data: ProfileStepInput) => {
     store.setProfile({
@@ -41,6 +63,7 @@ export function ProfileForm() {
       dateOfBirth: data.dateOfBirth || '',
       gradeLevel: data.gradeLevel || '',
       gender: data.gender || '',
+      learnerType: data.learnerType || '',
     })
     router.push('/onboarding/goal')
   }
@@ -103,6 +126,29 @@ export function ProfileForm() {
           className="h-11"
           max={new Date().toISOString().split('T')[0]}
         />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs font-semibold">I am a...</Label>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { value: 'STUDENT' as const, label: 'Student', desc: 'School, college, or university' },
+            { value: 'PROFESSIONAL' as const, label: 'Professional', desc: 'Working or career-focused' },
+          ].map((opt) => (
+            <label
+              key={opt.value}
+              className={`flex cursor-pointer flex-col rounded-xl border-2 p-4 text-center transition-all ${
+                watch('learnerType') === opt.value
+                  ? 'border-brand-orange bg-brand-orange/5'
+                  : 'border-border hover:border-brand-orange/30'
+              }`}
+            >
+              <input type="radio" value={opt.value} {...register('learnerType')} className="sr-only" />
+              <span className="text-sm font-semibold">{opt.label}</span>
+              <span className="text-[11px] text-muted-foreground">{opt.desc}</span>
+            </label>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

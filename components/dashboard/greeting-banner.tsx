@@ -3,7 +3,8 @@ import type { DashboardStats } from '@/lib/types'
 interface GreetingBannerProps {
   userName: string
   stats: DashboardStats
-  dueCount: number
+  planCount: number
+  sourceCount: number
 }
 
 function getGreeting(): string {
@@ -13,9 +14,18 @@ function getGreeting(): string {
   return 'Good evening'
 }
 
-export function GreetingBanner({ userName, stats, dueCount }: GreetingBannerProps) {
+export function GreetingBanner({ userName, stats, planCount, sourceCount }: GreetingBannerProps) {
   const firstName = userName.split(' ')[0]
   const greeting = getGreeting()
+
+  let subtitle: string
+  if (planCount === 0) {
+    subtitle = 'Create a study plan to start capturing and practicing.'
+  } else if (sourceCount === 0) {
+    subtitle = `${planCount} study plan${planCount === 1 ? '' : 's'} ready. Capture a source to start practicing.`
+  } else {
+    subtitle = `${sourceCount} source${sourceCount === 1 ? '' : 's'} ready to practice across ${planCount} plan${planCount === 1 ? '' : 's'}.`
+  }
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1C1410] to-[#261A10] px-8 py-7 text-white">
@@ -28,11 +38,7 @@ export function GreetingBanner({ userName, stats, dueCount }: GreetingBannerProp
           <h2 className="text-[22px] font-extrabold tracking-tight">
             {greeting}, <span className="text-primary">{firstName}</span>
           </h2>
-          <p className="text-[13px] text-white/45">
-            {dueCount > 0
-              ? `You have ${dueCount} recall items due today. Keep the streak alive!`
-              : 'No items due today. Great job staying on top of things!'}
-          </p>
+          <p className="text-[13px] text-white/45">{subtitle}</p>
         </div>
 
         <div className="flex gap-5">
@@ -49,7 +55,7 @@ export function GreetingBanner({ userName, stats, dueCount }: GreetingBannerProp
               {stats.passRate}%
             </div>
             <div className="mt-0.5 text-[9px] uppercase tracking-wide text-white/35">
-              Pass Rate
+              Success Rate
             </div>
           </div>
           <div className="text-center">
@@ -57,7 +63,7 @@ export function GreetingBanner({ userName, stats, dueCount }: GreetingBannerProp
               {stats.activeConcepts}
             </div>
             <div className="mt-0.5 text-[9px] uppercase tracking-wide text-white/35">
-              Concepts
+              Topics
             </div>
           </div>
         </div>

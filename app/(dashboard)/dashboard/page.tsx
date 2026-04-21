@@ -1,23 +1,23 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { getAuthHeaders } from '@/lib/api/auth-headers'
-import { getDashboardStats, getRecallQueue, getActivity, getSourceProgress, getStreakCalendar } from '@/lib/api/dashboard'
-import { getGoals } from '@/lib/api/goals'
+import { getDashboardStats, getRecallQueue, getActivity, getStreakCalendar } from '@/lib/api/dashboard'
+import { getRoadmaps } from '@/lib/api/roadmap'
 import { getProfile } from '@/lib/api/user'
 import { getDailyQuest } from '@/lib/api/gamification'
+import { getSessionHistory } from '@/lib/api/recall'
 import { ApiError } from '@/lib/api/client'
 import { TopBar } from '@/components/shared/TopBar'
 import { GreetingBanner } from '@/components/dashboard/greeting-banner'
 import { StatsRow } from '@/components/dashboard/stats-row'
-import { NotificationNudge } from '@/components/dashboard/notification-nudge'
-import { SourceProgressCard } from '@/components/dashboard/source-progress-card'
 import { RecallQueueCard } from '@/components/dashboard/recall-queue-card'
-import { QuickCaptureCard } from '@/components/dashboard/quick-capture-card'
 import { StreakActivityCard } from '@/components/dashboard/streak-activity-card'
 import { DailyQuestWidget } from '@/components/dashboard/daily-quest-widget'
-import { GoalTracker } from './components/goal-tracker'
+import { RecentSessionsCard } from '@/components/dashboard/recent-sessions-card'
+import { StudyPlansSection } from '@/components/dashboard/study-plans-section'
+import { EmptyStudyPlanCta } from '@/components/shared/empty-study-plan-cta'
 import { auth } from '@/lib/auth/config'
-import type { RecallQueueItem } from '@/lib/types'
+import type { RecallQueueItem, RecallSessionHistoryItem } from '@/lib/types'
 
 export const metadata: Metadata = {
   title: 'Home',
@@ -36,19 +36,19 @@ export default async function DashboardPage() {
   const headers = await getAuthHeaders()
   const session = await auth()
 
-  let stats, rawQueue, activity, sourceProgress, streak, profile, goals
+  let stats, rawQueue, activity, streak, profile, roadmapsResp, sessionHistory
   let dailyQuest: import('@/lib/api/gamification').DailyQuest | null = null
 
   try {
-    ;[stats, rawQueue, activity, sourceProgress, streak, profile, goals] = await Promise.all([
+    ;[stats, rawQueue, activity, streak, profile, roadmapsResp, dailyQuest, sessionHistory] = await Promise.all([
       getDashboardStats(headers),
       getRecallQueue(headers).catch(() => []),
       getActivity(headers).catch(() => []),
-      getSourceProgress(headers).catch(() => null),
       getStreakCalendar(headers).catch(() => ({ currentStreak: 0, bestStreak: 0, days: [] })),
       session?.accessToken ? getProfile(session.accessToken).catch(() => null) : Promise.resolve(null),
-      getGoals(headers).catch(() => []),
+      getRoadmaps(headers).catch(() => ({ roadmaps: [] })),
       getDailyQuest(headers).catch(() => null),
+      getSessionHistory(headers).catch(() => []),
     ])
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) {
@@ -63,8 +63,8 @@ export default async function DashboardPage() {
     ? rawQueue 
     : (rawQueue as { items?: RecallQueueItem[], queue?: RecallQueueItem[] })?.items || (rawQueue as { items?: RecallQueueItem[], queue?: RecallQueueItem[] })?.queue || []
 
-  const dueCount = queue.length
-  const failedCount = queue.filter((q: RecallQueueItem) => q.source === 'failed').length
+  const planCount = roadmapsResp?.roadmaps?.length ?? 0
+  const sourceCount = queue.length
 
   return (
     <>
@@ -73,21 +73,21 @@ export default async function DashboardPage() {
         <GreetingBanner
           userName={userName}
           stats={stats}
-          dueCount={dueCount}
+          planCount={planCount}
+          sourceCount={sourceCount}
         />
 
-        <GoalTracker initialGoals={goals || []} />
+        {planCount ? (
+          <StudyPlansSection roadmaps={roadmapsResp!.roadmaps} />
+        ) : (
+          <EmptyStudyPlanCta variant="home" />
+        )}
 
         <StatsRow stats={stats} />
 
-        <NotificationNudge dueCount={dueCount} failedCount={failedCount} />
-
         <div className="grid gap-4 lg:grid-cols-2">
-          {sourceProgress && (
-            <SourceProgressCard progress={sourceProgress} />
-          )}
           <RecallQueueCard items={queue} />
-          <QuickCaptureCard />
+          <RecentSessionsCard sessions={((sessionHistory as RecallSessionHistoryItem[]) ?? []).slice(0, 5)} />
           <StreakActivityCard streak={streak} activity={activity} />
           <DailyQuestWidget quest={dailyQuest} />
         </div>

@@ -15,6 +15,7 @@ export function VideoSource() {
   const selectedFile = useCaptureStore((s) => s.selectedFile)
   const setSelectedFile = useCaptureStore((s) => s.setSelectedFile)
   const setExtractionId = useCaptureStore((s) => s.setExtractionId)
+  const selectedRoadmapId = useCaptureStore((s) => s.selectedRoadmapId)
   const [submitting, setSubmitting] = useState(false)
   const [dragOver, setDragOver] = useState(false)
 
@@ -40,7 +41,8 @@ export function VideoSource() {
       const headers = { Authorization: `Bearer ${session.accessToken}` }
       const { extractionId } = await captureVideo(
         headers,
-        selectedFile as File
+        selectedFile as File,
+        selectedRoadmapId || undefined,
       )
       setExtractionId(extractionId)
     } catch {

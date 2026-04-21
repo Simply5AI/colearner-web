@@ -21,6 +21,7 @@ export function AudioSource() {
   const selectedFile = useCaptureStore((s) => s.selectedFile)
   const setSelectedFile = useCaptureStore((s) => s.setSelectedFile)
   const setExtractionId = useCaptureStore((s) => s.setExtractionId)
+  const selectedRoadmapId = useCaptureStore((s) => s.selectedRoadmapId)
 
   const [submitting, setSubmitting] = useState(false)
   const [dragOver, setDragOver] = useState(false)
@@ -97,7 +98,11 @@ export function AudioSource() {
     setSubmitting(true)
     try {
       const headers = { Authorization: `Bearer ${session.accessToken}` }
-      const { extractionId } = await captureAudio(headers, fileToUpload)
+      const { extractionId } = await captureAudio(
+        headers,
+        fileToUpload,
+        selectedRoadmapId || undefined,
+      )
       setExtractionId(extractionId)
     } catch {
       setSubmitting(false)

@@ -32,17 +32,12 @@ export function WelcomeCelebration() {
   const completeMutation = useCompleteOnboarding()
 
   const displayName = store.displayName || session?.user?.name || 'Learner'
-  const topicCount = store.selectedSkills.length
-  const dailyGoal = store.dailyGoalMinutes
 
-  // If user skipped all steps (no data in store), submit defaults
   useEffect(() => {
-    if (!store.goal && !store.displayName && store.selectedSkills.length === 0) {
+    if (!store.goal && !store.displayName) {
       completeMutation.mutate({
         name: session?.user?.name || 'Learner',
         goals: ['build_knowledge'],
-        dailyGoalMinutes: 15,
-        skillsInterests: [],
       })
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -141,18 +136,6 @@ export function WelcomeCelebration() {
 
         {/* Stats */}
         <div className="mb-9 flex justify-center gap-8">
-          <div>
-            <p className="font-mono text-2xl font-bold text-brand-orange-hover">
-              {topicCount || 0}
-            </p>
-            <p className="mt-0.5 text-[10px] uppercase tracking-wider text-white/30">Topics</p>
-          </div>
-          <div>
-            <p className="font-mono text-2xl font-bold text-brand-orange-hover">
-              {dailyGoal}m
-            </p>
-            <p className="mt-0.5 text-[10px] uppercase tracking-wider text-white/30">Daily Goal</p>
-          </div>
           <div>
             <p className="font-mono text-2xl font-bold text-brand-orange-hover">0</p>
             <p className="mt-0.5 text-[10px] uppercase tracking-wider text-white/30">Streak</p>

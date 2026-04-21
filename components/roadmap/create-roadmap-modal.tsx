@@ -36,7 +36,7 @@ export function CreateRoadmapModal({ open, onOpenChange }: Props) {
 
   const [mode, setMode] = useState<RoadmapMode>('TOPIC')
   const [topic, setTopic] = useState('')
-  const [weeks, setWeeks] = useState('4')
+  const [phases, setPhases] = useState('3')
   const [syllabusText, setSyllabusText] = useState('')
   const [examDate, setExamDate] = useState('')
   const [examTopics, setExamTopics] = useState('')
@@ -45,7 +45,7 @@ export function CreateRoadmapModal({ open, onOpenChange }: Props) {
     const input = {
       mode,
       topic,
-      weeks: parseInt(weeks, 10),
+      phases: parseInt(phases, 10),
       ...(mode === 'SYLLABUS' && syllabusText ? { syllabusText } : {}),
       ...(mode === 'EXAM_PREP' && examDate ? { examDate } : {}),
       ...(mode === 'EXAM_PREP' && examTopics
@@ -98,15 +98,15 @@ export function CreateRoadmapModal({ open, onOpenChange }: Props) {
             </div>
 
             <div>
-              <Label htmlFor="weeks">Duration (weeks)</Label>
-              <Select value={weeks} onValueChange={(v) => { if (v) setWeeks(v) }}>
+              <Label htmlFor="phases">Number of phases</Label>
+              <Select value={phases} onValueChange={(v) => { if (v) setPhases(v) }}>
                 <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: 16 }, (_, i) => i + 1).map((n) => (
+                  {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
                     <SelectItem key={n} value={String(n)}>
-                      {n} {n === 1 ? 'week' : 'weeks'}
+                      {n} {n === 1 ? 'phase' : 'phases'}
                     </SelectItem>
                   ))}
                 </SelectContent>

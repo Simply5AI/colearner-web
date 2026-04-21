@@ -38,7 +38,7 @@ export const VideoSummary = ({ summary }: VideoSummaryProps) => {
           <div>
             <p className="text-sm font-semibold text-foreground">Video Summary</p>
             <p className="text-xs text-muted-foreground">
-              Review key points before your recall session
+              Review key points before your practice session
             </p>
           </div>
         </div>

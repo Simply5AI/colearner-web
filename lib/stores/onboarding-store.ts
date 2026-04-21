@@ -6,6 +6,7 @@ import type { LearningGoal, UserProfile } from '@/lib/types'
 interface CertificationEntry {
   name: string
   issuingOrg: string
+  credentialUrl?: string
 }
 
 interface OnboardingState {
@@ -16,20 +17,19 @@ interface OnboardingState {
 
   goal: LearningGoal | null
   goalTitle: string
-  dailyGoalMinutes: number
-
-  selectedSkills: string[]
 
   // Demographic fields
   dateOfBirth: string
   gradeLevel: string
   gender: string
+  learnerType: string
 
   // Education (TASK-06)
   educationLevel: string
   fieldOfStudy: string
   isCurrent: boolean
   institution: string
+  graduationYear: number | null
 
   // Certifications (TASK-06)
   certifications: CertificationEntry[]
@@ -42,13 +42,11 @@ interface OnboardingState {
     dateOfBirth?: string
     gradeLevel?: string
     gender?: string
+    learnerType?: string
   }) => void
   setGoal: (goal: LearningGoal) => void
   setGoalTitle: (title: string) => void
-  setDailyGoalMinutes: (minutes: number) => void
-  toggleSkill: (skill: string) => void
-  removeSkill: (skill: string) => void
-  setEducation: (data: { educationLevel: string; fieldOfStudy: string; isCurrent: boolean; institution?: string }) => void
+  setEducation: (data: { educationLevel: string; fieldOfStudy: string; isCurrent: boolean; institution?: string; graduationYear?: number | null }) => void
   addCertification: (cert: CertificationEntry) => void
   removeCertification: (index: number) => void
   hydrate: (profile: UserProfile) => void
@@ -62,15 +60,15 @@ const initialState = {
   avatarFile: null as File | null,
   goal: null as LearningGoal | null,
   goalTitle: '',
-  dailyGoalMinutes: 15,
-  selectedSkills: [] as string[],
   dateOfBirth: '',
   gradeLevel: '',
   gender: '',
+  learnerType: '',
   educationLevel: '',
   fieldOfStudy: '',
   isCurrent: false,
   institution: '',
+  graduationYear: null as number | null,
   certifications: [] as CertificationEntry[],
 }
 
@@ -86,25 +84,12 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
       ...(data.dateOfBirth !== undefined ? { dateOfBirth: data.dateOfBirth } : {}),
       ...(data.gradeLevel !== undefined ? { gradeLevel: data.gradeLevel } : {}),
       ...(data.gender !== undefined ? { gender: data.gender } : {}),
+      ...(data.learnerType !== undefined ? { learnerType: data.learnerType } : {}),
     }),
 
   setGoal: (goal) => set({ goal }),
 
   setGoalTitle: (title) => set({ goalTitle: title }),
-
-  setDailyGoalMinutes: (minutes) => set({ dailyGoalMinutes: minutes }),
-
-  toggleSkill: (skill) =>
-    set((state) => ({
-      selectedSkills: state.selectedSkills.includes(skill)
-        ? state.selectedSkills.filter((s) => s !== skill)
-        : [...state.selectedSkills, skill],
-    })),
-
-  removeSkill: (skill) =>
-    set((state) => ({
-      selectedSkills: state.selectedSkills.filter((s) => s !== skill),
-    })),
 
   setEducation: (data) =>
     set({
@@ -112,6 +97,7 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
       fieldOfStudy: data.fieldOfStudy,
       isCurrent: data.isCurrent,
       institution: data.institution || '',
+      graduationYear: data.graduationYear ?? null,
     }),
 
   addCertification: (cert) =>
@@ -131,11 +117,10 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
       avatarPreviewUrl: profile.avatarUrl || null,
       avatarFile: null,
       goal: (profile.learningGoal?.toLowerCase() as LearningGoal) || null,
-      dailyGoalMinutes: profile.dailyTimeMinutes || 15,
-      selectedSkills: profile.topics?.map((t) => t.slug) || [],
       dateOfBirth: profile.dateOfBirth ? profile.dateOfBirth.split('T')[0] : '',
       gradeLevel: profile.gradeLevel || '',
       gender: profile.gender || '',
+      learnerType: profile.learnerType || '',
     }),
 
   reset: () => set(initialState),

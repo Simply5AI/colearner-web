@@ -77,7 +77,9 @@ export const queryKeys = {
   roadmaps: {
     all: ['roadmaps'] as const,
     list: () => [...queryKeys.roadmaps.all, 'list'] as const,
+    unified: () => [...queryKeys.roadmaps.all, 'unified'] as const,
     detail: (id: string) => [...queryKeys.roadmaps.all, 'detail', id] as const,
+    recommendations: (id: string) => [...queryKeys.roadmaps.all, 'recommendations', id] as const,
   },
 
   pods: {

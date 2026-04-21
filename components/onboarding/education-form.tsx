@@ -33,10 +33,12 @@ const COMMON_FIELDS = [
 
 export function EducationForm() {
   const router = useRouter()
-  const { educationLevel, fieldOfStudy, isCurrent, setEducation } = useOnboardingStore()
+  const { educationLevel, fieldOfStudy, isCurrent, institution, graduationYear, setEducation } = useOnboardingStore()
   const [localLevel, setLocalLevel] = useState(educationLevel)
   const [localField, setLocalField] = useState(fieldOfStudy)
   const [localCurrent, setLocalCurrent] = useState(isCurrent)
+  const [localInstitution, setLocalInstitution] = useState(institution)
+  const [localGradYear, setLocalGradYear] = useState<number | null>(graduationYear)
   const [showSuggestions, setShowSuggestions] = useState(false)
 
   const filteredFields = COMMON_FIELDS.filter((f) =>
@@ -50,6 +52,8 @@ export function EducationForm() {
       educationLevel: localLevel,
       fieldOfStudy: localField.trim(),
       isCurrent: localCurrent,
+      institution: localInstitution.trim(),
+      graduationYear: localGradYear,
     })
     router.push('/onboarding/certifications')
   }
@@ -110,6 +114,33 @@ export function EducationForm() {
             ))}
           </ul>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">
+          Institution <span className="font-normal text-muted-foreground">(optional)</span>
+        </Label>
+        <Input
+          value={localInstitution}
+          onChange={(e) => setLocalInstitution(e.target.value)}
+          placeholder="e.g., MIT, Stanford University"
+          className="h-11"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">
+          Graduation year <span className="font-normal text-muted-foreground">(optional)</span>
+        </Label>
+        <Input
+          type="number"
+          value={localGradYear ?? ''}
+          onChange={(e) => setLocalGradYear(e.target.value ? parseInt(e.target.value, 10) : null)}
+          placeholder="e.g., 2024"
+          min={1950}
+          max={2040}
+          className="h-11"
+        />
       </div>
 
       <div className="flex items-center space-x-2">

@@ -55,7 +55,7 @@ const authHeaders = (token: string) => ({ Authorization: `Bearer ${token}` })
 
 export async function updateOnboardingProfile(
   accessToken: string,
-  data: { displayName: string; bio?: string; avatarUrl?: string; dateOfBirth?: string; gradeLevel?: string; gender?: string }
+  data: { displayName: string; bio?: string; avatarUrl?: string; dateOfBirth?: string; gradeLevel?: string; gender?: string; learnerType?: string }
 ) {
   return apiClient('/api/onboarding/profile', {
     method: 'PATCH',
@@ -66,7 +66,7 @@ export async function updateOnboardingProfile(
 
 export async function updateOnboardingGoal(
   accessToken: string,
-  data: { learningGoal: string; dailyTimeMinutes: number; goalTitle?: string }
+  data: { learningGoal: string; goalTitle?: string }
 ) {
   return apiClient('/api/onboarding/goal', {
     method: 'PATCH',
@@ -97,7 +97,7 @@ export async function completeOnboarding(accessToken: string) {
 
 export async function updateOnboardingEducation(
   accessToken: string,
-  data: { educationLevel: string; fieldOfStudy: string; isCurrent?: boolean; institution?: string }
+  data: { educationLevel: string; fieldOfStudy: string; isCurrent?: boolean; institution?: string; graduationYear?: number }
 ) {
   return apiClient('/api/onboarding/education', {
     method: 'PATCH',
@@ -108,7 +108,7 @@ export async function updateOnboardingEducation(
 
 export async function updateOnboardingCertifications(
   accessToken: string,
-  data: { certifications: Array<{ name: string; issuingOrg?: string }> }
+  data: { certifications: Array<{ name: string; issuingOrg?: string; credentialUrl?: string }> }
 ) {
   return apiClient('/api/onboarding/certifications', {
     method: 'PATCH',

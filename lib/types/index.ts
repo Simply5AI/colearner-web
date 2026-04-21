@@ -179,6 +179,7 @@ export interface UserProfile {
   dateOfBirth?: string | null
   gradeLevel?: GradeLevel | null
   gender?: Gender | null
+  learnerType?: 'STUDENT' | 'PROFESSIONAL' | null
   learningGoal?: string | null
   dailyTimeMinutes?: number | null
   topics?: TopicItem[]
@@ -215,9 +216,10 @@ export interface DashboardStats {
 
 export interface RecallQueueItem {
   id: string
+  extractionId: string | null
   conceptTitle: string
   type: 'open' | 'mcq' | 'cloze'
-  source: 'sm2_due' | 'failed'
+  source: 'new' | 'practiced' | 'weak'
   lastScore: number | null
   easeFactor: number
   interval: number
@@ -277,7 +279,9 @@ export interface QuestionWithMeta {
   clozeTemplate?: string
   clozeBlankCount?: number
   hint?: string
+  conceptId: string
   conceptTitle: string
+  extractionId: string
   sortOrder: number
   answered: boolean
   skipped: boolean
@@ -323,6 +327,11 @@ export interface SessionQuestionResult {
   conceptTitle: string
   questionType: QuestionType
   questionText: string
+  options?: string[] | null
+  correctIndex?: number | null
+  explanation?: string | null
+  clozeTemplate?: string | null
+  clozeAnswers?: string[] | null
   sortOrder: number
   skipped: boolean
   answered: boolean
@@ -356,6 +365,7 @@ export interface RecallSessionConfig {
   order?: SessionOrder
   timerSeconds?: number
   difficultyLevel?: DifficultyLevel
+  conceptIds?: string[]
 }
 
 export interface RecallSessionResponse {
@@ -380,6 +390,13 @@ export interface ExtractionTopicInfo {
   source: 'auto' | 'manual'
 }
 
+export interface ExtractionRoadmapInfo {
+  id: string
+  title: string
+  status: string
+  phaseTitle: string
+}
+
 export interface Extraction {
   id: string
   title: string | null
@@ -395,6 +412,7 @@ export interface Extraction {
   topics?: ExtractionTopicInfo[]
   totalRecallSeconds?: number
   sessionCount?: number
+  roadmaps?: ExtractionRoadmapInfo[]
 }
 
 export interface ExtractionListResponse {
@@ -409,6 +427,20 @@ export interface ExtractionListResponse {
   }
 }
 
+// ─── Concept Mastery Types ───
+
+export interface ConceptMastery {
+  conceptId: string
+  title: string
+  description: string | null
+  order: number
+  masteryLevel: 'expert' | 'intermediate' | 'beginner' | 'needs_work'
+  averageEF: number
+  questionsAnswered: number
+  totalQuestions: number
+  lastPracticedAt: string | null
+}
+
 // ─── Queue Item Types ───
 
 export interface QueueItem {
@@ -416,6 +448,7 @@ export interface QueueItem {
   conceptTitle: string
   questionText: string
   questionType: QuestionType
+  difficulty: string | null
   source: 'due' | 'failed' | 'new'
   lastScore: number | null
   lastAttemptDate: string | null
@@ -423,6 +456,21 @@ export interface QueueItem {
   repetitions: number
   easinessFactor: number
   nextReviewDate: string | null
+}
+
+export interface RecallSessionHistoryItem {
+  id: string
+  extractionId: string | null
+  extraction: { id: string; title: string | null } | null
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED'
+  totalQuestions: number
+  correctCount: number
+  score: number | null
+  accuracy: number | null
+  durationSeconds: number | null
+  startedAt: string
+  completedAt: string | null
+  createdAt: string
 }
 
 // ─── Capture Types ───
@@ -572,7 +620,7 @@ export type RoadmapMode = 'TOPIC' | 'SYLLABUS' | 'EXAM_PREP'
 
 export interface RoadmapItem {
   id: string
-  weekId: string
+  phaseId: string
   title: string
   url: string | null
   sourceType: ExtractionSourceType
@@ -591,10 +639,10 @@ export interface RoadmapItem {
   } | null
 }
 
-export interface RoadmapWeek {
+export interface RoadmapPhase {
   id: string
   roadmapId: string
-  weekNumber: number
+  phaseNumber: number
   title: string
   description: string | null
   sortOrder: number
@@ -610,18 +658,33 @@ export interface Roadmap {
   mode: RoadmapMode
   status: RoadmapStatus
   goalId: string | null
-  totalWeeks: number
+  totalPhases: number
   examDate: string | null
   createdAt: string
   updatedAt: string
-  weeks: RoadmapWeek[]
+  phases: RoadmapPhase[]
   goal?: { id: string; title: string; icon: string | null; color: string | null } | null
+}
+
+export type RecommendationStatus = 'PENDING' | 'ACCEPTED' | 'DISMISSED'
+
+export interface Recommendation {
+  id: string
+  roadmapId: string
+  title: string
+  url: string | null
+  sourceType: string
+  description: string | null
+  durationMin: number | null
+  relevance: string | null
+  status: RecommendationStatus
+  sortOrder: number
 }
 
 export interface CreateRoadmapInput {
   mode: RoadmapMode
   topic: string
-  weeks?: number
+  phases?: number
   goalId?: string
   syllabusText?: string
   examDate?: string

@@ -11,24 +11,26 @@ export async function captureYouTube(
   headers: Record<string, string>,
   url: string,
   options?: { autoTranscript?: boolean; questionTypes?: string[] },
-  topicIds?: string[]
+  topicIds?: string[],
+  roadmapId?: string
 ): Promise<{ extractionId: string }> {
   return apiClient<{ extractionId: string }>('/api/capture/youtube', {
     method: 'POST',
     headers,
-    body: { url, options, topicIds },
+    body: { url, options, topicIds, roadmapId },
   })
 }
 
 export async function captureWeb(
   headers: Record<string, string>,
   url: string,
-  topicIds?: string[]
+  topicIds?: string[],
+  roadmapId?: string
 ): Promise<{ extractionId: string }> {
   return apiClient<{ extractionId: string }>('/api/capture/web', {
     method: 'POST',
     headers,
-    body: { url, topicIds },
+    body: { url, topicIds, roadmapId },
   })
 }
 
@@ -60,28 +62,34 @@ async function uploadFile(
 
 export async function captureDocument(
   headers: Record<string, string>,
-  file: File
+  file: File,
+  roadmapId?: string
 ): Promise<{ extractionId: string }> {
   const formData = new FormData()
   formData.append('file', file)
+  if (roadmapId) formData.append('roadmapId', roadmapId)
   return uploadFile('/api/capture/document', headers, formData)
 }
 
 export async function captureAudio(
   headers: Record<string, string>,
-  file: File | Blob
+  file: File | Blob,
+  roadmapId?: string
 ): Promise<{ extractionId: string }> {
   const formData = new FormData()
   formData.append('file', file)
+  if (roadmapId) formData.append('roadmapId', roadmapId)
   return uploadFile('/api/capture/audio', headers, formData)
 }
 
 export async function captureVideo(
   headers: Record<string, string>,
-  file: File
+  file: File,
+  roadmapId?: string
 ): Promise<{ extractionId: string }> {
   const formData = new FormData()
   formData.append('file', file)
+  if (roadmapId) formData.append('roadmapId', roadmapId)
   return uploadFile('/api/capture/video', headers, formData)
 }
 

@@ -108,7 +108,7 @@ export function SourceProgressCard({ progress }: SourceProgressCardProps) {
               {progress.sourceName}
             </h3>
             <p className="mb-3 text-[11px] leading-relaxed text-muted-foreground">
-              Complete {progress.requiredAttempts} recall attempts with{' '}
+              Complete {progress.requiredAttempts} practice attempts with{' '}
               {progress.requiredPassRate}%+ pass rate to unlock Source{' '}
               {progress.currentSource + 1}.
             </p>

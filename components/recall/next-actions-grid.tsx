@@ -16,7 +16,7 @@ export function NextActionsGrid({ sessionId: _sessionId, hasFailedQuestions }: N
       <ActionCard
         icon={<RotateCcw className="h-5 w-5 text-brand-blue" />}
         label="Start Another"
-        description="New recall session"
+        description="New practice session"
         onClick={() => router.push('/recall/start')}
       />
       <ActionCard

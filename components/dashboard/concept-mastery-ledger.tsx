@@ -45,7 +45,7 @@ export function ConceptMasteryLedger({
     <div className="rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border/50 px-[18px] py-3.5">
         <div className="text-[13px] font-bold text-foreground">
-          📖 Concept Mastery Ledger
+          📖 Learning Progress
           <span className="ml-2 text-[10px] font-normal text-muted-foreground">
             {total} concepts
           </span>
@@ -70,13 +70,13 @@ export function ConceptMasteryLedger({
                 Attempts
               </th>
               <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Pass Rate
+                Success Rate
               </th>
               <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Avg Score
               </th>
               <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                EF
+                Difficulty
               </th>
               <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Next Review

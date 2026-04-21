@@ -1,12 +1,13 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { useOnboardingStore } from '@/lib/stores/onboarding-store'
+import { useCompleteOnboarding } from '@/lib/hooks/use-onboarding'
 import { GoalCard } from '@/components/onboarding/goal-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { cn } from '@/lib/utils'
 import type { LearningGoal } from '@/lib/types'
 
 const GOALS: { id: LearningGoal; emoji: string; name: string; description: string }[] = [
@@ -16,19 +17,27 @@ const GOALS: { id: LearningGoal; emoji: string; name: string; description: strin
   { id: 'career_growth', emoji: '\u{1F4BC}', name: 'Career Growth', description: 'Level up professionally' },
 ]
 
-const TIME_OPTIONS = [5, 15, 30, 60] as const
-
-function formatTime(minutes: number): string {
-  return minutes >= 60 ? `${minutes / 60} hour` : `${minutes} min`
-}
-
 export function GoalForm() {
   const router = useRouter()
-  const { goal, goalTitle, dailyGoalMinutes, setGoal, setGoalTitle, setDailyGoalMinutes } = useOnboardingStore()
+  const { goal, goalTitle, displayName, bio, setGoal, setGoalTitle } = useOnboardingStore()
+  const completeMutation = useCompleteOnboarding()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    router.push('/onboarding/skills')
+
+    try {
+      await completeMutation.mutateAsync({
+        name: displayName,
+        bio: bio || undefined,
+        goals: goal ? [goal] : ['build_knowledge'],
+        goalTitle: goalTitle || undefined,
+      })
+      router.push('/onboarding/education')
+    } catch {
+      toast.error('Something went wrong', {
+        description: 'Failed to save your preferences. Please try again.',
+      })
+    }
   }
 
   return (
@@ -58,32 +67,12 @@ export function GoalForm() {
         />
       </div>
 
-      <div className="space-y-2.5">
-        <Label className="text-xs font-semibold">How much time per day?</Label>
-        <div className="flex flex-wrap gap-2">
-          {TIME_OPTIONS.map((minutes) => (
-            <button
-              key={minutes}
-              type="button"
-              onClick={() => setDailyGoalMinutes(minutes)}
-              className={cn(
-                'rounded-full border-[1.5px] px-5 py-2.5 text-[13px] font-semibold transition-all duration-200',
-                dailyGoalMinutes === minutes
-                  ? 'border-brand-orange bg-brand-orange text-white'
-                  : 'border-border bg-background text-muted-foreground hover:border-brand-orange/50'
-              )}
-            >
-              {formatTime(minutes)}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <Button
         type="submit"
+        disabled={completeMutation.isPending}
         className="w-full h-12 text-sm font-bold bg-brand-orange hover:bg-brand-orange-dark text-white shadow-[0_2px_8px_rgba(196,98,26,0.2)]"
       >
-        Continue &rarr;
+        {completeMutation.isPending ? 'Saving...' : 'Continue \u2192'}
       </Button>
     </form>
   )

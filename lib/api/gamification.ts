@@ -14,6 +14,11 @@ export interface DailyQuest {
   isAllCompleted: boolean
 }
 
+export interface BadgeProgress {
+  current: number
+  threshold: number
+}
+
 export interface Badge {
   id: string
   slug: string
@@ -25,6 +30,7 @@ export interface Badge {
   isEarned: boolean
   earnedAt?: string
   notified?: boolean
+  progress?: BadgeProgress
 }
 
 export interface BadgeListResponse {
