@@ -5,6 +5,7 @@ export interface TutorMessage {
   role: TutorMessageRole
   content: string
   conceptId: string | null
+  imageUrl: string | null
   createdAt: string
 }
 

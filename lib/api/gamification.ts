@@ -21,6 +21,7 @@ export interface BadgeProgress {
 
 export interface Badge {
   id: string
+  userBadgeId?: string
   slug: string
   name: string
   description: string

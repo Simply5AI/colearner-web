@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api/client'
-import type { Roadmap, Goal, CreateRoadmapInput, Recommendation } from '@/lib/types'
+import type { Roadmap, Goal, StudyPlanListItem, CreateRoadmapInput, Recommendation } from '@/lib/types'
 
 export async function getRoadmaps(
   headers: Record<string, string>
@@ -72,8 +72,11 @@ export async function skipRoadmapItem(
 
 export async function getUnifiedRoadmaps(
   headers: Record<string, string>
-): Promise<{ roadmaps: Roadmap[]; goalsWithoutRoadmap: Goal[] }> {
-  return apiClient<{ roadmaps: Roadmap[]; goalsWithoutRoadmap: Goal[] }>('/api/roadmaps/unified', { headers })
+): Promise<{ roadmaps: Roadmap[]; goalsWithoutRoadmap: Goal[]; studyPlans: StudyPlanListItem[] }> {
+  return apiClient<{ roadmaps: Roadmap[]; goalsWithoutRoadmap: Goal[]; studyPlans: StudyPlanListItem[] }>(
+    '/api/roadmaps/unified',
+    { headers }
+  )
 }
 
 // ─── Recommendations ────────────────────────────────────────────────────────
@@ -99,12 +102,12 @@ export async function acceptRecommendation(
   headers: Record<string, string>,
   roadmapId: string,
   recommendationId: string,
-  phaseId: string
+  phaseId?: string
 ): Promise<{ item: unknown }> {
   return apiClient(`/api/roadmaps/${roadmapId}/recommendations/${recommendationId}/accept`, {
     method: 'POST',
     headers,
-    body: { phaseId },
+    ...(phaseId ? { body: { phaseId } } : {}),
   })
 }
 

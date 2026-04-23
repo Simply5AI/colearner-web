@@ -1,17 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Globe, Loader2, RefreshCw, Sparkles, Youtube } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import {
   useRecommendations,
   useGenerateRecommendations,
@@ -40,9 +34,9 @@ function RecommendationCard({
   const dismissMutation = useDismissRecommendation(roadmapId)
   const terms = useLearnerTerms()
 
-  const handleAccept = async (phaseId: string) => {
+  const handleAccept = async () => {
     try {
-      await acceptMutation.mutateAsync({ recommendationId: rec.id, phaseId })
+      await acceptMutation.mutateAsync({ recommendationId: rec.id })
       toast.success(`Added to ${terms.planLabel.toLowerCase()}`)
     } catch {
       toast.error('Failed to add recommendation')
@@ -58,6 +52,7 @@ function RecommendationCard({
   }
 
   const isProcessing = acceptMutation.isPending || dismissMutation.isPending
+  const addLabel = `Add to ${terms.planLabel}`
 
   return (
     <Card className="group">
@@ -85,20 +80,16 @@ function RecommendationCard({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={<Button size="sm" variant="outline" className="h-7 text-xs" disabled={isProcessing} />}
-              >
-                Add to {terms.phaseLabel}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {phases.map((phase) => (
-                  <DropdownMenuItem key={phase.id} onClick={() => handleAccept(phase.id)}>
-                    {phase.title}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              onClick={handleAccept}
+              disabled={isProcessing}
+              title={phases.length === 0 ? 'Creates a Recommended Resources section in this study plan' : undefined}
+            >
+              {acceptMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : addLabel}
+            </Button>
 
             {rec.url && (
               <Button
@@ -132,8 +123,18 @@ function RecommendationCard({
 }
 
 export function RecommendationsSection({ roadmapId, phases, roadmapStatus }: RecommendationsSectionProps) {
-  const { data: recommendations, isLoading } = useRecommendations(roadmapId)
+  const { data: recommendations, isLoading, refetch } = useRecommendations(roadmapId)
   const generateMutation = useGenerateRecommendations(roadmapId)
+  const [isWaitingForResults, setIsWaitingForResults] = useState(false)
+
+  const generateRecommendations = () => {
+    setIsWaitingForResults(true)
+    generateMutation.mutate(undefined, {
+      onSettled: () => {
+        void refetch()
+      },
+    })
+  }
 
   // Auto-generate on first view of ACTIVE roadmap with no recommendations
   useEffect(() => {
@@ -145,14 +146,28 @@ export function RecommendationsSection({ roadmapId, phases, roadmapStatus }: Rec
       !generateMutation.isPending &&
       !generateMutation.isSuccess
     ) {
-      generateMutation.mutate()
+      generateRecommendations()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roadmapStatus, isLoading, recommendations?.length])
 
+  useEffect(() => {
+    if (!isWaitingForResults) return
+    if (recommendations && recommendations.length > 0) {
+      setIsWaitingForResults(false)
+      return
+    }
+
+    const interval = window.setInterval(() => {
+      void refetch()
+    }, 3000)
+
+    return () => window.clearInterval(interval)
+  }, [isWaitingForResults, recommendations, refetch])
+
   if (roadmapStatus !== 'ACTIVE') return null
 
-  const isGenerating = generateMutation.isPending
+  const isGenerating = generateMutation.isPending || (isWaitingForResults && (!recommendations || recommendations.length === 0))
 
   return (
     <div className="space-y-3">
@@ -165,7 +180,7 @@ export function RecommendationsSection({ roadmapId, phases, roadmapStatus }: Rec
           variant="ghost"
           size="sm"
           className="h-7 text-xs gap-1"
-          onClick={() => generateMutation.mutate()}
+          onClick={generateRecommendations}
           disabled={isGenerating}
         >
           {isGenerating ? (
@@ -210,7 +225,7 @@ export function RecommendationsSection({ roadmapId, phases, roadmapStatus }: Rec
               variant="outline"
               size="sm"
               className="mt-3 text-xs"
-              onClick={() => generateMutation.mutate()}
+              onClick={generateRecommendations}
             >
               <RefreshCw className="h-3 w-3 mr-1" /> Try Again
             </Button>

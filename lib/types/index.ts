@@ -616,6 +616,7 @@ export interface UpdateGoalInput {
 
 export type RoadmapStatus = 'GENERATING' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'
 export type RoadmapItemStatus = 'PENDING' | 'QUEUED' | 'CAPTURED' | 'SKIPPED'
+export type RoadmapItemDisplayStatus = RoadmapItemStatus | 'FAILED'
 export type RoadmapMode = 'TOPIC' | 'SYLLABUS' | 'EXAM_PREP'
 
 export interface RoadmapItem {
@@ -665,6 +666,22 @@ export interface Roadmap {
   phases: RoadmapPhase[]
   goal?: { id: string; title: string; icon: string | null; color: string | null } | null
 }
+
+export type StudyPlanListItem =
+  | {
+      type: 'roadmap'
+      id: string
+      sortDate: string
+      roadmap: Roadmap
+      goal: null
+    }
+  | {
+      type: 'goal_recommendation'
+      id: string
+      sortDate: string
+      roadmap: null
+      goal: Goal
+    }
 
 export type RecommendationStatus = 'PENDING' | 'ACCEPTED' | 'DISMISSED'
 

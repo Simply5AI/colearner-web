@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { Trophy } from 'lucide-react'
-import { getRecentBadges, acknowledgeBadge, Badge } from '@/lib/api/gamification'
+import { getRecentBadges, acknowledgeBadge } from '@/lib/api/gamification'
 import { useSession } from 'next-auth/react'
 
 export function useGamificationEvents() {
@@ -14,7 +14,7 @@ export function useGamificationEvents() {
   useEffect(() => {
     // Only poll if user is logged in
     if (!session?.user) return
-    const accessToken = (session as any)?.accessToken
+    const accessToken = session.accessToken
     if (!accessToken) return
 
     const pollBadges = async () => {
@@ -29,7 +29,7 @@ export function useGamificationEvents() {
         if (recentBadges && recentBadges.length > 0) {
           for (const badge of recentBadges) {
             // Show celebration toast
-            toast.custom((t) => (
+            toast.custom(() => (
               <div className="bg-background border-2 border-primary/20 p-4 rounded-xl shadow-lg flex items-start gap-4 w-[350px] relative overflow-hidden group animate-in slide-in-from-bottom-5">
                 <div className="absolute -right-10 -top-10 bg-primary/10 w-32 h-32 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500" />
                 <div className="bg-primary/10 p-3 rounded-full border border-primary/20 z-10">
@@ -48,7 +48,7 @@ export function useGamificationEvents() {
             })
 
             // Acknowledge the badge so it doesn't show up again
-            await acknowledgeBadge(badge.id, headers)
+            await acknowledgeBadge(badge.userBadgeId ?? badge.id, headers)
           }
         }
       } catch (error) {

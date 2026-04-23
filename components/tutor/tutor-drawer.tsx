@@ -34,23 +34,29 @@ export function TutorDrawer({ extractionId, extractionTitle, concepts }: TutorDr
 
   const { data, isLoading } = useTutorHistory(extractionId, isOpen)
   const { sendMessage, streamingText, isStreaming, error } = useTutorStream()
-  const [pendingUser, setPendingUser] = useState<string | null>(null)
+  const [pendingUser, setPendingUser] = useState<{
+    content: string
+    imagePreviewUrl: string | null
+  } | null>(null)
 
   const pinnedConcept = useMemo(
     () => (pinnedConceptId ? concepts.find((c) => c.id === pinnedConceptId) : null),
     [pinnedConceptId, concepts],
   )
 
-  const handleSend = async (content: string) => {
-    setPendingUser(content)
+  const handleSend = async (content: string, image: File | null) => {
+    const imagePreviewUrl = image ? URL.createObjectURL(image) : null
+    setPendingUser({ content, imagePreviewUrl })
     try {
       await sendMessage({
         extractionId,
         content,
         conceptId: pinnedConceptId ?? null,
+        image,
       })
     } finally {
       setPendingUser(null)
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
     }
   }
 

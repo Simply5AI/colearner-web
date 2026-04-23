@@ -17,6 +17,7 @@ import {
   Clock,
   Archive,
   Trash2,
+  AlertCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -30,13 +31,14 @@ import {
 import { useLearnerTerms } from '@/lib/hooks/use-learner-terms'
 import { RecommendationsSection } from './recommendations-section'
 import { getApiUrl } from '@/lib/api/client'
-import type { RoadmapItem, RoadmapItemStatus, RoadmapPhase } from '@/lib/types'
+import type { RoadmapItem, RoadmapItemDisplayStatus, RoadmapPhase } from '@/lib/types'
 
-const itemStatusConfig: Record<RoadmapItemStatus, { label: string; icon: React.ElementType; className: string }> = {
+const itemStatusConfig: Record<RoadmapItemDisplayStatus, { label: string; icon: React.ElementType; className: string }> = {
   PENDING: { label: 'Pending', icon: Clock, className: 'text-muted-foreground' },
   QUEUED: { label: 'Queued', icon: Loader2, className: 'text-blue-500' },
   CAPTURED: { label: 'Captured', icon: CheckCircle2, className: 'text-green-600' },
   SKIPPED: { label: 'Skipped', icon: SkipForward, className: 'text-muted-foreground' },
+  FAILED: { label: 'Failed', icon: AlertCircle, className: 'text-destructive' },
 }
 
 function SourceBadge({ type }: { type: string }) {
@@ -66,7 +68,11 @@ function RoadmapItemCard({
   const skipItem = useSkipRoadmapItem(roadmapId)
   const [showUrlInput, setShowUrlInput] = useState(false)
   const [manualUrl, setManualUrl] = useState('')
-  const config = itemStatusConfig[item.status]
+  const displayStatus: RoadmapItemDisplayStatus = item.extraction?.status === 'FAILED'
+    || item.metadata?.extractionFailed === true
+    ? 'FAILED'
+    : item.status
+  const config = itemStatusConfig[displayStatus]
   const StatusIcon = config.icon
   const capturable = isCapturableUrl(item.url, item.sourceType)
   const captures = (item.metadata?.captures as Array<{ extractionId: string; url: string }>) || []
@@ -103,11 +109,11 @@ function RoadmapItemCard({
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className={`flex items-center gap-1 text-xs ${config.className}`}>
-              <StatusIcon className={`h-3.5 w-3.5 ${item.status === 'QUEUED' ? 'animate-spin' : ''}`} />
+              <StatusIcon className={`h-3.5 w-3.5 ${displayStatus === 'QUEUED' ? 'animate-spin' : ''}`} />
               {config.label}
             </span>
 
-            {item.status === 'PENDING' && capturable && (
+            {(item.status === 'PENDING' || displayStatus === 'FAILED') && capturable && (
               <>
                 <Button
                   size="sm"
@@ -117,7 +123,7 @@ function RoadmapItemCard({
                   disabled={captureItem.isPending}
                 >
                   {captureItem.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-1" />}
-                  Capture
+                  {displayStatus === 'FAILED' ? 'Retry' : 'Capture'}
                 </Button>
                 <Button
                   size="sm"
@@ -131,7 +137,7 @@ function RoadmapItemCard({
               </>
             )}
 
-            {item.status === 'PENDING' && !capturable && (
+            {(item.status === 'PENDING' || displayStatus === 'FAILED') && !capturable && (
               <>
                 <Button
                   size="sm"
@@ -141,7 +147,7 @@ function RoadmapItemCard({
                   disabled={captureItem.isPending}
                 >
                   {captureItem.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-1" />}
-                  Capture
+                  {displayStatus === 'FAILED' ? 'Retry' : 'Capture'}
                 </Button>
                 <Button
                   size="sm"
@@ -188,6 +194,12 @@ function RoadmapItemCard({
           )}
           </div>
         </div>
+
+        {displayStatus === 'FAILED' && (
+          <p className="mt-2 border-t pt-2 text-xs text-destructive">
+            Capture failed. You can retry this resource or open the link and add a better source.
+          </p>
+        )}
 
         {showUrlInput && (
           <div className="flex items-center gap-2 mt-2 pt-2 border-t">

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Youtube, Globe, FileText, Headphones, Video, BookOpen, HelpCircle, Trash2, Loader2, Clock, Map } from 'lucide-react'
 import { resolveIcon } from '@/lib/utils/topic-icons'
 import { formatDuration } from '@/lib/utils'
@@ -46,6 +47,7 @@ function getDisplayTitle(extraction: Extraction): string {
 
 export function ExtractionCard({ extraction, onDeleted }: ExtractionCardProps) {
   const { data: session } = useSession()
+  const router = useRouter()
   const [showConfirm, setShowConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
@@ -179,16 +181,20 @@ export function ExtractionCard({ extraction, onDeleted }: ExtractionCardProps) {
       {extraction.roadmaps && extraction.roadmaps.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-1">
           {extraction.roadmaps.map((rm) => (
-            <Link
+            <button
               key={rm.id}
-              href={`/roadmaps/${rm.id}`}
-              onClick={(e) => e.stopPropagation()}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                router.push(`/roadmaps/${rm.id}`)
+              }}
               className="inline-flex items-center gap-1 rounded-full bg-brand-orange/10 px-2 py-0.5 text-[10px] font-medium text-brand-orange hover:bg-brand-orange/20 transition-colors"
             >
               <Map className="h-2.5 w-2.5" />
               {rm.title}
               <span className="text-brand-orange/60">· {rm.phaseTitle}</span>
-            </Link>
+            </button>
           ))}
         </div>
       )}

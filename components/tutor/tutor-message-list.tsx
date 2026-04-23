@@ -6,11 +6,16 @@ import { Sparkles } from 'lucide-react'
 import type { TutorMessage } from '@/lib/api/tutor'
 import { cn } from '@/lib/utils'
 
+interface PendingUserMessage {
+  content: string
+  imagePreviewUrl: string | null
+}
+
 interface TutorMessageListProps {
   messages: TutorMessage[]
   streamingText: string
   isStreaming: boolean
-  pendingUserMessage: string | null
+  pendingUserMessage: PendingUserMessage | null
 }
 
 export function TutorMessageList({
@@ -41,11 +46,19 @@ export function TutorMessageList({
   return (
     <div className="flex flex-col gap-4 px-5 py-4">
       {messages.map((m) => (
-        <Bubble key={m.id} role={m.role === 'USER' ? 'user' : 'assistant'}>
+        <Bubble
+          key={m.id}
+          role={m.role === 'USER' ? 'user' : 'assistant'}
+          imageUrl={m.imageUrl ?? null}
+        >
           {m.content}
         </Bubble>
       ))}
-      {pendingUserMessage && <Bubble role="user">{pendingUserMessage}</Bubble>}
+      {pendingUserMessage && (
+        <Bubble role="user" imageUrl={pendingUserMessage.imagePreviewUrl}>
+          {pendingUserMessage.content}
+        </Bubble>
+      )}
       {(isStreaming || streamingText) && (
         <Bubble role="assistant" streaming={isStreaming}>
           {streamingText}
@@ -59,10 +72,12 @@ export function TutorMessageList({
 function Bubble({
   role,
   streaming = false,
+  imageUrl = null,
   children,
 }: {
   role: 'user' | 'assistant'
   streaming?: boolean
+  imageUrl?: string | null
   children: string
 }) {
   const isUser = role === 'user'
@@ -76,8 +91,17 @@ function Bubble({
             : 'bg-muted text-foreground',
         )}
       >
+        {imageUrl && (
+          <a href={imageUrl} target="_blank" rel="noreferrer">
+            <img
+              src={imageUrl}
+              alt="Attachment"
+              className="mb-2 max-h-64 rounded-lg object-cover"
+            />
+          </a>
+        )}
         {isUser ? (
-          <p className="whitespace-pre-wrap">{children}</p>
+          children ? <p className="whitespace-pre-wrap">{children}</p> : null
         ) : (
           <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-headings:mt-3 prose-headings:mb-1.5">
             <ReactMarkdown>{children || ' '}</ReactMarkdown>

@@ -12,6 +12,7 @@ interface SendArgs {
   extractionId: string
   content: string
   conceptId?: string | null
+  image?: File | null
 }
 
 export function useTutorStream() {
@@ -28,7 +29,7 @@ export function useTutorStream() {
   }, [])
 
   const sendMessage = useCallback(
-    async ({ extractionId, content, conceptId }: SendArgs) => {
+    async ({ extractionId, content, conceptId, image }: SendArgs) => {
       cancel()
       const controller = new AbortController()
       abortRef.current = controller
@@ -38,10 +39,23 @@ export function useTutorStream() {
       setIsStreaming(true)
 
       try {
+        let body: BodyInit
+        const headers: Record<string, string> = { Accept: 'text/event-stream' }
+        if (image) {
+          const form = new FormData()
+          form.append('content', content)
+          if (conceptId) form.append('conceptId', conceptId)
+          form.append('image', image)
+          body = form
+        } else {
+          headers['Content-Type'] = 'application/json'
+          body = JSON.stringify({ content, conceptId: conceptId ?? undefined })
+        }
+
         const res = await fetch(`/api/tutor/${extractionId}/message`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-          body: JSON.stringify({ content, conceptId: conceptId ?? undefined }),
+          headers,
+          body,
           signal: controller.signal,
         })
 

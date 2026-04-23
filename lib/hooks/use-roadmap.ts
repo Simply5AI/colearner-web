@@ -122,6 +122,9 @@ export function useGenerateRecommendations(roadmapId: string) {
 
   return useMutation({
     mutationFn: () => generateRecommendations(headers!, roadmapId),
+    onMutate: () => {
+      queryClient.setQueryData(queryKeys.roadmaps.recommendations(roadmapId), { recommendations: [] })
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.roadmaps.recommendations(roadmapId) })
     },
@@ -133,7 +136,7 @@ export function useAcceptRecommendation(roadmapId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ recommendationId, phaseId }: { recommendationId: string; phaseId: string }) =>
+    mutationFn: ({ recommendationId, phaseId }: { recommendationId: string; phaseId?: string }) =>
       acceptRecommendation(headers!, roadmapId, recommendationId, phaseId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.roadmaps.recommendations(roadmapId) })

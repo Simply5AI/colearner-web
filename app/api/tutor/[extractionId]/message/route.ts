@@ -16,21 +16,54 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   const { extractionId } = await params
-  const body = await req.text()
+  const contentType = req.headers.get('content-type') ?? 'application/json'
+  const isMultipart = contentType.startsWith('multipart/form-data')
 
   const base = getApiUrl().replace('localhost', '127.0.0.1')
-  const upstream = await fetch(`${base}/api/tutor/${extractionId}/message`, {
-    method: 'POST',
-    headers: {
+
+  let upstream: Response
+  try {
+    const headers: Record<string, string> = {
       Authorization: `Bearer ${session.accessToken}`,
-      'Content-Type': 'application/json',
       Accept: 'text/event-stream',
-    },
-    body,
-  })
+    }
+    let body: BodyInit
+
+    if (isMultipart) {
+      const formData = await req.formData()
+      const image = formData.get('image')
+      console.info(
+        '[tutor proxy] forwarding multipart',
+        JSON.stringify({
+          extractionId,
+          hasImage: image instanceof File,
+          imageType: image instanceof File ? image.type : null,
+          imageSize: image instanceof File ? image.size : 0,
+          hasContent: typeof formData.get('content') === 'string',
+        }),
+      )
+      body = formData
+    } else {
+      headers['Content-Type'] = contentType
+      body = await req.text()
+    }
+
+    upstream = await fetch(`${base}/api/tutor/${extractionId}/message`, {
+      method: 'POST',
+      headers,
+      body,
+    })
+  } catch (err) {
+    console.error('[tutor proxy] upstream fetch failed', err)
+    return NextResponse.json(
+      { message: (err as Error).message || 'Upstream unreachable' },
+      { status: 502 },
+    )
+  }
 
   if (!upstream.ok || !upstream.body) {
     const errText = await upstream.text().catch(() => '')
+    console.error('[tutor proxy] upstream error', upstream.status, errText)
     return new NextResponse(errText || 'Upstream error', {
       status: upstream.status,
       headers: { 'Content-Type': 'application/json' },
