@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { Upload, FileText, X, Play, Info, Cloud, Monitor } from 'lucide-react'
+import { Upload, FileText, X, Play, Cloud, Monitor } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { captureDocument, saveLocalResults } from '@/lib/api/capture'
 import { useCaptureStore } from '@/lib/stores/capture-store'
@@ -18,8 +18,8 @@ const MAX_SIZE_MB = 25
 
 export function DocumentSource() {
   const { data: session } = useSession()
-  const selectedFile = useCaptureStore((s) => s.selectedFile)
-  const setSelectedFile = useCaptureStore((s) => s.setSelectedFile)
+  const selectedFile = useCaptureStore((s) => s.selectedFiles.document)
+  const setSourceFile = useCaptureStore((s) => s.setSourceFile)
   const setExtractionId = useCaptureStore((s) => s.setExtractionId)
   const [submitting, setSubmitting] = useState(false)
   const [dragOver, setDragOver] = useState(false)
@@ -40,9 +40,9 @@ export function DocumentSource() {
   const handleFile = useCallback(
     (file: File) => {
       if (file.size > MAX_SIZE_MB * 1024 * 1024) return
-      setSelectedFile(file)
+      setSourceFile('document', file)
     },
-    [setSelectedFile]
+    [setSourceFile]
   )
 
   function handleDrop(e: React.DragEvent) {
@@ -129,7 +129,7 @@ export function DocumentSource() {
       sourceType: 'DOCUMENT',
     })
 
-    setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved — ${concepts.length} concepts, ${questions.length} questions` })
+    setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved - ${concepts.length} concepts, ${questions.length} questions` })
   }
 
   async function handleByokSubmit() {
@@ -187,7 +187,7 @@ export function DocumentSource() {
       sourceType: 'DOCUMENT',
     })
 
-    setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved — ${concepts.length} concepts, ${questions.length} questions` })
+    setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved - ${concepts.length} concepts, ${questions.length} questions` })
   }
 
   async function handleSubmit() {
@@ -283,7 +283,7 @@ export function DocumentSource() {
             </div>
           </div>
           <button
-            onClick={() => setSelectedFile(null)}
+            onClick={() => setSourceFile('document', null)}
             className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
             <X className="h-3.5 w-3.5" />
@@ -298,7 +298,7 @@ export function DocumentSource() {
           className="mb-3.5 flex items-center gap-1.5 rounded-lg bg-[#7C3AED] px-6 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-[#6D28D9] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Play className="h-4 w-4" />
-          {submitting ? 'Processing...' : 'Start Capture'}
+          {submitting ? 'Building set...' : 'Create learning set'}
         </button>
       )}
 
@@ -311,18 +311,18 @@ export function DocumentSource() {
         <span>
           {isClientSide ? (
             <>
-              Pipeline: Text extraction → Pass 1{' '}
+              Pipeline: Text extraction - Pass 1{' '}
               <code className="rounded bg-card px-1.5 py-0.5 font-mono text-[9px] text-primary">
                 {localConfig.pass1Model || 'not set'}
               </code>{' '}
-              → Pass 2{' '}
+              - Pass 2{' '}
               <code className="rounded bg-card px-1.5 py-0.5 font-mono text-[9px] text-primary">
                 {localConfig.pass2Model || 'not set'}
               </code>
               <span className="ml-2 text-green-600 font-medium">Local</span>
             </>
           ) : (
-            <>Cloud processing — document text extracted on our servers</>
+            <>Cloud optimized - document text, concepts, and summary are prepared on our servers</>
           )}
         </span>
       </div>

@@ -1,6 +1,19 @@
 import { apiClient } from '@/lib/api/client'
 import type { CaptureStats, ExtractionProgress } from '@/lib/types'
 
+interface CaptureResponse {
+  extractionId?: string
+  extraction?: { id: string }
+}
+
+function normalizeExtractionId(response: CaptureResponse): { extractionId: string } {
+  const extractionId = response.extractionId ?? response.extraction?.id
+  if (!extractionId) {
+    throw new Error('Capture queued, but the API did not return an extraction id')
+  }
+  return { extractionId }
+}
+
 export async function getCaptureStats(
   headers: Record<string, string>
 ): Promise<CaptureStats> {
@@ -14,11 +27,12 @@ export async function captureYouTube(
   topicIds?: string[],
   roadmapId?: string
 ): Promise<{ extractionId: string }> {
-  return apiClient<{ extractionId: string }>('/api/capture/youtube', {
+  const response = await apiClient<CaptureResponse>('/api/capture/youtube', {
     method: 'POST',
     headers,
     body: { url, options, topicIds, roadmapId },
   })
+  return normalizeExtractionId(response)
 }
 
 export async function captureWeb(
@@ -27,11 +41,12 @@ export async function captureWeb(
   topicIds?: string[],
   roadmapId?: string
 ): Promise<{ extractionId: string }> {
-  return apiClient<{ extractionId: string }>('/api/capture/web', {
+  const response = await apiClient<CaptureResponse>('/api/capture/web', {
     method: 'POST',
     headers,
     body: { url, topicIds, roadmapId },
   })
+  return normalizeExtractionId(response)
 }
 
 function getApiUrl(): string {
@@ -57,7 +72,7 @@ async function uploadFile(
   }
 
   const json = await res.json()
-  return json.data ?? json
+  return normalizeExtractionId(json.data ?? json)
 }
 
 export async function captureDocument(

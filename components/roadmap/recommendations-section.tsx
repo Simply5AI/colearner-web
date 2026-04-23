@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Globe, Loader2, RefreshCw, Sparkles, Youtube } from 'lucide-react'
+import { ExternalLink, Link2, Loader2, RefreshCw, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -33,6 +33,7 @@ function RecommendationCard({
   const acceptMutation = useAcceptRecommendation(roadmapId)
   const dismissMutation = useDismissRecommendation(roadmapId)
   const terms = useLearnerTerms()
+  const [showReference, setShowReference] = useState(false)
 
   const handleAccept = async () => {
     try {
@@ -52,16 +53,16 @@ function RecommendationCard({
   }
 
   const isProcessing = acceptMutation.isPending || dismissMutation.isPending
-  const addLabel = `Add to ${terms.planLabel}`
+  const addLabel = `Add as Topic`
 
   return (
     <Card className="group">
       <CardContent className="py-3 px-4">
         <div className="flex items-start gap-3">
           {rec.sourceType === 'YOUTUBE' ? (
-            <Badge variant="outline" className="text-[10px] bg-red-50 text-red-700 border-red-200 shrink-0">YT</Badge>
+            <Badge variant="outline" className="text-[10px] bg-red-50 text-red-700 border-red-200 shrink-0">Video Lead</Badge>
           ) : (
-            <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200 shrink-0">WEB</Badge>
+            <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200 shrink-0">Research Lead</Badge>
           )}
 
           <div className="flex-1 min-w-0">
@@ -86,7 +87,7 @@ function RecommendationCard({
               className="h-7 text-xs"
               onClick={handleAccept}
               disabled={isProcessing}
-              title={phases.length === 0 ? 'Creates a Recommended Resources section in this study plan' : undefined}
+              title={phases.length === 0 ? 'Creates a research topics section in this study plan' : undefined}
             >
               {acceptMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : addLabel}
             </Button>
@@ -95,14 +96,11 @@ function RecommendationCard({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 w-7 p-0"
-                render={<a href={rec.url} target="_blank" rel="noopener noreferrer" />}
+                className="h-7 text-xs gap-1"
+                onClick={() => setShowReference(!showReference)}
               >
-                {rec.sourceType === 'YOUTUBE' ? (
-                  <Youtube className="h-3.5 w-3.5" />
-                ) : (
-                  <Globe className="h-3.5 w-3.5" />
-                )}
+                <Link2 className="h-3.5 w-3.5" />
+                Reference
               </Button>
             )}
 
@@ -117,6 +115,23 @@ function RecommendationCard({
             </Button>
           </div>
         </div>
+
+        {showReference && rec.url && (
+          <div className="mt-2 rounded-md border bg-muted/30 p-3 text-xs">
+            <p className="mb-2 text-muted-foreground">
+              Optional research lead only. Choose your own study source before capturing.
+            </p>
+            <a
+              href={rec.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-primary hover:underline"
+            >
+              <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{rec.url}</span>
+            </a>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
@@ -174,7 +189,7 @@ export function RecommendationsSection({ roadmapId, phases, roadmapStatus }: Rec
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
-          <h3 className="font-semibold text-sm">AI Recommendations</h3>
+          <h3 className="font-semibold text-sm">Research Leads</h3>
         </div>
         <Button
           variant="ghost"
@@ -197,7 +212,7 @@ export function RecommendationsSection({ roadmapId, phases, roadmapStatus }: Rec
           <CardContent className="flex items-center gap-3 py-6 justify-center">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
             <span className="text-sm text-muted-foreground">
-              Finding resources for you...
+              Finding optional research leads...
             </span>
           </CardContent>
         </Card>
@@ -220,7 +235,7 @@ export function RecommendationsSection({ roadmapId, phases, roadmapStatus }: Rec
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center py-6 text-center">
             <Sparkles className="h-8 w-8 text-muted-foreground/40 mb-2" />
-            <p className="text-sm text-muted-foreground">No recommendations available yet</p>
+            <p className="text-sm text-muted-foreground">No research leads available yet</p>
             <Button
               variant="outline"
               size="sm"

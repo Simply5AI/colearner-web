@@ -31,7 +31,7 @@ export function StudyPlanCapturePicker() {
   }
 
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
+    <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
         <GraduationCap className="h-4 w-4" />
       </div>
@@ -40,7 +40,7 @@ export function StudyPlanCapturePicker() {
           Study Plan
         </div>
         <p className="mb-2 text-xs text-muted-foreground">
-          Link captures to a plan so they count toward your progress.
+          Link new material to a study plan so practice, progress, and reviews stay connected.
         </p>
         {isLoading ? (
           <div className="h-8 w-full max-w-xs animate-pulse rounded-lg bg-muted" />

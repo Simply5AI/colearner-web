@@ -10,6 +10,7 @@ import { ApiError } from '@/lib/api/client'
 import { TopBar } from '@/components/shared/TopBar'
 import { GreetingBanner } from '@/components/dashboard/greeting-banner'
 import { StatsRow } from '@/components/dashboard/stats-row'
+import { LearningPathCard } from '@/components/dashboard/learning-path-card'
 import { RecallQueueCard } from '@/components/dashboard/recall-queue-card'
 import { StreakActivityCard } from '@/components/dashboard/streak-activity-card'
 import { DailyQuestWidget } from '@/components/dashboard/daily-quest-widget'
@@ -65,31 +66,38 @@ export default async function DashboardPage() {
 
   const planCount = roadmapsResp?.roadmaps?.length ?? 0
   const sourceCount = queue.length
+  const nextQueueItem = queue.find((item) => item.source === 'weak') ?? queue[0] ?? null
+  const roadmaps = roadmapsResp?.roadmaps ?? []
 
   return (
     <>
       <TopBar title="Home" subtitle={formatDate()} />
-      <div className="space-y-6 p-7">
+      <div className="space-y-5 p-5 md:p-7">
         <GreetingBanner
           userName={userName}
           stats={stats}
           planCount={planCount}
           sourceCount={sourceCount}
+          nextItem={nextQueueItem}
         />
 
+        <StatsRow stats={stats} />
+
+        <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
+          <LearningPathCard roadmaps={roadmaps} queue={queue} stats={stats} />
+          <DailyQuestWidget quest={dailyQuest} />
+        </div>
+
         {planCount ? (
-          <StudyPlansSection roadmaps={roadmapsResp!.roadmaps} />
+          <StudyPlansSection roadmaps={roadmaps} />
         ) : (
           <EmptyStudyPlanCta variant="home" />
         )}
-
-        <StatsRow stats={stats} />
 
         <div className="grid gap-4 lg:grid-cols-2">
           <RecallQueueCard items={queue} />
           <RecentSessionsCard sessions={((sessionHistory as RecallSessionHistoryItem[]) ?? []).slice(0, 5)} />
           <StreakActivityCard streak={streak} activity={activity} />
-          <DailyQuestWidget quest={dailyQuest} />
         </div>
       </div>
     </>

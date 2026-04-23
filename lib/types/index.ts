@@ -270,11 +270,18 @@ export interface StreakDay {
 // ─── Recall Session Types ───
 
 export type QuestionType = 'MULTIPLE_CHOICE' | 'FREE_TEXT' | 'TRUE_FALSE' | 'CLOZE'
+export type QuestionIntent =
+  | 'DIRECT'
+  | 'CONTEXTUAL'
+  | 'APPLICATION'
+  | 'MISCONCEPTION'
+  | 'EXPLAIN_WHY'
 
 export interface QuestionWithMeta {
   id: string
   text: string
   type: QuestionType
+  intent?: QuestionIntent | null
   options?: string[]
   clozeTemplate?: string
   clozeBlankCount?: number
@@ -326,6 +333,7 @@ export interface SessionQuestionResult {
   questionId: string
   conceptTitle: string
   questionType: QuestionType
+  questionIntent?: QuestionIntent | null
   questionText: string
   options?: string[] | null
   correctIndex?: number | null
@@ -355,6 +363,7 @@ export interface QueueStats {
 }
 
 export type SessionQuestionTypeFilter = 'ALL' | QuestionType
+export type SessionQuestionIntentFilter = 'MIXED' | QuestionIntent
 
 export type SessionOrder = 'sm2' | 'failed_first' | 'random' | 'newest'
 
@@ -362,6 +371,7 @@ export interface RecallSessionConfig {
   extractionId?: string
   questionCount?: number
   questionType?: SessionQuestionTypeFilter
+  questionIntent?: SessionQuestionIntentFilter
   order?: SessionOrder
   timerSeconds?: number
   difficultyLevel?: DifficultyLevel
@@ -448,6 +458,7 @@ export interface QueueItem {
   conceptTitle: string
   questionText: string
   questionType: QuestionType
+  questionIntent?: QuestionIntent | null
   difficulty: string | null
   source: 'due' | 'failed' | 'new'
   lastScore: number | null
@@ -492,6 +503,7 @@ export interface ExtractionProgress {
   conceptCount: number
   questionCount: number
   errorMessage?: string | null
+  metadata?: Record<string, unknown> | null
   createdAt?: string
   completedAt?: string | null
 }

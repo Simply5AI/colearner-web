@@ -1,5 +1,6 @@
 'use client'
 
+import { Flame } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { StreakCalendar, ActivityItem } from '@/lib/types'
 
@@ -32,21 +33,21 @@ export function StreakActivityCard({
   activity,
 }: StreakActivityCardProps) {
   return (
-    <div className="rounded-xl border border-border bg-card">
+    <div className="rounded-xl border border-border bg-card shadow-sm">
       <div className="border-b border-border/50 px-[18px] py-3.5">
-        <div className="text-[13px] font-bold text-foreground">
-          🔥 Weekly Streak
+        <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+          <Flame className="h-4 w-4 text-primary" />
+          Weekly Streak
         </div>
       </div>
 
       <div className="p-[18px]">
-        {/* Streak days row */}
         <div className="mb-2 flex gap-1">
           {(streak?.days || []).map((day) => (
             <div
               key={day.date}
               className={cn(
-                'flex h-7 flex-1 items-center justify-center rounded text-[9px] font-bold',
+                'flex h-8 flex-1 items-center justify-center rounded text-[9px] font-bold',
                 day.status === 'active' &&
                   'border border-green-600 bg-green-50 text-green-600',
                 day.status === 'missed' &&
@@ -62,11 +63,10 @@ export function StreakActivityCard({
           ))}
         </div>
         <div className="mb-4 text-[10px] text-muted-foreground">
-          {streak.currentStreak}-day streak · Best ever: {streak.bestStreak}{' '}
+          {streak.currentStreak}-day streak &middot; Best ever: {streak.bestStreak}{' '}
           days
         </div>
 
-        {/* Activity feed */}
         <div className="mb-2 text-[11px] font-bold text-foreground/80">
           Recent Activity
         </div>
@@ -93,6 +93,11 @@ export function StreakActivityCard({
               </div>
             </div>
           ))}
+          {(!Array.isArray(activity) || activity.length === 0) && (
+            <p className="py-4 text-center text-xs text-muted-foreground">
+              Activity will appear after your first capture or recall session.
+            </p>
+          )}
         </div>
       </div>
     </div>

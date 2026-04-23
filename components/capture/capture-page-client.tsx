@@ -6,12 +6,14 @@ import { CaptureStatsBar } from '@/components/capture/capture-stats-bar'
 import { CaptureSourceAccordion } from '@/components/capture/capture-source-accordion'
 import { ExtractionProgress } from '@/components/capture/extraction-progress'
 import { StudyPlanCapturePicker } from '@/components/capture/study-plan-capture-picker'
+import { CaptureLearningIntro } from '@/components/capture/capture-learning-intro'
 
 export function CapturePageClient() {
   const { data: stats, isLoading } = useCaptureStats()
 
   return (
-    <div className="space-y-6 p-7">
+    <div className="mx-auto max-w-[1320px] space-y-6 p-5 md:p-7">
+      <CaptureLearningIntro />
       {isLoading || !stats ? (
         <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-4 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />

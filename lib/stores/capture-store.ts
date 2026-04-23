@@ -64,6 +64,11 @@ interface CaptureState {
   isRecording: boolean
   recordingDuration: number
   selectedFile: File | null
+  selectedFiles: {
+    document: File | null
+    audio: File | null
+    video: File | null
+  }
   extractionId: string | null
 
   // Study plan (roadmap) selection — scopes captures to a plan
@@ -90,6 +95,7 @@ interface CaptureState {
   setRecording: (recording: boolean) => void
   setRecordingDuration: (seconds: number) => void
   setSelectedFile: (file: File | null) => void
+  setSourceFile: (source: keyof CaptureState['selectedFiles'], file: File | null) => void
   setExtractionId: (id: string | null) => void
   setSelectedRoadmapId: (id: string | null) => void
   setProcessingMode: (mode: 'cloud' | 'local' | 'byok') => void
@@ -118,6 +124,11 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
   isRecording: false,
   recordingDuration: 0,
   selectedFile: null,
+  selectedFiles: {
+    document: null,
+    audio: null,
+    video: null,
+  },
   extractionId: null,
   selectedRoadmapId: null,
   processingMode: loadProcessingMode(),
@@ -140,6 +151,11 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
   setRecording: (recording) => set({ isRecording: recording }),
   setRecordingDuration: (seconds) => set({ recordingDuration: seconds }),
   setSelectedFile: (file) => set({ selectedFile: file }),
+  setSourceFile: (source, file) =>
+    set((state) => ({
+      selectedFiles: { ...state.selectedFiles, [source]: file },
+      selectedFile: file,
+    })),
   setExtractionId: (id) => set({ extractionId: id }),
   setSelectedRoadmapId: (id) => set({ selectedRoadmapId: id }),
   setProcessingMode: (mode) => {
@@ -205,6 +221,11 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
       isRecording: false,
       recordingDuration: 0,
       selectedFile: null,
+      selectedFiles: {
+        document: null,
+        audio: null,
+        video: null,
+      },
       extractionId: null,
       selectedRoadmapId: null,
       localProgress: null,

@@ -1,15 +1,24 @@
 'use client'
 
 import { PenLine, CheckSquare, Braces, FileQuestion, Lightbulb } from 'lucide-react'
-import type { QuestionType } from '@/lib/types'
+import type { QuestionIntent, QuestionType } from '@/lib/types'
 
 interface RecallQuestionShellProps {
   type: QuestionType
+  intent?: QuestionIntent | null
   conceptTitle: string
   hint?: string
   hintVisible: boolean
   onToggleHint: () => void
   children: React.ReactNode
+}
+
+const intentLabel: Record<QuestionIntent, string> = {
+  DIRECT: 'Direct Recall',
+  CONTEXTUAL: 'Contextual',
+  APPLICATION: 'Application',
+  MISCONCEPTION: 'Misconception Check',
+  EXPLAIN_WHY: 'Explain Why',
 }
 
 const typeConfig: Record<QuestionType, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
@@ -41,6 +50,7 @@ const typeConfig: Record<QuestionType, { label: string; icon: React.ReactNode; c
 
 export function RecallQuestionShell({
   type,
+  intent,
   conceptTitle,
   hint,
   hintVisible,
@@ -57,6 +67,11 @@ export function RecallQuestionShell({
             {config.icon}
             {config.label}
           </span>
+          {intent && (
+            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+              {intentLabel[intent]}
+            </span>
+          )}
           <span className="text-sm text-muted-foreground">{conceptTitle}</span>
         </div>
 

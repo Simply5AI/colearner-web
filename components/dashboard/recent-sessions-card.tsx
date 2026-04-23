@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { CheckCircle2, XCircle, Clock } from 'lucide-react'
+import { ArrowRight, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { RecallSessionHistoryItem } from '@/lib/types'
 
@@ -27,16 +27,18 @@ function formatDate(dateStr: string): string {
 
 export function RecentSessionsCard({ sessions }: RecentSessionsCardProps) {
   return (
-    <div className="rounded-xl border border-border bg-card">
+    <div className="rounded-xl border border-border bg-card shadow-sm">
       <div className="flex items-center justify-between border-b border-border/50 px-[18px] py-3.5">
-        <div className="flex items-center gap-2 text-[13px] font-bold text-foreground">
-          🕘 Recent Sessions
+        <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+          <Clock className="h-4 w-4 text-primary" />
+          Recent Sessions
         </div>
         <Link
           href="/dashboard/history"
-          className="text-[11px] font-semibold text-primary hover:underline"
+          className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
         >
-          View all →
+          View all
+          <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
 
@@ -54,13 +56,7 @@ export function RecentSessionsCard({ sessions }: RecentSessionsCardProps) {
           const title = session.extraction?.title ?? 'Untitled Source'
 
           const row = (
-            <div
-              className={cn(
-                'flex items-center gap-3 rounded-lg border p-3 transition-colors',
-                'border-border/50 hover:border-border hover:bg-accent/50',
-              )}
-            >
-              {/* Status dot */}
+            <div className="flex items-center gap-3 rounded-lg border border-border/50 p-3 transition-colors hover:border-border hover:bg-accent/50">
               <div
                 className={cn(
                   'h-2 w-2 shrink-0 rounded-full',
@@ -72,7 +68,6 @@ export function RecentSessionsCard({ sessions }: RecentSessionsCardProps) {
                 )}
               />
 
-              {/* Title + date */}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-semibold text-foreground">
                   {title}
@@ -84,7 +79,6 @@ export function RecentSessionsCard({ sessions }: RecentSessionsCardProps) {
                 </div>
               </div>
 
-              {/* Score */}
               {isCompleted && accuracy != null && (
                 <div className="shrink-0 text-right">
                   <div className="flex items-center gap-1 text-xs font-semibold">

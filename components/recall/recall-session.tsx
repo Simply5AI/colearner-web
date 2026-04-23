@@ -176,6 +176,7 @@ export function RecallSession({ sessionId, authHeaders }: RecallSessionProps) {
 
       <RecallQuestionShell
         type={currentQuestion.type}
+        intent={currentQuestion.intent}
         conceptTitle={currentQuestion.conceptTitle}
         hint={currentQuestion.hint}
         hintVisible={store.hintVisible}

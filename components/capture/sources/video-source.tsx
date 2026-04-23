@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { Upload, Video, X, Play, Info, Cloud, AlertTriangle } from 'lucide-react'
+import { Upload, Video, X, Play, Cloud, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { captureVideo } from '@/lib/api/capture'
 import { useCaptureStore } from '@/lib/stores/capture-store'
@@ -12,19 +12,20 @@ const MAX_SIZE_MB = 500
 
 export function VideoSource() {
   const { data: session } = useSession()
-  const selectedFile = useCaptureStore((s) => s.selectedFile)
-  const setSelectedFile = useCaptureStore((s) => s.setSelectedFile)
+  const selectedFile = useCaptureStore((s) => s.selectedFiles.video)
+  const setSourceFile = useCaptureStore((s) => s.setSourceFile)
   const setExtractionId = useCaptureStore((s) => s.setExtractionId)
   const selectedRoadmapId = useCaptureStore((s) => s.selectedRoadmapId)
+  const processingMode = useCaptureStore((s) => s.processingMode)
   const [submitting, setSubmitting] = useState(false)
   const [dragOver, setDragOver] = useState(false)
 
   const handleFile = useCallback(
     (file: File) => {
       if (file.size > MAX_SIZE_MB * 1024 * 1024) return
-      setSelectedFile(file)
+      setSourceFile('video', file)
     },
-    [setSelectedFile]
+    [setSourceFile]
   )
 
   function handleDrop(e: React.DragEvent) {
@@ -111,7 +112,7 @@ export function VideoSource() {
             </div>
           </div>
           <button
-            onClick={() => setSelectedFile(null)}
+            onClick={() => setSourceFile('video', null)}
             className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
             <X className="h-3.5 w-3.5" />
@@ -126,19 +127,19 @@ export function VideoSource() {
           className="mb-3.5 flex items-center gap-1.5 rounded-lg bg-[#D97706] px-6 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-[#B45309] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Play className="h-4 w-4" />
-          {submitting ? 'Processing...' : 'Start Capture'}
+          {submitting ? 'Building set...' : 'Create learning set'}
         </button>
       )}
 
       <div className="flex items-center gap-2 rounded-lg bg-accent/50 px-3 py-2 text-[10px] text-muted-foreground">
         <Cloud className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
-        <span>Cloud processing — audio extraction → Whisper transcription → concept extraction on our servers</span>
+        <span>Cloud optimized - audio is extracted, transcribed, then turned into concepts and a summary</span>
       </div>
 
-      {['local', 'byok'].includes(useCaptureStore.getState().processingMode) && (
+      {['local', 'byok'].includes(processingMode) && (
         <div className="mt-2 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-[10px] text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          <span>Video transcription requires cloud processing. Your video will be processed on our servers.</span>
+          <span>Video currently needs cloud transcription before concepts can be created.</span>
         </div>
       )}
     </div>

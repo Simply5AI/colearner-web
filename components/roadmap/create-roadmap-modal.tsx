@@ -66,7 +66,7 @@ export function CreateRoadmapModal({ open, onOpenChange }: Props) {
         <DialogHeader>
           <DialogTitle>Create Learning Roadmap</DialogTitle>
           <DialogDescription>
-            AI will generate a structured study plan with curated resources.
+            AI will generate the topics and milestones. Students choose which sources to capture.
           </DialogDescription>
         </DialogHeader>
 

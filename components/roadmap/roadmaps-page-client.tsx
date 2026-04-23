@@ -201,7 +201,7 @@ function StudyPlanCard({ item }: { item: StudyPlanListItem }) {
               </span>
               <span className="flex items-center gap-1">
                 <GraduationCap className="h-3 w-3" />
-                {progress?.capturedItems ?? 0}/{progress?.totalItems ?? 0} captured
+                {progress?.totalItems ?? 0} topics · {progress?.capturedItems ?? 0} captured
               </span>
               {roadmap.goal && (
                 <span className="flex items-center gap-1">

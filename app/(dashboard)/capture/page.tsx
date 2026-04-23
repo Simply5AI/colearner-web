@@ -11,7 +11,7 @@ export default function CapturePage() {
     <>
       <TopBar
         title="Library"
-        subtitle="Add a source to extract concepts from. We'll generate practice questions automatically."
+        subtitle="Add learning material, extract key concepts, then practice with recall when you're ready."
       />
       <CapturePageClient />
     </>

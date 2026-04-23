@@ -10,10 +10,20 @@ import {
   Compass,
   Flag,
   Trophy,
+  Brain,
+  Map,
+  Wrench,
+  AlertTriangle,
+  MessageCircleQuestion,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createRecallSession } from '@/lib/api/recall'
-import type { SessionQuestionTypeFilter, SessionOrder, DifficultyLevel } from '@/lib/types'
+import type {
+  SessionQuestionTypeFilter,
+  SessionQuestionIntentFilter,
+  SessionOrder,
+  DifficultyLevel,
+} from '@/lib/types'
 
 interface SessionConfigPanelProps {
   extractionId: string
@@ -28,6 +38,50 @@ const questionTypeOptions: { value: SessionQuestionTypeFilter; label: string }[]
   { value: 'MULTIPLE_CHOICE', label: 'MCQ Only' },
   { value: 'CLOZE', label: 'Cloze Only' },
   { value: 'TRUE_FALSE', label: 'True/False Only' },
+]
+
+const questionIntentOptions: Array<{
+  value: SessionQuestionIntentFilter
+  label: string
+  description: string
+  icon: typeof Brain
+}> = [
+  {
+    value: 'MIXED',
+    label: 'Smart Mix',
+    description: 'Balanced recall styles',
+    icon: Brain,
+  },
+  {
+    value: 'DIRECT',
+    label: 'Direct',
+    description: 'Definitions and facts',
+    icon: Compass,
+  },
+  {
+    value: 'CONTEXTUAL',
+    label: 'Contextual',
+    description: 'Realistic scenarios',
+    icon: Map,
+  },
+  {
+    value: 'APPLICATION',
+    label: 'Apply',
+    description: 'Use it to solve',
+    icon: Wrench,
+  },
+  {
+    value: 'MISCONCEPTION',
+    label: 'Misconceptions',
+    description: 'Catch common traps',
+    icon: AlertTriangle,
+  },
+  {
+    value: 'EXPLAIN_WHY',
+    label: 'Explain Why',
+    description: 'Justify reasoning',
+    icon: MessageCircleQuestion,
+  },
 ]
 
 const orderOptions: { value: SessionOrder; label: string }[] = [
@@ -61,6 +115,7 @@ const difficultyLevels: Array<{
 export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptIds, conceptCount }: SessionConfigPanelProps) {
   const router = useRouter()
   const [questionType, setQuestionType] = useState<SessionQuestionTypeFilter>('ALL')
+  const [questionIntent, setQuestionIntent] = useState<SessionQuestionIntentFilter>('MIXED')
   const [order, setOrder] = useState<SessionOrder>('sm2')
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevel>('beginner')
@@ -73,10 +128,12 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
   const effectiveQuestionCount = Math.min(questionCount, maxQuestions)
 
   const questionTypeLabel = questionTypeOptions.find((o) => o.value === questionType)?.label ?? 'Mixed'
+  const questionIntentLabel = questionIntentOptions.find((o) => o.value === questionIntent)?.label ?? 'Smart Mix'
   const difficultyLabel = currentDifficulty.label
 
   function handleReset() {
     setQuestionType('ALL')
+    setQuestionIntent('MIXED')
     setOrder('sm2')
     setTimerSeconds(0)
     setDifficultyLevel('beginner')
@@ -92,6 +149,7 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
         extractionId,
         questionCount: effectiveQuestionCount,
         questionType: questionType === 'ALL' ? undefined : questionType,
+        questionIntent: questionIntent === 'MIXED' ? undefined : questionIntent,
         order,
         timerSeconds: timerSeconds || undefined,
         difficultyLevel,
@@ -111,6 +169,38 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
       </div>
 
       {/* Config dropdowns */}
+      <div className="mb-5">
+        <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          Recall Style
+        </label>
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+          {questionIntentOptions.map((option) => {
+            const Icon = option.icon
+            const isActive = questionIntent === option.value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setQuestionIntent(option.value)}
+                className={`min-h-[72px] rounded-lg border-[1.5px] px-3 py-2 text-left transition-all duration-150 ${
+                  isActive
+                    ? 'border-brand-orange bg-brand-orange/[0.06] text-foreground shadow-sm'
+                    : 'border-border bg-card text-muted-foreground hover:border-muted-foreground/40'
+                }`}
+              >
+                <span className="flex items-center gap-1.5 text-xs font-bold">
+                  <Icon className={isActive ? 'h-3.5 w-3.5 text-brand-orange' : 'h-3.5 w-3.5'} />
+                  {option.label}
+                </span>
+                <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
+                  {option.description}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-4">
         <ConfigSelect
           label="Question Types"
@@ -171,6 +261,8 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
           <strong className="text-foreground">{selectedCount}/{conceptCount} concepts</strong> selected
           {' '}&middot; {effectiveQuestionCount} questions will be generated
           {' '}&middot; {difficultyLabel}
+          {' '}&middot; {questionIntentLabel}
+          {questionType !== 'ALL' ? <> &middot; {questionTypeLabel}</> : null}
         </p>
         <div className="flex gap-2.5">
           <Button variant="outline" size="sm" onClick={handleReset}>

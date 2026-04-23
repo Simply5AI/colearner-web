@@ -5,17 +5,15 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft,
-  BookOpen,
   ExternalLink,
   Loader2,
+  Link2,
   Play,
   Plus,
+  Search,
   SkipForward,
-  Globe,
-  Youtube,
   CheckCircle2,
   Clock,
-  Archive,
   Trash2,
   AlertCircle,
 } from 'lucide-react'
@@ -30,7 +28,6 @@ import {
 } from '@/lib/hooks/use-roadmap'
 import { useLearnerTerms } from '@/lib/hooks/use-learner-terms'
 import { RecommendationsSection } from './recommendations-section'
-import { getApiUrl } from '@/lib/api/client'
 import type { RoadmapItem, RoadmapItemDisplayStatus, RoadmapPhase } from '@/lib/types'
 
 const itemStatusConfig: Record<RoadmapItemDisplayStatus, { label: string; icon: React.ElementType; className: string }> = {
@@ -43,18 +40,61 @@ const itemStatusConfig: Record<RoadmapItemDisplayStatus, { label: string; icon: 
 
 function SourceBadge({ type }: { type: string }) {
   if (type === 'YOUTUBE') {
-    return <Badge variant="outline" className="text-[10px] bg-red-50 text-red-700 border-red-200">YT</Badge>
+    return <Badge variant="outline" className="text-[10px] bg-red-50 text-red-700 border-red-200">Video Topic</Badge>
   }
-  return <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">WEB</Badge>
+  return <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">Topic</Badge>
 }
 
-/** Direct video/article URL that the extraction pipeline can process */
-function isCapturableUrl(url: string | null, sourceType: string): boolean {
-  if (!url) return false
-  if (sourceType === 'YOUTUBE') {
-    return url.includes('youtube.com/watch') || url.includes('youtu.be/')
-  }
-  return true // WEB URLs are capturable
+function getMetadataString(metadata: Record<string, unknown> | null, key: string): string | null {
+  const value = metadata?.[key]
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function getReferenceLinks(item: RoadmapItem) {
+  const referenceLinks = item.metadata?.referenceLinks
+  const links = Array.isArray(referenceLinks)
+    ? referenceLinks.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    : []
+
+  if (item.url) links.unshift(item.url)
+
+  return [...new Set(links)]
+}
+
+function ReferencePanel({ item }: { item: RoadmapItem }) {
+  const searchQuery = getMetadataString(item.metadata, 'searchQuery')
+  const links = getReferenceLinks(item)
+
+  if (!searchQuery && links.length === 0) return null
+
+  return (
+    <div className="mt-2 rounded-md border bg-muted/30 p-3 text-xs">
+      <p className="mb-2 text-muted-foreground">
+        Optional research leads only. Choose the source you trust, then paste that URL into Capture.
+      </p>
+      <div className="space-y-2">
+        {searchQuery && (
+          <div className="flex items-center gap-2">
+            <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span className="font-medium">Search:</span>
+            <span className="text-muted-foreground">{searchQuery}</span>
+          </div>
+        )}
+        {links.map((link) => (
+          <a
+            key={link}
+            href={link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-primary hover:underline"
+          >
+            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{link}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function RoadmapItemCard({
@@ -67,6 +107,7 @@ function RoadmapItemCard({
   const captureItem = useCaptureRoadmapItem(roadmapId)
   const skipItem = useSkipRoadmapItem(roadmapId)
   const [showUrlInput, setShowUrlInput] = useState(false)
+  const [showReferences, setShowReferences] = useState(false)
   const [manualUrl, setManualUrl] = useState('')
   const displayStatus: RoadmapItemDisplayStatus = item.extraction?.status === 'FAILED'
     || item.metadata?.extractionFailed === true
@@ -74,12 +115,8 @@ function RoadmapItemCard({
     : item.status
   const config = itemStatusConfig[displayStatus]
   const StatusIcon = config.icon
-  const capturable = isCapturableUrl(item.url, item.sourceType)
   const captures = (item.metadata?.captures as Array<{ extractionId: string; url: string }>) || []
-
-  const handleCapture = () => {
-    captureItem.mutate({ itemId: item.id })
-  }
+  const hasReferences = !!getMetadataString(item.metadata, 'searchQuery') || getReferenceLinks(item).length > 0
 
   const handleManualCapture = () => {
     if (!manualUrl.trim()) return
@@ -113,31 +150,7 @@ function RoadmapItemCard({
               {config.label}
             </span>
 
-            {(item.status === 'PENDING' || displayStatus === 'FAILED') && capturable && (
-              <>
-                <Button
-                  size="sm"
-                  variant="default"
-                  className="h-7 text-xs"
-                  onClick={handleCapture}
-                  disabled={captureItem.isPending}
-                >
-                  {captureItem.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-1" />}
-                  {displayStatus === 'FAILED' ? 'Retry' : 'Capture'}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 text-xs"
-                  onClick={() => skipItem.mutate(item.id)}
-                  disabled={skipItem.isPending}
-                >
-                  Skip
-                </Button>
-              </>
-            )}
-
-            {(item.status === 'PENDING' || displayStatus === 'FAILED') && !capturable && (
+            {(item.status === 'PENDING' || displayStatus === 'FAILED') && (
               <>
                 <Button
                   size="sm"
@@ -147,7 +160,7 @@ function RoadmapItemCard({
                   disabled={captureItem.isPending}
                 >
                   {captureItem.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-1" />}
-                  {displayStatus === 'FAILED' ? 'Retry' : 'Capture'}
+                  {displayStatus === 'FAILED' ? 'Retry Capture' : 'Capture Source'}
                 </Button>
                 <Button
                   size="sm"
@@ -183,23 +196,27 @@ function RoadmapItemCard({
               </>
             )}
 
-          {item.url && (
-            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" render={<a href={item.url} target="_blank" rel="noopener noreferrer" />}>
-              {item.sourceType === 'YOUTUBE' ? (
-                <Youtube className="h-3.5 w-3.5" />
-              ) : (
-                <Globe className="h-3.5 w-3.5" />
-              )}
-            </Button>
-          )}
+            {hasReferences && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-xs gap-1"
+                onClick={() => setShowReferences(!showReferences)}
+              >
+                <Link2 className="h-3.5 w-3.5" />
+                References
+              </Button>
+            )}
           </div>
         </div>
 
         {displayStatus === 'FAILED' && (
           <p className="mt-2 border-t pt-2 text-xs text-destructive">
-            Capture failed. You can retry this resource or open the link and add a better source.
+            Capture failed. Choose a different source for this topic and paste its URL below.
           </p>
         )}
+
+        {showReferences && <ReferencePanel item={item} />}
 
         {showUrlInput && (
           <div className="flex items-center gap-2 mt-2 pt-2 border-t">
@@ -207,7 +224,7 @@ function RoadmapItemCard({
               type="url"
               value={manualUrl}
               onChange={(e) => setManualUrl(e.target.value)}
-              placeholder="Paste the URL of the video or article you studied..."
+              placeholder="Paste the source URL you chose for this topic..."
               className="flex-1 h-8 rounded-md border border-input bg-background px-3 text-xs placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               onKeyDown={(e) => { if (e.key === 'Enter') handleManualCapture() }}
             />
@@ -219,7 +236,7 @@ function RoadmapItemCard({
               disabled={!manualUrl.trim() || captureItem.isPending}
             >
               {captureItem.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-1" />}
-              Capture
+              Capture Source
             </Button>
             <Button
               size="sm"
@@ -310,7 +327,7 @@ export function RoadmapDetailClient({ roadmapId }: { roadmapId: string }) {
           )}
           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
             <span>{roadmap.totalPhases} {terms.phasesLabel.toLowerCase()}</span>
-            <span>{totalItems} resources</span>
+            <span>{totalItems} topics</span>
             <span>{capturedItems} captured</span>
             {roadmap.goal && <span>Goal: {roadmap.goal.title}</span>}
           </div>

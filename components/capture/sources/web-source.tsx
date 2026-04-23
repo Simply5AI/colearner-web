@@ -111,7 +111,7 @@ export function WebSource() {
       sourceType: 'WEB',
     })
 
-    setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved — ${concepts.length} concepts, ${questions.length} questions` })
+    setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved - ${concepts.length} concepts, ${questions.length} questions` })
   }
 
   async function handleByokSubmit() {
@@ -177,7 +177,7 @@ export function WebSource() {
       sourceType: 'WEB',
     })
 
-    setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved — ${concepts.length} concepts, ${questions.length} questions` })
+    setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved - ${concepts.length} concepts, ${questions.length} questions` })
   }
 
   async function handleSubmit() {
@@ -239,7 +239,7 @@ export function WebSource() {
             className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#2563EB] px-6 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Play className="h-4 w-4" />
-            {submitting ? 'Processing...' : 'Start Capture'}
+            {submitting ? 'Building set...' : 'Create learning set'}
           </button>
         </div>
       </div>
@@ -264,18 +264,18 @@ export function WebSource() {
         <span>
           {isClientSide ? (
             <>
-              Pipeline: Readability extraction → Pass 1{' '}
+              Pipeline: Readability extraction - Pass 1{' '}
               <code className="rounded bg-card px-1.5 py-0.5 font-mono text-[9px] text-primary">
                 {localConfig.pass1Model || 'not set'}
               </code>{' '}
-              → Pass 2{' '}
+              - Pass 2{' '}
               <code className="rounded bg-card px-1.5 py-0.5 font-mono text-[9px] text-primary">
                 {localConfig.pass2Model || 'not set'}
               </code>
               <span className="ml-2 text-green-600 font-medium">Local</span>
             </>
           ) : (
-            <>Cloud processing — article content extracted on our servers</>
+            <>Cloud optimized - article text, concepts, and summary are prepared on our servers</>
           )}
         </span>
       </div>

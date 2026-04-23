@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { Upload, Mic, Square, Play, Info, X, FileAudio, Cloud, AlertTriangle } from 'lucide-react'
+import { Upload, Mic, Square, Play, X, FileAudio, Cloud, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { captureAudio } from '@/lib/api/capture'
 import { useCaptureStore } from '@/lib/stores/capture-store'
@@ -18,10 +18,11 @@ export function AudioSource() {
   const setRecording = useCaptureStore((s) => s.setRecording)
   const duration = useCaptureStore((s) => s.recordingDuration)
   const setDuration = useCaptureStore((s) => s.setRecordingDuration)
-  const selectedFile = useCaptureStore((s) => s.selectedFile)
-  const setSelectedFile = useCaptureStore((s) => s.setSelectedFile)
+  const selectedFile = useCaptureStore((s) => s.selectedFiles.audio)
+  const setSourceFile = useCaptureStore((s) => s.setSourceFile)
   const setExtractionId = useCaptureStore((s) => s.setExtractionId)
   const selectedRoadmapId = useCaptureStore((s) => s.selectedRoadmapId)
+  const processingMode = useCaptureStore((s) => s.processingMode)
 
   const [submitting, setSubmitting] = useState(false)
   const [dragOver, setDragOver] = useState(false)
@@ -39,9 +40,9 @@ export function AudioSource() {
   const handleFile = useCallback(
     (file: File) => {
       if (file.size > MAX_SIZE_MB * 1024 * 1024) return
-      setSelectedFile(file)
+      setSourceFile('audio', file)
     },
-    [setSelectedFile]
+    [setSourceFile]
   )
 
   function handleDrop(e: React.DragEvent) {
@@ -193,7 +194,7 @@ export function AudioSource() {
                 </div>
               </div>
               <button
-                onClick={() => setSelectedFile(null)}
+                onClick={() => setSourceFile('audio', null)}
                 className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
               >
                 <X className="h-3.5 w-3.5" />
@@ -265,19 +266,19 @@ export function AudioSource() {
           className="mb-3.5 flex items-center gap-1.5 rounded-lg bg-[#059669] px-6 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-[#047857] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Play className="h-4 w-4" />
-          {submitting ? 'Processing...' : 'Start Capture'}
+          {submitting ? 'Building set...' : 'Create learning set'}
         </button>
       )}
 
       <div className="flex items-center gap-2 rounded-lg bg-accent/50 px-3 py-2 text-[10px] text-muted-foreground">
         <Cloud className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
-        <span>Cloud processing — Whisper transcription → concept extraction on our servers</span>
+        <span>Cloud optimized - transcription, concepts, and summary are prepared on our servers</span>
       </div>
 
-      {['local', 'byok'].includes(useCaptureStore.getState().processingMode) && (
+      {['local', 'byok'].includes(processingMode) && (
         <div className="mt-2 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-[10px] text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          <span>Audio transcription requires cloud processing. Your audio will be processed on our servers.</span>
+          <span>Audio currently needs cloud transcription before concepts can be created.</span>
         </div>
       )}
     </div>
