@@ -63,14 +63,14 @@ export function AnswerFeedback({ result, isLastQuestion, onNext, onTutoring }: A
         </div>
       </div>
 
-      {/* SM-2 Update */}
+      {/* Review schedule Update */}
       <div className="text-xs text-muted-foreground border-t pt-2 mt-2">
         <span>
-          Next review: {formatInterval(result.sm2Delta.intervalBefore)} → {formatInterval(result.sm2Delta.intervalAfter)}
+          Next review: {formatInterval(result.reviewScheduleDelta.intervalBefore)} → {formatInterval(result.reviewScheduleDelta.intervalAfter)}
         </span>
         <span className="mx-2">·</span>
         <span>
-          Difficulty: {result.sm2Delta.efBefore.toFixed(2)} → {result.sm2Delta.efAfter.toFixed(2)}
+          Review ease: {result.reviewScheduleDelta.reviewEaseBefore.toFixed(2)} → {result.reviewScheduleDelta.reviewEaseAfter.toFixed(2)}
         </span>
       </div>
 

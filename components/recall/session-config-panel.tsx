@@ -85,7 +85,7 @@ const questionIntentOptions: Array<{
 ]
 
 const orderOptions: { value: SessionOrder; label: string }[] = [
-  { value: 'sm2', label: 'Smart Order (Due First)' },
+  { value: 'due_first', label: 'Smart Order (Due First)' },
   { value: 'failed_first', label: 'Failed Items First' },
   { value: 'random', label: 'Random Shuffle' },
   { value: 'newest', label: 'Newest Concepts First' },
@@ -116,7 +116,7 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
   const router = useRouter()
   const [questionType, setQuestionType] = useState<SessionQuestionTypeFilter>('ALL')
   const [questionIntent, setQuestionIntent] = useState<SessionQuestionIntentFilter>('MIXED')
-  const [order, setOrder] = useState<SessionOrder>('sm2')
+  const [order, setOrder] = useState<SessionOrder>('due_first')
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevel>('beginner')
   const [questionCount, setQuestionCount] = useState(10)
@@ -134,7 +134,7 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
   function handleReset() {
     setQuestionType('ALL')
     setQuestionIntent('MIXED')
-    setOrder('sm2')
+    setOrder('due_first')
     setTimerSeconds(0)
     setDifficultyLevel('beginner')
     setQuestionCount(10)

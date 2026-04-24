@@ -1,4 +1,4 @@
-import type { BYOKProvider } from './types'
+﻿import type { BYOKProvider } from './types'
 
 export interface ProviderInfo {
   name: string

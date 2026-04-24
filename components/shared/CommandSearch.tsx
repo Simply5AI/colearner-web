@@ -29,7 +29,7 @@ const navItems: NavItem[] = [
   { href: '/capture', label: 'Library', icon: Download },
   { href: '/roadmaps', label: 'Study Plans', icon: BookOpen },
   { href: '/practice', label: 'Practice', icon: Clock },
-  { href: '/mastery', label: 'Progress', icon: BarChart3 },
+  { href: '/progress', label: 'Progress', icon: BarChart3 },
   { href: '/pods', label: 'Study Groups', icon: Users },
   { href: '/trophies', label: 'Achievements', icon: Trophy },
   { href: '/settings', label: 'Settings', icon: Settings },

@@ -42,7 +42,7 @@ function getNavSections(plansLabel: string): NavSection[] {
       title: 'Practice',
       items: [
         { href: '/practice', label: 'Practice', icon: Clock },
-        { href: '/mastery', label: 'Progress', icon: BarChart3 },
+        { href: '/progress', label: 'Progress', icon: BarChart3 },
         { href: '/trophies', label: 'Achievements', icon: Trophy },
       ],
     },

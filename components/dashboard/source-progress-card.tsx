@@ -52,7 +52,7 @@ export function SourceProgressCard({ progress }: SourceProgressCardProps) {
           📊 Source Progress
         </div>
         <Link
-          href="/mastery"
+          href="/progress"
           className="text-[11px] font-semibold text-primary hover:underline"
         >
           View details →

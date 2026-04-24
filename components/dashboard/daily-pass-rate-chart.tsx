@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import {
   BarChart,
@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts'
+import { BarChart3 } from 'lucide-react'
 import type { DailyPassRate } from '@/lib/types'
 
 interface DailyPassRateChartProps {
@@ -35,9 +36,7 @@ export function DailyPassRateChart({ data }: DailyPassRateChartProps) {
   return (
     <div className="rounded-xl border border-border bg-card">
       <div className="border-b border-border/50 px-[18px] py-3.5">
-        <div className="text-[13px] font-bold text-foreground">
-          📊 Daily Success Rate
-        </div>
+        <div className="flex items-center gap-2 text-[13px] font-bold text-foreground"><BarChart3 className="h-4 w-4 text-primary" />Daily Success Rate</div>
       </div>
       <div className="p-[18px]">
         <ResponsiveContainer width="100%" height={200}>

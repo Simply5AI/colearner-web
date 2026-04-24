@@ -56,7 +56,7 @@ export function LearningPathCard({ roadmaps, queue, stats }: LearningPathCardPro
       title: 'Review',
       detail: weakItems > 0 ? `${weakItems} weak topic${weakItems === 1 ? '' : 's'} to revisit` : `${stats.passRate}% success rate`,
       icon: Brain,
-      href: '/dashboard/mastery',
+      href: '/progress',
       active: weakItems > 0 || stats.totalRecalls > 0,
     },
   ]

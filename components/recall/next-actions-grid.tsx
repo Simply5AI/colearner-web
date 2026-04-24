@@ -36,7 +36,7 @@ export function NextActionsGrid({ sessionId: _sessionId, hasFailedQuestions }: N
         icon={<BarChart3 className="h-5 w-5 text-brand-orange" />}
         label="View Mastery"
         description="See your progress"
-        onClick={() => router.push('/mastery')}
+        onClick={() => router.push('/progress')}
       />
     </div>
   )

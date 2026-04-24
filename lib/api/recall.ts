@@ -95,7 +95,7 @@ export async function getConceptMastery(
   extractionId: string,
 ): Promise<ConceptMastery[]> {
   return apiClient<ConceptMastery[]>(
-    `/api/recall/concepts/mastery?extractionId=${extractionId}`,
+    `/api/recall/concepts/progress?extractionId=${extractionId}`,
     { headers },
   )
 }

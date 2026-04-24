@@ -2,9 +2,9 @@
 
 import { useCallback } from 'react'
 import { useSession } from 'next-auth/react'
-import { Download } from 'lucide-react'
+import { BookOpen, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { exportMasteryCSV } from '@/lib/api/mastery'
+import { exportMasteryCSV } from '@/lib/api/progress'
 import type { ConceptLedgerEntry } from '@/lib/types'
 
 interface ConceptMasteryLedgerProps {
@@ -33,7 +33,7 @@ export function ConceptMasteryLedger({
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'mastery-ledger.csv'
+      a.download = 'progress-ledger.csv'
       a.click()
       URL.revokeObjectURL(url)
     } catch {
@@ -44,8 +44,9 @@ export function ConceptMasteryLedger({
   return (
     <div className="rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border/50 px-[18px] py-3.5">
-        <div className="text-[13px] font-bold text-foreground">
-          📖 Learning Progress
+        <div className="flex items-center gap-2 text-[13px] font-bold text-foreground">
+          <BookOpen className="h-4 w-4 text-primary" />
+          Learning Progress
           <span className="ml-2 text-[10px] font-normal text-muted-foreground">
             {total} concepts
           </span>
@@ -76,7 +77,7 @@ export function ConceptMasteryLedger({
                 Avg Score
               </th>
               <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Difficulty
+                Review Ease
               </th>
               <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Next Review
@@ -118,7 +119,7 @@ export function ConceptMasteryLedger({
                     {Number(entry.avgScore ?? 0).toFixed(1)}
                   </td>
                   <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">
-                    {Number(entry.easeFactor ?? 2.5).toFixed(2)}
+                    {Number(entry.reviewEase ?? 2.5).toFixed(2)}
                   </td>
                   <td className="px-4 py-3 text-[11px] text-muted-foreground">
                     {entry.nextReviewDate

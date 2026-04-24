@@ -19,7 +19,7 @@ interface BackendQueueItem {
   conceptTitle: string
   type: string
   source: string
-  sm2: { ef: number; interval: number; nextReviewDate: string } | null
+  reviewSchedule: { reviewEase: number; interval: number; nextReviewDate: string } | null
 }
 
 export async function getRecallQueue(
@@ -40,10 +40,10 @@ export async function getRecallQueue(
   const grouped = new Map<string, RecallQueueItem>()
   const sourceRank: Record<RecallQueueItem['source'], number> = { weak: 0, new: 1, practiced: 2 }
   for (const r of raw) {
-    const ef = r.sm2?.ef ?? null
+    const reviewEase = r.reviewSchedule?.reviewEase ?? null
     let masteryState: RecallQueueItem['source']
-    if (ef === null) masteryState = 'new'
-    else if (ef < 2.0) masteryState = 'weak'
+    if (reviewEase === null) masteryState = 'new'
+    else if (reviewEase < 2.0) masteryState = 'weak'
     else masteryState = 'practiced'
 
     const key = r.extractionId ?? r.source
@@ -56,15 +56,15 @@ export async function getRecallQueue(
         type: r.type as RecallQueueItem['type'],
         source: masteryState,
         lastScore: null,
-        easeFactor: ef ?? 2.5,
-        interval: r.sm2?.interval ?? 0,
-        dueDate: r.sm2?.nextReviewDate ?? '',
+        reviewEase: reviewEase ?? 2.5,
+        interval: r.reviewSchedule?.interval ?? 0,
+        dueDate: r.reviewSchedule?.nextReviewDate ?? '',
         dueCount: 1,
       })
     } else {
       existing.dueCount++
-      if ((ef ?? 2.5) < existing.easeFactor) existing.easeFactor = ef ?? 2.5
-      if ((r.sm2?.interval ?? 0) < existing.interval) existing.interval = r.sm2?.interval ?? 0
+      if ((reviewEase ?? 2.5) < existing.reviewEase) existing.reviewEase = reviewEase ?? 2.5
+      if ((r.reviewSchedule?.interval ?? 0) < existing.interval) existing.interval = r.reviewSchedule?.interval ?? 0
       if (sourceRank[masteryState] < sourceRank[existing.source]) existing.source = masteryState
     }
   }

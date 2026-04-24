@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -31,13 +31,13 @@ const PROCESSING_MODES = [
   {
     value: 'cloud' as const,
     label: 'Cloud',
-    description: 'CoLearner AI — uses your plan quota',
+    description: 'CoLearner AI â€” uses your plan quota',
     icon: Cloud,
   },
   {
     value: 'byok' as const,
     label: 'Bring Your Own Key',
-    description: 'Use your own API key — unlimited',
+    description: 'Use your own API key â€” unlimited',
     icon: Key,
   },
   {
@@ -107,12 +107,12 @@ export default function AiProcessingPage() {
     try {
       await updateAISettings(session.accessToken, data)
     } catch {
-      // Silently fail — localStorage still has the value as fallback
+      // Silently fail â€” localStorage still has the value as fallback
     }
     setSaving(false)
   }
 
-  // ─── Ollama Handlers ────────────────────────────────────────────
+  // â”€â”€â”€ Ollama Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const testConnection = async () => {
     setTesting(true)
@@ -177,7 +177,7 @@ export default function AiProcessingPage() {
     saveToBackend({ ollamaPass2Model: value })
   }
 
-  // ─── BYOK Handlers ────────────────────────────────────────────
+  // â”€â”€â”€ BYOK Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handleByokProviderChange = (provider: BYOKProvider) => {
     setByokProvider(provider)
@@ -226,7 +226,7 @@ export default function AiProcessingPage() {
       <div>
         <h2 className="text-lg font-bold">AI Processing</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Choose how your content is processed — cloud, your own API key, or locally on your machine.
+          Choose how your content is processed â€” cloud, your own API key, or locally on your machine.
         </p>
       </div>
 
@@ -271,7 +271,7 @@ export default function AiProcessingPage() {
         })}
       </div>
 
-      {/* ─── BYOK Section ──────────────────────────────────────── */}
+      {/* â”€â”€â”€ BYOK Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {isByok && (
         <>
           {/* Provider Selection */}
@@ -357,7 +357,7 @@ export default function AiProcessingPage() {
 
               <div className="flex items-center justify-between">
                 <p className="text-[10px] text-muted-foreground">
-                  Your key is stored only in this browser — never sent to our servers for storage.
+                  Your key is stored only in this browser â€” never sent to our servers for storage.
                 </p>
                 <div className="flex gap-3">
                   {byokApiKey && (
@@ -401,7 +401,7 @@ export default function AiProcessingPage() {
                 <div className="mt-4 space-y-4">
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      Fast Model — Extraction &amp; Questions
+                      Fast Model â€” Extraction &amp; Questions
                     </label>
                     <input
                       type="text"
@@ -416,7 +416,7 @@ export default function AiProcessingPage() {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      Smart Model — Concept Ranking
+                      Smart Model â€” Concept Ranking
                     </label>
                     <input
                       type="text"
@@ -460,7 +460,7 @@ export default function AiProcessingPage() {
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
                   4
                 </span>
-                Your API key stays in this browser — never stored on our servers
+                Your API key stays in this browser â€” never stored on our servers
               </li>
             </ol>
             <p className="mt-3 text-[10px] text-muted-foreground/70">
@@ -470,7 +470,7 @@ export default function AiProcessingPage() {
         </>
       )}
 
-      {/* ─── Local (Ollama) Section ──────────────────────────────── */}
+      {/* â”€â”€â”€ Local (Ollama) Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {isLocal && (
         <>
           {/* Connection Status */}
@@ -570,7 +570,7 @@ export default function AiProcessingPage() {
                 <>
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      Fast Model — Extraction &amp; Questions
+                      Fast Model â€” Extraction &amp; Questions
                     </label>
                     <select
                       value={localConfig.pass1Model}
@@ -584,13 +584,13 @@ export default function AiProcessingPage() {
                       ))}
                     </select>
                     <p className="mt-1 text-[10px] text-muted-foreground">
-                      Used for concept extraction and question generation — pick a fast, cheap model
+                      Used for concept extraction and question generation â€” pick a fast, cheap model
                     </p>
                   </div>
 
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      Smart Model — Concept Ranking
+                      Smart Model â€” Concept Ranking
                     </label>
                     <select
                       value={localConfig.pass2Model}
@@ -604,7 +604,7 @@ export default function AiProcessingPage() {
                       ))}
                     </select>
                     <p className="mt-1 text-[10px] text-muted-foreground">
-                      Ranks concepts by importance and assigns question counts — pick a smart, reasoning model
+                      Ranks concepts by importance and assigns question counts â€” pick a smart, reasoning model
                     </p>
                   </div>
                 </>

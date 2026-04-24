@@ -21,9 +21,9 @@ export interface Concept {
   topicName: string
 }
 
-export interface ConceptWithSM2State extends Concept {
+export interface ConceptWithReviewSchedule extends Concept {
   masteryState: MasteryState
-  easeFactor: number
+  reviewEase: number
   interval: number
   repetitions: number
   nextReviewDate: string
@@ -221,7 +221,7 @@ export interface RecallQueueItem {
   type: 'open' | 'mcq' | 'cloze'
   source: 'new' | 'practiced' | 'weak'
   lastScore: number | null
-  easeFactor: number
+  reviewEase: number
   interval: number
   dueDate: string
   dueCount: number
@@ -294,9 +294,9 @@ export interface QuestionWithMeta {
   skipped: boolean
 }
 
-export interface SM2Delta {
-  efBefore: number
-  efAfter: number
+export interface ReviewScheduleDelta {
+  reviewEaseBefore: number
+  reviewEaseAfter: number
   intervalBefore: number
   intervalAfter: number
   repsBefore: number
@@ -309,7 +309,7 @@ export interface AnswerResult {
   score: number
   feedback: string
   correctAnswer?: string
-  sm2Delta: SM2Delta
+  reviewScheduleDelta: ReviewScheduleDelta
   correctCount: number
   totalAttempts: number
   accuracy: number
@@ -349,7 +349,7 @@ export interface SessionQuestionResult {
   userAnswer: string | null
   timeSpentSeconds: number
   currentInterval: number
-  currentEF: number
+  currentReviewEase: number
   nextReviewDate: string | null
 }
 
@@ -365,7 +365,7 @@ export interface QueueStats {
 export type SessionQuestionTypeFilter = 'ALL' | QuestionType
 export type SessionQuestionIntentFilter = 'MIXED' | QuestionIntent
 
-export type SessionOrder = 'sm2' | 'failed_first' | 'random' | 'newest'
+export type SessionOrder = 'due_first' | 'failed_first' | 'random' | 'newest'
 
 export interface RecallSessionConfig {
   extractionId?: string
@@ -445,7 +445,7 @@ export interface ConceptMastery {
   description: string | null
   order: number
   masteryLevel: 'expert' | 'intermediate' | 'beginner' | 'needs_work'
-  averageEF: number
+  averageReviewEase: number
   questionsAnswered: number
   totalQuestions: number
   lastPracticedAt: string | null
@@ -465,7 +465,7 @@ export interface QueueItem {
   lastAttemptDate: string | null
   interval: number
   repetitions: number
-  easinessFactor: number
+  reviewEase: number
   nextReviewDate: string | null
 }
 
@@ -521,7 +521,7 @@ export interface MasteryAnalyticsStats {
   totalAttempts: number
   passRate: number
   avgScore: number
-  avgEF: number
+  avgReviewEase: number
 }
 
 export interface DailyPassRate {
@@ -538,6 +538,7 @@ export interface TypeBreakdown {
     | 'FREE_TEXT'
     | 'MULTIPLE_CHOICE'
     | 'TRUE_FALSE'
+    | 'CLOZE'
   passRate: number
   attempts: number
 }
@@ -548,9 +549,40 @@ export interface ConceptLedgerEntry {
   attempts: number
   passRate: number
   avgScore: number
-  easeFactor: number
+  reviewEase: number
   nextReviewDate: string
   status: 'strong' | 'fair' | 'weak'
+}
+
+export interface ProgressInsights {
+  masteryDistribution: Array<{
+    status: 'strong' | 'fair' | 'weak'
+    label: string
+    count: number
+  }>
+  reviewLoad: Array<{
+    bucket: 'overdue' | 'today' | 'tomorrow' | 'thisWeek' | 'later'
+    label: string
+    count: number
+  }>
+  weeklyActivity: Array<{
+    week: string
+    attempts: number
+    passRate: number
+  }>
+  weakestConcepts: Array<{
+    conceptId: string
+    conceptTitle: string
+    passRate: number
+    reviewEase: number
+    attempts: number
+    nextReviewDate: string | null
+    status: 'strong' | 'fair' | 'weak'
+  }>
+  nextReviewSummary: {
+    dueNow: number
+    dueThisWeek: number
+  }
 }
 
 // ─── Goal Types ──────────────────────────────────────────────────────────────

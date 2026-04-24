@@ -1,4 +1,5 @@
-import { cn } from '@/lib/utils'
+﻿import { cn } from '@/lib/utils'
+import { ClipboardList } from 'lucide-react'
 import type { TypeBreakdown as TypeBreakdownData } from '@/lib/types'
 
 interface TypeBreakdownProps {
@@ -12,6 +13,7 @@ const typeConfig: Record<string, { label: string; color: string; bgColor: string
   MULTIPLE_CHOICE: { label: 'MCQ', color: 'bg-teal-600', bgColor: 'bg-teal-100' },
   cloze: { label: 'True / False', color: 'bg-purple-600', bgColor: 'bg-purple-100' },
   TRUE_FALSE: { label: 'True / False', color: 'bg-purple-600', bgColor: 'bg-purple-100' },
+  CLOZE: { label: 'Fill-in-Blank', color: 'bg-amber-600', bgColor: 'bg-amber-100' },
 }
 
 export function TypeBreakdown({ data }: TypeBreakdownProps) {
@@ -20,9 +22,7 @@ export function TypeBreakdown({ data }: TypeBreakdownProps) {
   return (
     <div className="rounded-xl border border-border bg-card">
       <div className="border-b border-border/50 px-[18px] py-3.5">
-        <div className="text-[13px] font-bold text-foreground">
-          📋 Performance by Type
-        </div>
+        <div className="flex items-center gap-2 text-[13px] font-bold text-foreground"><ClipboardList className="h-4 w-4 text-primary" />Performance by Type</div>
       </div>
       <div className="space-y-4 p-[18px]">
         {items.map((item) => {

@@ -230,7 +230,7 @@ const authConfig: NextAuthConfig = {
         nextUrl.pathname.startsWith('/extract') ||
         nextUrl.pathname.startsWith('/capture') ||
         nextUrl.pathname.startsWith('/queue') ||
-        nextUrl.pathname.startsWith('/mastery') ||
+        nextUrl.pathname.startsWith('/progress') ||
         nextUrl.pathname.startsWith('/settings')
 
       // Require auth for onboarding and app routes

@@ -113,7 +113,7 @@ export function QueueItemCard({ item, selected, onToggle }: QueueItemCardProps) 
         </div>
       </div>
 
-      {/* SM-2 metadata row */}
+      {/* Review schedule metadata row */}
       <div className="flex items-center gap-3 border-t border-border/60 pt-3">
         <div className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground">
           <Calendar className="h-3 w-3" />
@@ -125,7 +125,7 @@ export function QueueItemCard({ item, selected, onToggle }: QueueItemCardProps) 
         </div>
         <div className={`flex items-center gap-1 text-[10px] font-semibold ${isFailed ? 'text-destructive' : 'text-muted-foreground'}`}>
           <Zap className="h-3 w-3" />
-          Difficulty: <span className={`font-mono ${isFailed ? 'text-destructive' : 'text-foreground/70'}`}>{item.easinessFactor}</span>
+          Review ease: <span className={`font-mono ${isFailed ? 'text-destructive' : 'text-foreground/70'}`}>{item.reviewEase}</span>
         </div>
       </div>
     </div>
