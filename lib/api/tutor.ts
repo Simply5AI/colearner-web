@@ -7,6 +7,7 @@ export interface TutorMessage {
   conceptId: string | null
   imageUrl: string | null
   createdAt: string
+  usedMemoryIds?: string[]
 }
 
 export interface TutorHistory {

@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { Sparkles } from 'lucide-react'
+import { Info, Sparkles } from 'lucide-react'
 import type { TutorMessage } from '@/lib/api/tutor'
+import { useSession } from 'next-auth/react'
+import { getMemorySource, type MemorySourceDetail } from '@/lib/api/memory'
 import { cn } from '@/lib/utils'
 
 interface PendingUserMessage {
@@ -46,13 +48,14 @@ export function TutorMessageList({
   return (
     <div className="flex flex-col gap-4 px-5 py-4">
       {messages.map((m) => (
-        <Bubble
-          key={m.id}
-          role={m.role === 'USER' ? 'user' : 'assistant'}
-          imageUrl={m.imageUrl ?? null}
-        >
-          {m.content}
-        </Bubble>
+        <div key={m.id} className="flex flex-col gap-1">
+          <Bubble role={m.role === 'USER' ? 'user' : 'assistant'} imageUrl={m.imageUrl ?? null}>
+            {m.content}
+          </Bubble>
+          {m.role === 'ASSISTANT' && m.usedMemoryIds && m.usedMemoryIds.length > 0 ? (
+            <MemoryProvenance memoryIds={m.usedMemoryIds} />
+          ) : null}
+        </div>
       ))}
       {pendingUserMessage && (
         <Bubble role="user" imageUrl={pendingUserMessage.imagePreviewUrl}>
@@ -65,6 +68,62 @@ export function TutorMessageList({
         </Bubble>
       )}
       <div ref={bottomRef} />
+    </div>
+  )
+}
+
+function MemoryProvenance({ memoryIds }: { memoryIds: string[] }) {
+  const { data: session } = useSession()
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [details, setDetails] = useState<MemorySourceDetail[]>([])
+
+  async function toggle() {
+    if (open) {
+      setOpen(false)
+      return
+    }
+    setOpen(true)
+    if (details.length > 0 || !session?.accessToken) return
+    setLoading(true)
+    try {
+      const results = await Promise.all(
+        memoryIds.map((id) => getMemorySource(session.accessToken as string, id).catch(() => null)),
+      )
+      setDetails(results.filter((d): d is MemorySourceDetail => d !== null))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="ml-1 flex flex-col gap-1">
+      <button
+        type="button"
+        onClick={toggle}
+        className="flex items-center gap-1 self-start text-[11px] text-muted-foreground hover:text-foreground"
+      >
+        <Info className="h-3 w-3" />
+        Memory used ({memoryIds.length}) {open ? '▴' : '▾'}
+      </button>
+      {open ? (
+        <div className="rounded-md border border-border bg-muted/30 p-2 text-xs">
+          {loading ? (
+            <span className="text-muted-foreground">Loading…</span>
+          ) : details.length === 0 ? (
+            <span className="text-muted-foreground">No source available</span>
+          ) : (
+            <ul className="space-y-1.5">
+              {details.map((d) => (
+                <li key={d.memoryId}>
+                  <span className="font-medium">{d.type.replaceAll('_', ' ')}:</span>{' '}
+                  <span className="text-muted-foreground">{d.content}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
     </div>
   )
 }

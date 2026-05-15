@@ -3,7 +3,19 @@
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useQuery } from '@tanstack/react-query'
-import { Plus, Target, Link2, CheckCircle2, Pause, Trash2, BookOpen, Brain, X } from 'lucide-react'
+import {
+  Plus,
+  Target,
+  Link2,
+  CheckCircle2,
+  Pause,
+  Trash2,
+  BookOpen,
+  Brain,
+  X,
+  Sparkles,
+  Lightbulb,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -22,6 +34,9 @@ import {
   useDeleteGoal,
   useLinkExtraction,
   useUnlinkExtraction,
+  useGoalMemoryInsights,
+  useAcceptGoalMemorySuggestion,
+  useDismissGoalMemorySuggestion,
 } from '@/lib/hooks/use-goals'
 import type { GoalWithProgress } from '@/lib/types'
 
@@ -219,6 +234,9 @@ function GoalDetailSheet({
   const updateMutation = useUpdateGoal()
   const deleteMutation = useDeleteGoal()
   const unlinkMutation = useUnlinkExtraction()
+  const acceptSuggestionMutation = useAcceptGoalMemorySuggestion()
+  const dismissSuggestionMutation = useDismissGoalMemorySuggestion()
+  const { data: insights, isLoading: insightsLoading } = useGoalMemoryInsights(goalId)
 
   async function handleStatus(status: 'COMPLETED' | 'PAUSED' | 'ACTIVE') {
     if (!goalId) return
@@ -248,6 +266,26 @@ function GoalDetailSheet({
       await unlinkMutation.mutateAsync({ goalId, extractionId })
     } catch {
       toast.error('Failed to unlink source')
+    }
+  }
+
+  async function handleAcceptSuggestion(suggestionId: string) {
+    if (!goalId) return
+    try {
+      await acceptSuggestionMutation.mutateAsync({ goalId, suggestionId })
+      toast.success('Source linked')
+    } catch {
+      toast.error('Failed to accept suggestion')
+    }
+  }
+
+  async function handleDismissSuggestion(suggestionId: string) {
+    if (!goalId) return
+    try {
+      await dismissSuggestionMutation.mutateAsync({ goalId, suggestionId })
+      toast.success('Suggestion dismissed')
+    } catch {
+      toast.error('Failed to dismiss suggestion')
     }
   }
 
@@ -333,6 +371,117 @@ function GoalDetailSheet({
                     ))}
                   </div>
                 )}
+
+                <div className="mt-6 border-t border-border pt-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                      <p className="text-xs font-semibold text-foreground">AI insights</p>
+                    </div>
+                    {insights?.memoryCount ? (
+                      <Badge variant="outline" className="text-[10px]">
+                        {insights.memoryCount} memories
+                      </Badge>
+                    ) : null}
+                  </div>
+
+                  {insightsLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-14 w-full rounded-lg" />
+                      <Skeleton className="h-16 w-full rounded-lg" />
+                    </div>
+                  ) : !insights ||
+                    (insights.suggestedLinks.length === 0 &&
+                      insights.weakAreas.length === 0 &&
+                      insights.nextActions.length === 0) ? (
+                    <p className="rounded-lg border border-dashed border-border px-3 py-5 text-center text-xs text-muted-foreground">
+                      No memory-backed suggestions yet
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {insights.weakAreas.length > 0 && (
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Weak areas
+                          </p>
+                          {insights.weakAreas.slice(0, 3).map((area, index) => (
+                            <div
+                              key={`${area.content}-${index}`}
+                              className="rounded-lg bg-accent/60 px-3 py-2 text-xs text-foreground"
+                            >
+                              {area.content}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {insights.suggestedLinks.length > 0 && (
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Suggested links
+                          </p>
+                          {insights.suggestedLinks.map((suggestion) => (
+                            <div
+                              key={suggestion.id}
+                              className="rounded-lg border border-border p-2.5"
+                            >
+                              <div className="flex items-start gap-2">
+                                <BookOpen className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                <div className="min-w-0 flex-1">
+                                  <p className="line-clamp-1 text-xs font-medium">
+                                    {suggestion.extraction?.title ?? 'Untitled source'}
+                                  </p>
+                                  <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                    {suggestion.content}
+                                  </p>
+                                  <p className="mt-1 text-[10px] text-muted-foreground">
+                                    {Math.round(suggestion.confidence * 100)}% confidence
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="mt-2 flex gap-1.5">
+                                <Button
+                                  size="sm"
+                                  className="h-7 flex-1 text-[10px]"
+                                  onClick={() => handleAcceptSuggestion(suggestion.id)}
+                                  disabled={acceptSuggestionMutation.isPending}
+                                >
+                                  Accept
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-[10px]"
+                                  onClick={() => handleDismissSuggestion(suggestion.id)}
+                                  disabled={dismissSuggestionMutation.isPending}
+                                >
+                                  Dismiss
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {insights.nextActions.length > 0 && (
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Next actions
+                          </p>
+                          {insights.nextActions.slice(0, 3).map((action, index) => (
+                            <div
+                              key={`${action.content}-${index}`}
+                              className="flex gap-2 rounded-lg bg-accent/60 px-3 py-2 text-xs"
+                            >
+                              <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                              <span>{action.content}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-2 border-t border-border px-6 py-4">

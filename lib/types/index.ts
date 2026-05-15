@@ -637,6 +637,42 @@ export interface GoalDetail extends Goal, GoalProgress {
   extractions: GoalExtractionLink[]
 }
 
+export type GoalMemorySuggestionStatus = 'PENDING' | 'ACCEPTED' | 'DISMISSED'
+
+export interface GoalMemorySuggestion {
+  id: string
+  goalId: string
+  extractionId: string | null
+  type: 'EXTRACTION_LINK' | 'WEAK_AREA' | 'NEXT_ACTION'
+  content: string
+  confidence: number
+  status: GoalMemorySuggestionStatus
+  createdAt: string
+  updatedAt: string
+  extraction: {
+    id: string
+    title: string | null
+    sourceType: ExtractionSourceType
+    status: ExtractionStatus
+    createdAt: string
+    _count: { concepts: number }
+  } | null
+}
+
+export interface GoalMemoryInsights {
+  goalId: string
+  weakAreas: Array<{ content: string; confidence: number }>
+  nextActions: Array<{ content: string; confidence: number }>
+  suggestedLinks: GoalMemorySuggestion[]
+  memoryCount: number
+  suppressionState?: Partial<
+    Record<
+      'EXTRACTION_LINK' | 'WEAK_AREA' | 'NEXT_ACTION',
+      { dismissCount: number; suppressedAt: string | null }
+    >
+  >
+}
+
 export interface CreateGoalInput {
   title: string
   description?: string

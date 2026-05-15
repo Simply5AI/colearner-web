@@ -10,6 +10,9 @@ import {
   deleteGoal,
   linkExtraction,
   unlinkExtraction,
+  getGoalMemoryInsights,
+  acceptGoalMemorySuggestion,
+  dismissGoalMemorySuggestion,
 } from '@/lib/api/goals'
 import { queryKeys } from '@/lib/api/query-keys'
 import type { CreateGoalInput, UpdateGoalInput, GoalWithProgress } from '@/lib/types'
@@ -34,6 +37,20 @@ export function useGoalDetail(id: string | null) {
     queryFn: () => {
       if (!session?.accessToken || !id) throw new Error('Not authenticated')
       return getGoal({ Authorization: `Bearer ${session.accessToken}` }, id)
+    },
+    enabled: !!session?.accessToken && !!id,
+  })
+}
+
+export function useGoalMemoryInsights(id: string | null) {
+  const { data: session } = useSession()
+  return useQuery({
+    queryKey: id
+      ? [...queryKeys.goals.detail(id), 'memory-insights']
+      : [...queryKeys.goals.all(), 'detail', '__none__', 'memory-insights'],
+    queryFn: () => {
+      if (!session?.accessToken || !id) throw new Error('Not authenticated')
+      return getGoalMemoryInsights({ Authorization: `Bearer ${session.accessToken}` }, id)
     },
     enabled: !!session?.accessToken && !!id,
   })
@@ -116,6 +133,44 @@ export function useUnlinkExtraction() {
     onSuccess: (_result, { goalId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.goals.detail(goalId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.goals.list() })
+    },
+  })
+}
+
+export function useAcceptGoalMemorySuggestion() {
+  const { data: session } = useSession()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ goalId, suggestionId }: { goalId: string; suggestionId: string }) => {
+      if (!session?.accessToken) throw new Error('Not authenticated')
+      return acceptGoalMemorySuggestion(
+        { Authorization: `Bearer ${session.accessToken}` },
+        goalId,
+        suggestionId
+      )
+    },
+    onSuccess: (_result, { goalId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.goals.detail(goalId) })
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.goals.detail(goalId), 'memory-insights'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.goals.list() })
+    },
+  })
+}
+
+export function useDismissGoalMemorySuggestion() {
+  const { data: session } = useSession()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ goalId, suggestionId }: { goalId: string; suggestionId: string }) => {
+      if (!session?.accessToken) throw new Error('Not authenticated')
+      return dismissGoalMemorySuggestion(
+        { Authorization: `Bearer ${session.accessToken}` },
+        goalId,
+        suggestionId
+      )
+    },
+    onSuccess: (_result, { goalId }) => {
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.goals.detail(goalId), 'memory-insights'] })
     },
   })
 }

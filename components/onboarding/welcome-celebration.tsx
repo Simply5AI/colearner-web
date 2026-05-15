@@ -7,7 +7,9 @@ import { motion } from 'framer-motion'
 
 import { useOnboardingStore } from '@/lib/stores/onboarding-store'
 import { useCompleteOnboarding } from '@/lib/hooks/use-onboarding'
+import { useProfile } from '@/lib/hooks/use-profile'
 import { cn } from '@/lib/utils'
+import type { LearningGoal } from '@/lib/types'
 
 const CONFETTI_COLORS = [
   'bg-brand-orange',
@@ -18,20 +20,98 @@ const CONFETTI_COLORS = [
   'bg-brand-orange-hover',
 ]
 
-const LEARNING_STATES = [
-  { label: 'Explore', emoji: '\u{1F9ED}', active: true, colorClass: 'bg-brand-teal-bg text-brand-teal' },
-  { label: 'Learn', emoji: '\u{1F682}', active: true, colorClass: 'bg-brand-blue-bg text-brand-blue' },
-  { label: 'Locked', emoji: '\u{1F331}', active: false, colorClass: 'bg-white/5 text-white/20' },
-  { label: 'Locked', emoji: '\u{1F3C6}', active: false, colorClass: 'bg-white/5 text-white/20' },
+const GOAL_TAGLINES: Record<LearningGoal, string> = {
+  build_knowledge: 'YOUR LEARNING JOURNEY BEGINS',
+  retain_more: 'YOUR RETENTION PATH IS READY',
+  exam_prep: 'YOUR EXAM PREP IS READY',
+  career_growth: 'YOUR CAREER PATH IS READY',
+}
+
+const GOAL_LABELS: Record<LearningGoal, string> = {
+  build_knowledge: 'Build Knowledge',
+  retain_more: 'Retain More',
+  exam_prep: 'Exam Prep',
+  career_growth: 'Career Growth',
+}
+
+const GOAL_CTA_HELPER: Record<LearningGoal, string> = {
+  build_knowledge: 'Capture a YouTube video to start building knowledge',
+  retain_more: 'Capture a YouTube video to start building knowledge',
+  exam_prep: 'Add your first study resource to start preparing',
+  career_growth: 'Explore recommended resources for your goal',
+}
+
+const PILL_STYLES = [
+  'bg-brand-teal-bg text-brand-teal',
+  'bg-brand-blue-bg text-brand-blue',
+  'bg-brand-orange/15 text-brand-orange-hover',
+  'bg-brand-purple/15 text-brand-purple',
 ]
+
+function prettify(value: string | null | undefined): string {
+  if (!value) return ''
+  return value
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function buildSubtitle(goalTitle: string, fieldOfStudy: string): string {
+  if (goalTitle && fieldOfStudy) {
+    return `Your plan for "${goalTitle}" in ${fieldOfStudy} is ready. Let's dive in.`
+  }
+  if (goalTitle) {
+    return `Your plan for "${goalTitle}" is ready. Let's dive in.`
+  }
+  if (fieldOfStudy) {
+    return `Your personalized plan in ${fieldOfStudy} is ready. Let's dive in.`
+  }
+  return `Your personalized learning plan is ready. Let's dive in.`
+}
 
 export function WelcomeCelebration() {
   const router = useRouter()
   const { data: session, update } = useSession()
   const store = useOnboardingStore()
   const completeMutation = useCompleteOnboarding()
+  const { data: profile } = useProfile()
 
-  const displayName = store.displayName || session?.user?.name || 'Learner'
+  const displayName =
+    store.displayName || profile?.name || session?.user?.name || 'Learner'
+
+  const goal: LearningGoal | null =
+    store.goal ?? (profile?.learningGoal?.toLowerCase() as LearningGoal | undefined) ?? null
+
+  const goalTitle = store.goalTitle
+  const fieldOfStudy =
+    store.fieldOfStudy || profile?.educations?.[0]?.fieldOfStudy || ''
+  const educationLevel =
+    store.educationLevel || profile?.educations?.[0]?.educationLevel || ''
+  const gradeLevel = store.gradeLevel || profile?.gradeLevel || ''
+
+  const topicNames: string[] =
+    profile?.topics?.map((t) => t.name).filter(Boolean) ??
+    store.certifications.map((c) => c.name).filter(Boolean)
+
+  const tagline = goal ? GOAL_TAGLINES[goal] : 'YOU’RE ALL SET'
+  const subtitle = buildSubtitle(goalTitle, fieldOfStudy)
+  const ctaHelper = goal
+    ? GOAL_CTA_HELPER[goal]
+    : 'Jump in and start building lasting knowledge'
+
+  const stats: Array<{ value: string; label: string }> = []
+  if (topicNames.length > 0) {
+    stats.push({ value: String(topicNames.length), label: 'Interests' })
+  }
+  if (goal) {
+    stats.push({ value: GOAL_LABELS[goal], label: 'Focus' })
+  }
+  const levelDisplay = prettify(gradeLevel) || prettify(educationLevel)
+  if (levelDisplay) {
+    stats.push({ value: levelDisplay, label: 'Level' })
+  }
+
+  const visibleTopics = topicNames.slice(0, 4)
 
   useEffect(() => {
     if (!store.goal && !store.displayName) {
@@ -101,61 +181,81 @@ export function WelcomeCelebration() {
 
       {/* Content */}
       <motion.div
-        className="relative z-10 max-w-[480px]"
+        className="relative z-10 flex w-full max-w-[480px] flex-col items-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Badge */}
-        <p className="mb-6 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-orange-hover">
-          Source 1 Unlocked
-        </p>
-
         {/* Circle */}
         <motion.div
-          className="mx-auto mb-7 size-[120px]"
+          className="mb-5 flex size-[104px] items-center justify-center"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', delay: 0.2, stiffness: 200 }}
         >
           <div className="flex size-full items-center justify-center rounded-full border-[3px] border-brand-orange/20 animate-[pulse-ring_2s_ease-in-out_infinite]">
-            <div className="flex size-[88px] items-center justify-center rounded-full bg-gradient-to-br from-brand-orange to-brand-orange-hover shadow-[0_8px_24px_rgba(196,98,26,0.3)]">
-              <span className="text-4xl font-black text-white">1</span>
+            <div className="flex size-[76px] items-center justify-center rounded-full bg-gradient-to-br from-brand-orange to-brand-orange-hover shadow-[0_8px_24px_rgba(196,98,26,0.3)]">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="size-9"
+                aria-hidden="true"
+              >
+                <path d="M5 12.5l4.5 4.5L19 7" />
+              </svg>
             </div>
           </div>
         </motion.div>
+
+        {/* Badge */}
+        <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-orange-hover">
+          {tagline}
+        </p>
 
         {/* Title */}
         <h1 className="mb-2 text-[32px] font-black tracking-tight text-white">
           You&apos;re all set, {displayName}!
         </h1>
-        <p className="mx-auto mb-9 max-w-[360px] text-sm leading-relaxed text-white/40">
-          Welcome to Source 1 — Beginner. Capture your first YouTube video and start building
-          lasting knowledge.
+        <p className="mx-auto mb-9 max-w-[400px] text-sm leading-relaxed text-white/40">
+          {subtitle}
         </p>
 
         {/* Stats */}
-        <div className="mb-9 flex justify-center gap-8">
-          <div>
-            <p className="font-mono text-2xl font-bold text-brand-orange-hover">0</p>
-            <p className="mt-0.5 text-[10px] uppercase tracking-wider text-white/30">Streak</p>
+        {stats.length > 0 && (
+          <div className="mb-9 flex justify-center gap-8">
+            {stats.map((stat) => (
+              <div key={stat.label}>
+                <p className="font-mono text-2xl font-bold text-brand-orange-hover">
+                  {stat.value}
+                </p>
+                <p className="mt-0.5 text-[10px] uppercase tracking-wider text-white/30">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
           </div>
-        </div>
+        )}
 
-        {/* Learning states */}
-        <div className="mb-10 flex flex-wrap justify-center gap-2.5">
-          {LEARNING_STATES.map((state, i) => (
-            <span
-              key={i}
-              className={cn(
-                'flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[11px] font-bold',
-                state.colorClass
-              )}
-            >
-              {state.emoji} {state.label}
-            </span>
-          ))}
-        </div>
+        {/* Topics / interests */}
+        {visibleTopics.length > 0 && (
+          <div className="mb-10 flex flex-wrap justify-center gap-2.5">
+            {visibleTopics.map((name, i) => (
+              <span
+                key={name}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[11px] font-bold',
+                  PILL_STYLES[i % PILL_STYLES.length]
+                )}
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* CTA */}
         <button
@@ -164,9 +264,7 @@ export function WelcomeCelebration() {
         >
           Start Learning &rarr;
         </button>
-        <p className="mt-4 text-[11px] text-white/25">
-          Paste a YouTube URL to capture your first video
-        </p>
+        <p className="mt-4 text-[11px] text-white/25">{ctaHelper}</p>
       </motion.div>
     </div>
   )

@@ -4,6 +4,9 @@ import type {
   GoalDetail,
   GoalProgress,
   Goal,
+  GoalMemoryInsights,
+  GoalMemorySuggestion,
+  GoalExtractionLink,
   CreateGoalInput,
   UpdateGoalInput,
 } from '@/lib/types'
@@ -82,4 +85,51 @@ export async function getGoalProgress(
   id: string
 ): Promise<GoalProgress> {
   return apiClient<GoalProgress>(`/api/goals/${id}/progress`, { headers })
+}
+
+export async function getGoalMemoryInsights(
+  headers: Record<string, string>,
+  id: string
+): Promise<GoalMemoryInsights> {
+  return apiClient<GoalMemoryInsights>(`/api/goals/${id}/memory-insights`, { headers })
+}
+
+export async function acceptGoalMemorySuggestion(
+  headers: Record<string, string>,
+  goalId: string,
+  suggestionId: string
+): Promise<{ suggestion: GoalMemorySuggestion; link: GoalExtractionLink }> {
+  return apiClient<{ suggestion: GoalMemorySuggestion; link: GoalExtractionLink }>(
+    `/api/goals/${goalId}/memory-suggestions/${suggestionId}/accept`,
+    {
+      method: 'POST',
+      headers,
+    }
+  )
+}
+
+export async function dismissGoalMemorySuggestion(
+  headers: Record<string, string>,
+  goalId: string,
+  suggestionId: string
+): Promise<GoalMemorySuggestion> {
+  return apiClient<GoalMemorySuggestion>(
+    `/api/goals/${goalId}/memory-suggestions/${suggestionId}/dismiss`,
+    {
+      method: 'POST',
+      headers,
+    }
+  )
+}
+
+export async function unsuppressGoalSuggestionType(
+  headers: Record<string, string>,
+  goalId: string,
+  type: 'EXTRACTION_LINK' | 'WEAK_AREA' | 'NEXT_ACTION'
+): Promise<unknown> {
+  return apiClient(`/api/goals/${goalId}/memory-suggestions/unsuppress`, {
+    method: 'POST',
+    headers,
+    body: { type },
+  })
 }
