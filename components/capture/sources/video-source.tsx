@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { Upload, Video, X, Play, Cloud, AlertTriangle } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { captureVideo } from '@/lib/api/capture'
 import { useCaptureStore } from '@/lib/stores/capture-store'
@@ -40,11 +41,14 @@ export function VideoSource() {
     setSubmitting(true)
     try {
       const headers = { Authorization: `Bearer ${session.accessToken}` }
-      const { extractionId } = await captureVideo(
+      const { extractionId, deduped } = await captureVideo(
         headers,
         selectedFile as File,
         selectedRoadmapId || undefined,
       )
+      if (deduped) {
+        toast.info('You already have an active capture for this file — opening the existing one.')
+      }
       setExtractionId(extractionId)
     } catch {
       setSubmitting(false)
@@ -136,10 +140,10 @@ export function VideoSource() {
         <span>Cloud optimized - audio is extracted, transcribed, then turned into concepts and a summary</span>
       </div>
 
-      {['local', 'byok'].includes(processingMode) && (
+      {processingMode === 'local' && (
         <div className="mt-2 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-[10px] text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          <span>Video currently needs cloud transcription before concepts can be created.</span>
+          <span>Video requires cloud transcription. Local Ollama mode is not supported for video.</span>
         </div>
       )}
     </div>

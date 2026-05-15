@@ -32,7 +32,7 @@ export async function getStreak(accessToken: string): Promise<StreakData> {
 // --- AI Settings API ---
 
 export interface AISettings {
-  processingMode: 'cloud' | 'local' | 'byok'
+  processingMode: 'cloud' | 'local'
   ollamaBaseUrl: string
   ollamaPass1Model: string | null
   ollamaPass2Model: string | null
@@ -47,6 +47,57 @@ export async function updateAISettings(
     headers: { Authorization: `Bearer ${accessToken}` },
     body: data,
   })
+}
+
+// --- BYOK AI Credential API (server-side, encrypted at rest) ---
+
+export type AiProvider = 'OPENROUTER' | 'ANTHROPIC' | 'GEMINI' | 'OPENAI'
+
+export interface AiCredentialView {
+  provider: AiProvider
+  model: string | null
+  apiKeyMasked: string
+  updatedAt: string
+}
+
+export async function getAiCredential(
+  accessToken: string,
+): Promise<AiCredentialView | null> {
+  return apiClient<AiCredentialView | null>('/api/users/me/ai-credential', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+}
+
+export async function upsertAiCredential(
+  accessToken: string,
+  data: { provider: AiProvider; apiKey: string; model?: string },
+): Promise<AiCredentialView> {
+  return apiClient<AiCredentialView>('/api/users/me/ai-credential', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: data,
+  })
+}
+
+export async function deleteAiCredential(accessToken: string): Promise<{ ok: boolean }> {
+  return apiClient<{ ok: boolean }>('/api/users/me/ai-credential', {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+}
+
+export async function testAiCredential(
+  accessToken: string,
+  data: { provider: AiProvider; apiKey: string; model?: string },
+): Promise<{ ok: boolean; model?: string; error?: string }> {
+  return apiClient<{ ok: boolean; model?: string; error?: string }>(
+    '/api/users/me/ai-credential/test',
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+      body: data,
+    },
+  )
 }
 
 // --- Onboarding API ---

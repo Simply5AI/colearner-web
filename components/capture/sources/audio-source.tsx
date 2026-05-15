@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { Upload, Mic, Square, Play, X, FileAudio, Cloud, AlertTriangle } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { captureAudio } from '@/lib/api/capture'
 import { useCaptureStore } from '@/lib/stores/capture-store'
@@ -99,11 +100,14 @@ export function AudioSource() {
     setSubmitting(true)
     try {
       const headers = { Authorization: `Bearer ${session.accessToken}` }
-      const { extractionId } = await captureAudio(
+      const { extractionId, deduped } = await captureAudio(
         headers,
         fileToUpload,
         selectedRoadmapId || undefined,
       )
+      if (deduped) {
+        toast.info('You already have an active capture for this file — opening the existing one.')
+      }
       setExtractionId(extractionId)
     } catch {
       setSubmitting(false)
@@ -275,10 +279,10 @@ export function AudioSource() {
         <span>Cloud optimized - transcription, concepts, and summary are prepared on our servers</span>
       </div>
 
-      {['local', 'byok'].includes(processingMode) && (
+      {processingMode === 'local' && (
         <div className="mt-2 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-[10px] text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          <span>Audio currently needs cloud transcription before concepts can be created.</span>
+          <span>Audio requires cloud transcription. Local Ollama mode is not supported for audio.</span>
         </div>
       )}
     </div>

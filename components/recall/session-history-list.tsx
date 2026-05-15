@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { Clock, CheckCircle2, XCircle, AlertCircle, BookOpen } from 'lucide-react'
+import { Clock, CheckCircle2, XCircle, AlertCircle, BookOpen, Play } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import type { RecallSessionHistoryItem } from '@/lib/types'
 
 function formatDuration(seconds: number | null): string {
@@ -78,9 +79,9 @@ export function SessionHistoryList({ sessions }: SessionHistoryListProps) {
       {sessions.map((session) => {
         const accuracy = session.accuracy != null ? Math.round(session.accuracy * 100) : null
         const isCompleted = session.status === 'COMPLETED'
-        const href = isCompleted
-          ? `/recall/summary/${session.id}`
-          : undefined
+        const isInProgress = session.status === 'IN_PROGRESS'
+        const href = isCompleted ? `/recall/summary/${session.id}` : undefined
+        const resumeHref = isInProgress ? `/recall/${session.id}` : undefined
 
         const content = (
           <div className="flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-accent/50">
@@ -128,12 +129,26 @@ export function SessionHistoryList({ sessions }: SessionHistoryListProps) {
                 )}
               </div>
             )}
+            {resumeHref && (
+              <Button size="sm" className="ml-4 pointer-events-none">
+                <Play className="mr-1.5 h-3.5 w-3.5" />
+                Continue
+              </Button>
+            )}
           </div>
         )
 
         if (href) {
           return (
             <Link key={session.id} href={href}>
+              {content}
+            </Link>
+          )
+        }
+
+        if (resumeHref) {
+          return (
+            <Link key={session.id} href={resumeHref}>
               {content}
             </Link>
           )

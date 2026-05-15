@@ -3,12 +3,11 @@
 import { useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { Globe, Play, Info, Cloud, Monitor } from 'lucide-react'
+import { toast } from 'sonner'
 import { captureWeb, saveLocalResults } from '@/lib/api/capture'
 import { useCaptureStore } from '@/lib/stores/capture-store'
 import { runPipeline } from '@/lib/ollama/extraction-pipeline'
 import { OllamaClient } from '@/lib/ollama/ollama-client'
-import { createByokClient } from '@/lib/llm/provider-factory'
-import { PROVIDER_DEFAULTS } from '@/lib/llm/provider-defaults'
 import { LocalExtractionProgress } from '@/components/capture/local-extraction-progress'
 
 export function WebSource() {
@@ -25,20 +24,19 @@ export function WebSource() {
   const localError = useCaptureStore((s) => s.localError)
   const setLocalError = useCaptureStore((s) => s.setLocalError)
   const selectedRoadmapId = useCaptureStore((s) => s.selectedRoadmapId)
-  const byokProvider = useCaptureStore((s) => s.byokProvider)
-  const byokApiKey = useCaptureStore((s) => s.byokApiKey)
-  const byokFastModel = useCaptureStore((s) => s.byokFastModel)
-  const byokSmartModel = useCaptureStore((s) => s.byokSmartModel)
 
   async function handleCloudSubmit() {
     if (!session?.accessToken) return
     const headers = { Authorization: `Bearer ${session.accessToken}` }
-    const { extractionId } = await captureWeb(
+    const { extractionId, deduped } = await captureWeb(
       headers,
       url.trim(),
       undefined,
       selectedRoadmapId || undefined,
     )
+    if (deduped) {
+      toast.info('You already have an active capture for this source — opening the existing one.')
+    }
     setExtractionId(extractionId)
   }
 
@@ -114,72 +112,6 @@ export function WebSource() {
     setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved - ${concepts.length} concepts, ${questions.length} questions` })
   }
 
-  async function handleByokSubmit() {
-    if (!session?.accessToken || !byokProvider || !byokApiKey) return
-
-    const defaults = PROVIDER_DEFAULTS[byokProvider]
-    const abort = new AbortController()
-    abortRef.current = abort
-
-    setLocalProgress({ phase: 'article-fetch', current: 0, total: 1 })
-    const articleRes = await fetch('/api/article-text', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: url.trim() }),
-      signal: abort.signal,
-    })
-
-    if (!articleRes.ok) {
-      const err = await articleRes.json().catch(() => ({ error: 'Failed to fetch article' }))
-      throw new Error(err.error || 'Failed to fetch article')
-    }
-
-    const { text, title } = (await articleRes.json()) as { text: string; title: string }
-    setLocalProgress({ phase: 'article-fetch', current: 1, total: 1 })
-
-    const client = createByokClient(byokProvider, byokApiKey)
-    const result = await runPipeline(
-      {
-        transcript: text,
-        pass1Model: byokFastModel || defaults.fast,
-        pass2Model: byokSmartModel || defaults.smart,
-        client,
-        signal: abort.signal,
-      },
-      (progress) => setLocalProgress(progress)
-    )
-
-    setLocalProgress({ phase: 'saving', current: 0, total: 1 })
-    const headers = { Authorization: `Bearer ${session.accessToken}` }
-
-    const concepts = result.concepts.map((c, i) => ({
-      title: c.title,
-      description: c.description,
-      order: i,
-    }))
-
-    const questions = result.questions.flatMap((qg) =>
-      qg.questions.map((q) => ({
-        conceptIndex: qg.conceptIndex,
-        type: q.type,
-        text: q.text,
-        options: q.options,
-        correctIndex: q.correctIndex,
-        explanation: q.explanation,
-      }))
-    )
-
-    await saveLocalResults(headers, {
-      videoUrl: url.trim(),
-      title: title || url.trim(),
-      concepts,
-      questions,
-      sourceType: 'WEB',
-    })
-
-    setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved - ${concepts.length} concepts, ${questions.length} questions` })
-  }
-
   async function handleSubmit() {
     if (!url.trim() || submitting || !session?.accessToken) return
     setSubmitting(true)
@@ -189,8 +121,6 @@ export function WebSource() {
     try {
       if (processingMode === 'local') {
         await handleLocalSubmit()
-      } else if (processingMode === 'byok') {
-        await handleByokSubmit()
       } else {
         await handleCloudSubmit()
       }
@@ -213,7 +143,7 @@ export function WebSource() {
     setLocalProgress(null)
   }
 
-  const isClientSide = processingMode === 'local' || processingMode === 'byok'
+  const isClientSide = processingMode === 'local'
 
   return (
     <div>

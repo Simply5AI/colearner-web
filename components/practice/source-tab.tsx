@@ -63,7 +63,18 @@ export function SourceTab() {
           listExtractions(headers, { status, limit: 20 })
         )
       )
-      return results.flatMap((r) => r.data)
+      const all = results.flatMap((r) => r.data)
+      // Dedupe by source (videoUrl): if two extractions exist for the same
+      // source, keep the most recently created one.
+      const bySource = new Map<string, Extraction>()
+      for (const e of all) {
+        const key = e.videoUrl || e.id
+        const prev = bySource.get(key)
+        if (!prev || new Date(e.createdAt) > new Date(prev.createdAt)) {
+          bySource.set(key, e)
+        }
+      }
+      return Array.from(bySource.values())
     },
     enabled: !!session?.accessToken,
     refetchInterval: (query) => {

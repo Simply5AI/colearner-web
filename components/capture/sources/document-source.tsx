@@ -3,13 +3,12 @@
 import { useCallback, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { Upload, FileText, X, Play, Cloud, Monitor } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { captureDocument, saveLocalResults } from '@/lib/api/capture'
 import { useCaptureStore } from '@/lib/stores/capture-store'
 import { runPipeline } from '@/lib/ollama/extraction-pipeline'
 import { OllamaClient } from '@/lib/ollama/ollama-client'
-import { createByokClient } from '@/lib/llm/provider-factory'
-import { PROVIDER_DEFAULTS } from '@/lib/llm/provider-defaults'
 import { extractTextFromFile } from '@/lib/extraction/document-extractor'
 import { LocalExtractionProgress } from '@/components/capture/local-extraction-progress'
 
@@ -31,10 +30,6 @@ export function DocumentSource() {
   const setLocalProgress = useCaptureStore((s) => s.setLocalProgress)
   const localError = useCaptureStore((s) => s.localError)
   const setLocalError = useCaptureStore((s) => s.setLocalError)
-  const byokProvider = useCaptureStore((s) => s.byokProvider)
-  const byokApiKey = useCaptureStore((s) => s.byokApiKey)
-  const byokFastModel = useCaptureStore((s) => s.byokFastModel)
-  const byokSmartModel = useCaptureStore((s) => s.byokSmartModel)
   const selectedRoadmapId = useCaptureStore((s) => s.selectedRoadmapId)
 
   const handleFile = useCallback(
@@ -60,11 +55,14 @@ export function DocumentSource() {
   async function handleCloudSubmit() {
     if (!selectedFile || !session?.accessToken) return
     const headers = { Authorization: `Bearer ${session.accessToken}` }
-    const { extractionId } = await captureDocument(
+    const { extractionId, deduped } = await captureDocument(
       headers,
       selectedFile,
       selectedRoadmapId || undefined,
     )
+    if (deduped) {
+      toast.info('You already have an active capture for this file — opening the existing one.')
+    }
     setExtractionId(extractionId)
   }
 
@@ -132,64 +130,6 @@ export function DocumentSource() {
     setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved - ${concepts.length} concepts, ${questions.length} questions` })
   }
 
-  async function handleByokSubmit() {
-    if (!selectedFile || !session?.accessToken || !byokProvider || !byokApiKey) return
-
-    const defaults = PROVIDER_DEFAULTS[byokProvider]
-    const abort = new AbortController()
-    abortRef.current = abort
-
-    setLocalProgress({ phase: 'document-extract', current: 0, total: 1 })
-    const text = await extractTextFromFile(selectedFile)
-    if (!text || text.trim().length === 0) {
-      throw new Error('Could not extract text from document')
-    }
-    setLocalProgress({ phase: 'document-extract', current: 1, total: 1 })
-
-    const client = createByokClient(byokProvider, byokApiKey)
-    const result = await runPipeline(
-      {
-        transcript: text,
-        pass1Model: byokFastModel || defaults.fast,
-        pass2Model: byokSmartModel || defaults.smart,
-        client,
-        signal: abort.signal,
-      },
-      (progress) => setLocalProgress(progress)
-    )
-
-    setLocalProgress({ phase: 'saving', current: 0, total: 1 })
-    const headers = { Authorization: `Bearer ${session.accessToken}` }
-
-    const title = selectedFile.name.replace(/\.[^.]+$/, '')
-    const concepts = result.concepts.map((c, i) => ({
-      title: c.title,
-      description: c.description,
-      order: i,
-    }))
-
-    const questions = result.questions.flatMap((qg) =>
-      qg.questions.map((q) => ({
-        conceptIndex: qg.conceptIndex,
-        type: q.type,
-        text: q.text,
-        options: q.options,
-        correctIndex: q.correctIndex,
-        explanation: q.explanation,
-      }))
-    )
-
-    await saveLocalResults(headers, {
-      videoUrl: `file://${selectedFile.name}`,
-      title,
-      concepts,
-      questions,
-      sourceType: 'DOCUMENT',
-    })
-
-    setLocalProgress({ phase: 'saving', current: 1, total: 1, detail: `Saved - ${concepts.length} concepts, ${questions.length} questions` })
-  }
-
   async function handleSubmit() {
     if (!selectedFile || submitting || !session?.accessToken) return
     setSubmitting(true)
@@ -199,8 +139,6 @@ export function DocumentSource() {
     try {
       if (processingMode === 'local') {
         await handleLocalSubmit()
-      } else if (processingMode === 'byok') {
-        await handleByokSubmit()
       } else {
         await handleCloudSubmit()
       }
@@ -223,7 +161,7 @@ export function DocumentSource() {
     setLocalProgress(null)
   }
 
-  const isClientSide = processingMode === 'local' || processingMode === 'byok'
+  const isClientSide = processingMode === 'local'
 
   return (
     <div>

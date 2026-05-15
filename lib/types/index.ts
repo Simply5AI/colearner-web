@@ -198,7 +198,7 @@ export interface UserProfile {
   createdAt: string
   updatedAt?: string
   // AI Processing preferences
-  processingMode?: 'cloud' | 'local' | 'byok'
+  processingMode?: 'cloud' | 'local'
   ollamaBaseUrl?: string
   ollamaPass1Model?: string | null
   ollamaPass2Model?: string | null

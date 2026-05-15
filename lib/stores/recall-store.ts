@@ -59,14 +59,22 @@ const initialState = {
 export const useRecallStore = create<RecallState>((set) => ({
   ...initialState,
 
-  startSession: (sessionId, questions) =>
-    set({
+  startSession: (sessionId, questions) => {
+    // Resume from the first unanswered, unskipped question. Falls back to the
+    // last question if everything is already done (the user will see the
+    // last-question state and can complete the session from there).
+    const firstUnansweredIdx = questions.findIndex((q) => !q.answered && !q.skipped)
+    const resumeIdx =
+      firstUnansweredIdx >= 0 ? firstUnansweredIdx : Math.max(0, questions.length - 1)
+    return set({
       ...initialState,
       sessionId,
       questions,
       totalQuestions: questions.length,
+      currentQuestionIndex: resumeIdx,
       timerStartedAt: Date.now(),
-    }),
+    })
+  },
 
   nextQuestion: () =>
     set((state) => ({

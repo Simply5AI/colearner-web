@@ -13,8 +13,65 @@ export interface LearningMemory {
   sources?: Array<{ id: string; sourceType: string; sourceId: string }>
 }
 
+export interface LearningProfileInsight {
+  id: string
+  title: string
+  summary: string
+  status: string
+  confidence: number
+  evidenceCount: number
+  memoryIds: string[]
+  sourceTypes: string[]
+  lastSeenAt: string
+  lastUsedAt: string | null
+  conceptId?: string | null
+  extractionId?: string | null
+}
+
+export interface LearnerConceptLevel {
+  conceptId: string
+  title: string
+  level: 'beginner' | 'intermediate' | 'advanced' | 'needs_attention'
+  averageReviewEase: number
+  questionsReviewed: number
+  lastPracticedAt: string | null
+}
+
+export interface MemoryUsageItem {
+  id: string
+  memoryId: string
+  content: string
+  type: string
+  purpose: string
+  createdAt: string
+}
+
+export interface LearningProfileDashboard {
+  learnerBrief: string
+  stats: {
+    activeMemories: number
+    weakAreas: number
+    strengths: number
+    reviewedConcepts: number
+  }
+  profile: LearningProfileInsight[]
+  preferences: LearningProfileInsight[]
+  weakAreas: LearningProfileInsight[]
+  strengths: LearnerConceptLevel[]
+  conceptLevels: LearnerConceptLevel[]
+  recentEvidence: LearningProfileInsight[]
+  usage: MemoryUsageItem[]
+  rawMemoryCount: number
+}
+
 export async function getMemories(accessToken: string): Promise<LearningMemory[]> {
   return apiClient<LearningMemory[]>('/api/memory', {
+    headers: authHeaders(accessToken),
+  })
+}
+
+export async function getLearningProfile(accessToken: string): Promise<LearningProfileDashboard> {
+  return apiClient<LearningProfileDashboard>('/api/memory/profile', {
     headers: authHeaders(accessToken),
   })
 }

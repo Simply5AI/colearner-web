@@ -1,5 +1,3 @@
-export type BYOKProvider = 'OPENAI' | 'GEMINI' | 'ANTHROPIC'
-
 export interface ChatOptions {
   model: string
   messages: { role: 'system' | 'user' | 'assistant'; content: string }[]

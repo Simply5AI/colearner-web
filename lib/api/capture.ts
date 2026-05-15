@@ -4,14 +4,20 @@ import type { CaptureStats, ExtractionProgress } from '@/lib/types'
 interface CaptureResponse {
   extractionId?: string
   extraction?: { id: string }
+  deduped?: boolean
 }
 
-function normalizeExtractionId(response: CaptureResponse): { extractionId: string } {
+export interface CaptureResult {
+  extractionId: string
+  deduped: boolean
+}
+
+function normalizeExtractionId(response: CaptureResponse): CaptureResult {
   const extractionId = response.extractionId ?? response.extraction?.id
   if (!extractionId) {
     throw new Error('Capture queued, but the API did not return an extraction id')
   }
-  return { extractionId }
+  return { extractionId, deduped: response.deduped === true }
 }
 
 export async function getCaptureStats(
@@ -26,7 +32,7 @@ export async function captureYouTube(
   options?: { autoTranscript?: boolean; questionTypes?: string[] },
   topicIds?: string[],
   roadmapId?: string
-): Promise<{ extractionId: string }> {
+): Promise<CaptureResult> {
   const response = await apiClient<CaptureResponse>('/api/capture/youtube', {
     method: 'POST',
     headers,
@@ -40,7 +46,7 @@ export async function captureWeb(
   url: string,
   topicIds?: string[],
   roadmapId?: string
-): Promise<{ extractionId: string }> {
+): Promise<CaptureResult> {
   const response = await apiClient<CaptureResponse>('/api/capture/web', {
     method: 'POST',
     headers,
@@ -57,7 +63,7 @@ async function uploadFile(
   path: string,
   headers: Record<string, string>,
   formData: FormData
-): Promise<{ extractionId: string }> {
+): Promise<CaptureResult> {
   const res = await fetch(`${getApiUrl()}${path}`, {
     method: 'POST',
     headers: {
@@ -79,7 +85,7 @@ export async function captureDocument(
   headers: Record<string, string>,
   file: File,
   roadmapId?: string
-): Promise<{ extractionId: string }> {
+): Promise<CaptureResult> {
   const formData = new FormData()
   formData.append('file', file)
   if (roadmapId) formData.append('roadmapId', roadmapId)
@@ -90,7 +96,7 @@ export async function captureAudio(
   headers: Record<string, string>,
   file: File | Blob,
   roadmapId?: string
-): Promise<{ extractionId: string }> {
+): Promise<CaptureResult> {
   const formData = new FormData()
   formData.append('file', file)
   if (roadmapId) formData.append('roadmapId', roadmapId)
@@ -101,7 +107,7 @@ export async function captureVideo(
   headers: Record<string, string>,
   file: File,
   roadmapId?: string
-): Promise<{ extractionId: string }> {
+): Promise<CaptureResult> {
   const formData = new FormData()
   formData.append('file', file)
   if (roadmapId) formData.append('roadmapId', roadmapId)
