@@ -19,6 +19,7 @@ interface ApiOptions {
   body?: unknown
   headers?: Record<string, string>
   schema?: z.ZodType
+  signal?: AbortSignal
 }
 
 /**
@@ -29,7 +30,7 @@ export async function apiClient<T>(
   path: string,
   options: ApiOptions = {}
 ): Promise<T> {
-  const { method = 'GET', body, headers = {}, schema } = options
+  const { method = 'GET', body, headers = {}, schema, signal } = options
   const apiUrl = getApiUrl()
   const url = `${apiUrl}${path}`
 
@@ -42,8 +43,12 @@ export async function apiClient<T>(
         ...headers,
       },
       body: body ? JSON.stringify(body) : undefined,
+      signal,
     })
   } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw error
+    }
     const detail =
       error instanceof Error && error.message ? ` ${error.message}` : ''
     throw new ApiError(

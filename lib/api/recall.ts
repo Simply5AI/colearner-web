@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/api/client'
 import type {
   RecallSessionConfig,
   RecallSessionResponse,
+  AttemptDiagnosis,
   QuestionWithMeta,
   AnswerResult,
   SessionSummaryDetailed,
@@ -40,6 +41,17 @@ export async function submitRecallAnswer(
   return apiClient<AnswerResult>(
     `/api/recall/sessions/${sessionId}/answers`,
     { method: 'POST', headers, body: data }
+  )
+}
+
+export async function getAttemptDiagnosis(
+  headers: Record<string, string>,
+  attemptId: string,
+  signal?: AbortSignal,
+): Promise<AttemptDiagnosis> {
+  return apiClient<AttemptDiagnosis>(
+    `/api/recall/attempts/${attemptId}/diagnosis`,
+    { headers, signal },
   )
 }
 

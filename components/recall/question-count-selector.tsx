@@ -30,6 +30,7 @@ export function QuestionCountSelector({ stats, authHeaders }: QuestionCountSelec
     try {
       const session = await createRecallSession(authHeaders, {
         questionCount: count,
+        availableMinutes: 25,
       })
       router.push(`/recall/${session.id}`)
     } catch {

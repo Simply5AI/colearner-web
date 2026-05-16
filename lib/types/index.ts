@@ -315,6 +315,17 @@ export interface AnswerResult {
   accuracy: number
 }
 
+export type AttemptDiagnosis =
+  | { ready: false }
+  | {
+      ready: true
+      classification: string
+      explanation: string
+      createdAt: string
+    }
+
+export type ReadyDiagnosis = Extract<AttemptDiagnosis, { ready: true }>
+
 export interface SessionSummaryDetailed {
   sessionId: string
   status: string
@@ -376,6 +387,7 @@ export interface RecallSessionConfig {
   timerSeconds?: number
   difficultyLevel?: DifficultyLevel
   conceptIds?: string[]
+  availableMinutes?: number
 }
 
 export interface RecallSessionResponse {

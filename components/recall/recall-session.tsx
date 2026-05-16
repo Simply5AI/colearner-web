@@ -4,7 +4,13 @@ import { useEffect, useCallback, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { useRecallStore } from '@/lib/stores/recall-store'
-import { submitRecallAnswer, skipRecallQuestion, completeRecallSession, getSessionQuestions } from '@/lib/api/recall'
+import {
+  submitRecallAnswer,
+  skipRecallQuestion,
+  completeRecallSession,
+  getSessionQuestions,
+} from '@/lib/api/recall'
+import { useAttemptDiagnosis } from '@/lib/hooks/use-attempt-diagnosis'
 import { getExtraction } from '@/lib/api/extraction'
 import { RecallProgressBar } from './recall-progress-bar'
 import { RecallQuestionShell } from './recall-question-shell'
@@ -47,6 +53,15 @@ export function RecallSession({ sessionId, authHeaders }: RecallSessionProps) {
   const isLastQuestion = store.currentQuestionIndex >= store.totalQuestions - 1
 
   const extractionId = currentQuestion?.extractionId
+  const shouldPollDiagnosis =
+    Boolean(store.showFeedback && store.lastResult && !store.lastResult.isCorrect) &&
+    (currentQuestion?.type === 'FREE_TEXT' || currentQuestion?.type === 'CLOZE')
+
+  const diagnosis = useAttemptDiagnosis(
+    authHeaders,
+    store.lastResult?.attemptId,
+    shouldPollDiagnosis,
+  )
 
   const tutorConcepts = useMemo(() => {
     const seen = new Map<string, { id: string; title: string }>()
@@ -192,6 +207,8 @@ export function RecallSession({ sessionId, authHeaders }: RecallSessionProps) {
               isLastQuestion={isLastQuestion}
               onNext={handleNext}
               onTutoring={() => setTutoringOpen(true)}
+              diagnosis={diagnosis}
+              isDiagnosing={shouldPollDiagnosis && !diagnosis}
             />
             <TutoringPanel
               questionId={currentQuestion.id}

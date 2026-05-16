@@ -1,18 +1,20 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { CheckCircle2, XCircle, ArrowRight, SkipForward, Sparkles } from 'lucide-react'
+import { CheckCircle2, XCircle, ArrowRight, SkipForward, Sparkles, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import type { AnswerResult } from '@/lib/types'
+import type { AnswerResult, ReadyDiagnosis } from '@/lib/types'
 
 interface AnswerFeedbackProps {
   result: AnswerResult
   isLastQuestion: boolean
   onNext: () => void
   onTutoring?: () => void
+  diagnosis?: ReadyDiagnosis | null
+  isDiagnosing?: boolean
 }
 
-export function AnswerFeedback({ result, isLastQuestion, onNext, onTutoring }: AnswerFeedbackProps) {
+export function AnswerFeedback({ result, isLastQuestion, onNext, onTutoring, diagnosis, isDiagnosing }: AnswerFeedbackProps) {
   const passed = result.isCorrect
 
   return (
@@ -57,8 +59,38 @@ export function AnswerFeedback({ result, isLastQuestion, onNext, onTutoring }: A
               className="mt-2 text-brand-purple hover:text-brand-purple/90 -ml-2"
             >
               <Sparkles className="h-4 w-4 mr-1" />
-              Why was I wrong?
+              {diagnosis ? 'Go deeper with tutor' : 'Why was I wrong?'}
             </Button>
+          )}
+
+          {!passed && isDiagnosing && !diagnosis && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="mt-3 flex items-center gap-2 rounded-lg border border-dashed border-brand-purple/25 bg-background/40 p-3 text-xs text-muted-foreground"
+            >
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-purple" />
+              Analyzing your answer…
+            </div>
+          )}
+
+          {!passed && diagnosis && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="mt-3 rounded-lg border border-brand-purple/25 bg-background/70 p-3"
+            >
+              <div className="mb-1 flex items-center gap-1.5 text-xs font-bold text-brand-purple">
+                <Sparkles className="h-3.5 w-3.5" />
+                Tutor explanation
+                <span className="rounded-full bg-brand-purple/10 px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                  {formatClassification(diagnosis.classification)}
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed text-foreground/85">
+                {diagnosis.explanation}
+              </p>
+            </div>
           )}
         </div>
       </div>
@@ -92,6 +124,10 @@ export function AnswerFeedback({ result, isLastQuestion, onNext, onTutoring }: A
       </Button>
     </motion.div>
   )
+}
+
+function formatClassification(classification: string): string {
+  return classification.replace(/_/g, ' ').toLowerCase()
 }
 
 function formatInterval(days: number): string {

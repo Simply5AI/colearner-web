@@ -15,6 +15,7 @@ import {
   Wrench,
   AlertTriangle,
   MessageCircleQuestion,
+  Clock3,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createRecallSession } from '@/lib/api/recall'
@@ -99,6 +100,7 @@ const timerOptions: { value: number; label: string }[] = [
 ]
 
 const questionCountOptions = [5, 10, 15, 20]
+const timeBudgetOptions = [15, 25, 45, 60]
 
 const difficultyLevels: Array<{
   id: DifficultyLevel
@@ -120,6 +122,7 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevel>('beginner')
   const [questionCount, setQuestionCount] = useState(10)
+  const [availableMinutes, setAvailableMinutes] = useState(25)
   const [isStarting, setIsStarting] = useState(false)
 
   const selectedCount = selectedConceptIds.length
@@ -138,6 +141,7 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
     setTimerSeconds(0)
     setDifficultyLevel('beginner')
     setQuestionCount(10)
+    setAvailableMinutes(25)
   }
 
   async function handleStart() {
@@ -154,6 +158,7 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
         timerSeconds: timerSeconds || undefined,
         difficultyLevel,
         conceptIds: selectedConceptIds,
+        availableMinutes,
       })
       router.push(`/recall/${session.id}`)
     } catch {
@@ -162,14 +167,14 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
-      <div className="mb-5 flex items-center gap-2 text-sm font-extrabold text-foreground">
+    <div className="rounded-xl border border-border bg-card p-4 md:p-5">
+      <div className="mb-4 flex items-center gap-2 text-sm font-extrabold text-foreground">
         <Settings2 className="h-[18px] w-[18px] text-brand-orange" />
         Session Configuration
       </div>
 
       {/* Config dropdowns */}
-      <div className="mb-5">
+      <div className="mb-4">
         <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
           Recall Style
         </label>
@@ -182,7 +187,8 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
                 key={option.value}
                 type="button"
                 onClick={() => setQuestionIntent(option.value)}
-                className={`min-h-[72px] rounded-lg border-[1.5px] px-3 py-2 text-left transition-all duration-150 ${
+                title={option.description}
+                className={`rounded-lg border-[1.5px] px-2.5 py-1.5 text-left transition-all duration-150 ${
                   isActive
                     ? 'border-brand-orange bg-brand-orange/[0.06] text-foreground shadow-sm'
                     : 'border-border bg-card text-muted-foreground hover:border-muted-foreground/40'
@@ -192,7 +198,7 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
                   <Icon className={isActive ? 'h-3.5 w-3.5 text-brand-orange' : 'h-3.5 w-3.5'} />
                   {option.label}
                 </span>
-                <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
+                <span className="mt-0.5 block truncate text-[11px] leading-tight text-muted-foreground">
                   {option.description}
                 </span>
               </button>
@@ -201,7 +207,37 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
         </div>
       </div>
 
-      <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <Clock3 className="h-3.5 w-3.5" />
+          Time Available
+        </label>
+        <div className="flex flex-wrap gap-1.5">
+          {timeBudgetOptions.map((minutes) => {
+            const isActive = availableMinutes === minutes
+            return (
+              <button
+                key={minutes}
+                type="button"
+                onClick={() => setAvailableMinutes(minutes)}
+                aria-pressed={isActive}
+                className={`rounded-full border-[1.5px] px-3 py-1 text-xs font-semibold transition-all duration-150 ${
+                  isActive
+                    ? 'border-brand-teal bg-brand-teal/[0.08] text-brand-teal shadow-sm'
+                    : 'border-border bg-card text-muted-foreground hover:border-muted-foreground/50'
+                }`}
+              >
+                {minutes} min
+              </button>
+            )
+          })}
+        </div>
+        <span className="text-[11px] text-muted-foreground">
+          Picks the best mix of due, failed, and new items for your time budget.
+        </span>
+      </div>
+
+      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <ConfigSelect
           label="Question Types"
           value={questionType}
@@ -229,7 +265,7 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
       </div>
 
       {/* Difficulty Level Pills */}
-      <div className="mb-5">
+      <div className="mb-4">
         <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
           Difficulty Level
         </label>
@@ -262,6 +298,7 @@ export function SessionConfigPanel({ extractionId, authHeaders, selectedConceptI
           {' '}&middot; {effectiveQuestionCount} questions will be generated
           {' '}&middot; {difficultyLabel}
           {' '}&middot; {questionIntentLabel}
+          {' '}&middot; {availableMinutes} min
           {questionType !== 'ALL' ? <> &middot; {questionTypeLabel}</> : null}
         </p>
         <div className="flex gap-2.5">
