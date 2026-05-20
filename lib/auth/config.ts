@@ -13,6 +13,7 @@ declare module 'next-auth' {
       name: string
       image?: string
       onboardingCompleted?: boolean
+      systemRole?: string
     }
   }
 
@@ -29,6 +30,7 @@ interface ExtendedJWT {
   refreshToken?: string
   accessTokenExpires?: number
   onboardingCompleted?: boolean
+  systemRole?: string
   error?: string
 }
 
@@ -162,7 +164,11 @@ const authConfig: NextAuthConfig = {
       }
 
       // Check onboarding status on initial sign-in or when session is updated
-      if ((user || trigger === 'update') && t.accessToken && !session?.onboardingCompleted) {
+      if (
+        (user || trigger === 'update' || !t.systemRole) &&
+        t.accessToken &&
+        (!session?.onboardingCompleted || !t.systemRole)
+      ) {
         try {
           const API_URL = process.env.NEXT_PUBLIC_API_URL
           const res = await fetch(`${API_URL}/api/users/me`, {
@@ -180,8 +186,14 @@ const authConfig: NextAuthConfig = {
             t.onboardingCompleted = !!(
               profile.goals?.length > 0 || profile.onboardingCompletedAt
             )
+            if (profile.systemRole === 'SUPER_ADMIN') {
+              t.onboardingCompleted = true
+            }
             if (profile.displayName || profile.name) {
               t.name = profile.displayName || profile.name
+            }
+            if (profile.systemRole) {
+              t.systemRole = profile.systemRole
             }
             console.log('[auth:jwt] resolved onboardingCompleted:', t.onboardingCompleted)
           } else {
@@ -212,6 +224,9 @@ const authConfig: NextAuthConfig = {
         if (t.name) {
           session.user.name = t.name as string
         }
+        if (t.systemRole) {
+          session.user.systemRole = t.systemRole
+        }
       }
       return session
     },
@@ -223,6 +238,8 @@ const authConfig: NextAuthConfig = {
 
       const isOnboarded = (auth as { user?: { onboardingCompleted?: boolean } })?.user
         ?.onboardingCompleted ?? false
+      const isSuperAdmin = (auth as { user?: { systemRole?: string } })?.user
+        ?.systemRole === 'SUPER_ADMIN'
       const isOnboardingPage = nextUrl.pathname.startsWith('/onboarding')
       const isProtectedApp =
         nextUrl.pathname.startsWith('/dashboard') ||
@@ -232,15 +249,17 @@ const authConfig: NextAuthConfig = {
         nextUrl.pathname.startsWith('/queue') ||
         nextUrl.pathname.startsWith('/progress') ||
         nextUrl.pathname.startsWith('/settings')
+      const isAdminPage = nextUrl.pathname.startsWith('/admin')
 
       // Require auth for onboarding and app routes
-      if ((isProtectedApp || isOnboardingPage) && !isLoggedIn) {
+      if ((isProtectedApp || isOnboardingPage || isAdminPage) && !isLoggedIn) {
         return Response.redirect(new URL('/login', nextUrl))
       }
 
       // Redirect from root based on auth/onboarding status
       if (nextUrl.pathname === '/') {
         if (!isLoggedIn) return Response.redirect(new URL('/login', nextUrl))
+        if (isSuperAdmin) return Response.redirect(new URL('/admin', nextUrl))
         const target = isOnboarded ? '/dashboard' : '/onboarding/profile'
         return Response.redirect(new URL(target, nextUrl))
       }
@@ -250,8 +269,13 @@ const authConfig: NextAuthConfig = {
         nextUrl.pathname.startsWith('/login') ||
         nextUrl.pathname.startsWith('/signup')
       if (isAuthPage && isLoggedIn) {
+        if (isSuperAdmin) return Response.redirect(new URL('/admin', nextUrl))
         const target = isOnboarded ? '/dashboard' : '/onboarding/profile'
         return Response.redirect(new URL(target, nextUrl))
+      }
+
+      if ((isProtectedApp || isOnboardingPage) && isLoggedIn && isSuperAdmin) {
+        return Response.redirect(new URL('/admin', nextUrl))
       }
 
       // Redirect to onboarding if not completed (when accessing app routes)

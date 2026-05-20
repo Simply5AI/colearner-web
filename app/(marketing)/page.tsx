@@ -8,6 +8,10 @@ export default async function RootPage() {
     redirect('/login')
   }
 
+  if (session.user.systemRole === 'SUPER_ADMIN') {
+    redirect('/admin')
+  }
+
   if (session.user.onboardingCompleted) {
     redirect('/dashboard')
   }

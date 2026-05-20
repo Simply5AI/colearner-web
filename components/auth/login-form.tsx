@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
-import { signIn } from 'next-auth/react'
+import { getSession, signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
@@ -61,7 +61,8 @@ export function LoginForm() {
           setError(`The email or password you entered is incorrect. ${5 - newAttempts} attempt${5 - newAttempts === 1 ? '' : 's'} remaining.`)
         }
       } else {
-        router.push('/dashboard')
+        const session = await getSession()
+        router.push(session?.user.systemRole === 'SUPER_ADMIN' ? '/admin' : '/dashboard')
       }
     } catch {
       setError('Something went wrong. Please try again.')
