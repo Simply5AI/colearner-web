@@ -32,7 +32,7 @@ export function GoalForm() {
         goals: goal ? [goal] : ['build_knowledge'],
         goalTitle: goalTitle || undefined,
       })
-      router.push('/onboarding/education')
+      router.push(useOnboardingStore.getState().learnerType === 'STUDENT' ? '/onboarding/subjects' : '/onboarding/education')
     } catch {
       toast.error('Something went wrong', {
         description: 'Failed to save your preferences. Please try again.',

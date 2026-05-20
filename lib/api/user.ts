@@ -1,5 +1,5 @@
 import { apiClient, getApiUrl } from '@/lib/api/client'
-import type { UserProfile, StreakData, TopicItem } from '@/lib/types'
+import type { UserProfile, StreakData, TopicItem, SubjectItem } from '@/lib/types'
 
 export async function getProfile(accessToken: string): Promise<UserProfile> {
   return apiClient<UserProfile>('/api/users/me', {
@@ -137,6 +137,28 @@ export async function updateOnboardingSkills(
   })
 }
 
+export async function updateOnboardingSubjects(
+  accessToken: string,
+  data: { subjectIds: string[] }
+) {
+  return apiClient('/api/onboarding/subjects', {
+    method: 'PATCH',
+    headers: authHeaders(accessToken),
+    body: data,
+  })
+}
+
+export async function createCustomSubject(
+  accessToken: string,
+  data: { name: string }
+): Promise<SubjectItem> {
+  return apiClient<SubjectItem>('/api/subjects/custom', {
+    method: 'POST',
+    headers: authHeaders(accessToken),
+    body: data,
+  })
+}
+
 export async function completeOnboarding(accessToken: string) {
   return apiClient('/api/onboarding/complete', {
     method: 'POST',
@@ -185,6 +207,12 @@ export async function getOnboardingSuggestionStatus(accessToken: string) {
 
 export async function getTopics(accessToken: string): Promise<TopicItem[]> {
   return apiClient<TopicItem[]>('/api/onboarding/topics', {
+    headers: authHeaders(accessToken),
+  })
+}
+
+export async function getSubjects(accessToken: string): Promise<SubjectItem[]> {
+  return apiClient<SubjectItem[]>('/api/subjects', {
     headers: authHeaders(accessToken),
   })
 }

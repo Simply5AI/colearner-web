@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -14,41 +14,98 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Checkbox } from '@/components/ui/checkbox'
+import { getDisplaySubjects } from '@/lib/constants/subjects'
 import { useCreateRoadmap } from '@/lib/hooks/use-roadmap'
-import type { RoadmapMode } from '@/lib/types'
+import { useProfile } from '@/lib/hooks/use-profile'
+import { useSubjects } from '@/lib/hooks/use-onboarding'
+import { cn } from '@/lib/utils'
+import type { GradeLevel, RoadmapMode } from '@/lib/types'
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
+  initialSubjectId?: string | null
 }
 
-export function CreateRoadmapModal({ open, onOpenChange }: Props) {
+type StudentPlanHelpMode = 'FULL_SUBJECT' | 'TEST_PREP' | 'SYLLABUS'
+
+function formatGradeLevel(gradeLevel?: GradeLevel | null) {
+  if (!gradeLevel) return null
+  if (gradeLevel.startsWith('CLASS_')) {
+    return `Class ${gradeLevel.replace('CLASS_', '')}`
+  }
+  return gradeLevel
+    .toLowerCase()
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+export function CreateRoadmapModal({ open, onOpenChange, initialSubjectId }: Props) {
   const router = useRouter()
   const createRoadmap = useCreateRoadmap()
+  const { data: profile } = useProfile()
+  const { data: subjects = [] } = useSubjects()
 
+  const [step, setStep] = useState<1 | 2>(1)
   const [mode, setMode] = useState<RoadmapMode>('TOPIC')
+  const [studentHelpMode, setStudentHelpMode] = useState<StudentPlanHelpMode>('FULL_SUBJECT')
   const [topic, setTopic] = useState('')
+  const [subjectId, setSubjectId] = useState(initialSubjectId ?? '')
   const [phases, setPhases] = useState('3')
   const [syllabusText, setSyllabusText] = useState('')
   const [examDate, setExamDate] = useState('')
   const [examTopics, setExamTopics] = useState('')
+  const isStudent = profile?.learnerType === 'STUDENT'
+  const displaySubjects = getDisplaySubjects(subjects)
+  const selectedSubject = displaySubjects.find((subject) => subject.id === subjectId)
+  const gradeLabel = formatGradeLevel(profile?.gradeLevel)
+  const planTypes: Array<{ value: RoadmapMode; label: string; description: string }> = [
+    { value: 'TOPIC', label: 'Topic', description: 'Learn a skill or concept' },
+    { value: 'SYLLABUS', label: 'Course', description: 'Turn a course outline into a plan' },
+    { value: 'EXAM_PREP', label: 'Certification', description: 'Prepare for an assessment' },
+  ]
+  const studentHelpOptions: Array<{ value: StudentPlanHelpMode; label: string; description: string }> = [
+    { value: 'FULL_SUBJECT', label: 'Full subject plan', description: 'Build a plan from this subject' },
+    { value: 'TEST_PREP', label: 'Prepare for a test', description: 'Focus on exam revision and practice' },
+    { value: 'SYLLABUS', label: 'Use syllabus or chapters', description: 'Paste the topics your teacher gave you' },
+  ]
+
+  useEffect(() => {
+    if (open) {
+      setStep(1)
+      setStudentHelpMode('FULL_SUBJECT')
+      setSubjectId(initialSubjectId ?? '')
+    }
+  }, [initialSubjectId, open])
 
   const handleSubmit = async () => {
+    const subjectExistsInApi = subjects.some((subject) => subject.id === subjectId)
+    const studentMode: RoadmapMode =
+      studentHelpMode === 'SYLLABUS'
+        ? 'SYLLABUS'
+        : studentHelpMode === 'TEST_PREP'
+        ? 'EXAM_PREP'
+        : 'TOPIC'
+    const effectiveMode = isStudent ? studentMode : mode
+    const topicFromProfile =
+      isStudent
+        ? [gradeLabel, selectedSubject?.name ?? 'Syllabus'].filter(Boolean).join(' ')
+        : topic.trim()
+    const normalizedTopic = selectedSubject && !subjectExistsInApi
+      ? `${selectedSubject.name}: ${topicFromProfile}`
+      : topicFromProfile
+    const phaseCount = Math.min(Math.max(parseInt(phases, 10) || 3, 1), 8)
+
     const input = {
-      mode,
-      topic,
-      phases: parseInt(phases, 10),
-      ...(mode === 'SYLLABUS' && syllabusText ? { syllabusText } : {}),
-      ...(mode === 'EXAM_PREP' && examDate ? { examDate } : {}),
-      ...(mode === 'EXAM_PREP' && examTopics
+      mode: effectiveMode,
+      topic: normalizedTopic,
+      phases: isStudent ? 4 : phaseCount,
+      ...(subjectId && subjectExistsInApi ? { subjectId } : {}),
+      ...(effectiveMode === 'SYLLABUS' && syllabusText ? { syllabusText } : {}),
+      ...(effectiveMode === 'EXAM_PREP' && examDate ? { examDate } : {}),
+      ...(effectiveMode === 'EXAM_PREP' && examTopics
         ? { examTopics: examTopics.split(',').map((t) => t.trim()).filter(Boolean) }
         : {}),
     }
@@ -58,77 +115,188 @@ export function CreateRoadmapModal({ open, onOpenChange }: Props) {
     router.push(`/roadmaps/${result.roadmap.id}`)
   }
 
-  const canSubmit = topic.trim().length > 0 && !createRoadmap.isPending
+  const studentNeedsDetail = studentHelpMode === 'SYLLABUS' || studentHelpMode === 'TEST_PREP'
+  const canContinue = isStudent ? Boolean(subjectId) : topic.trim().length > 0
+  const canSubmit = canContinue && !createRoadmap.isPending
+  const topicLabel = isStudent
+    ? mode === 'SYLLABUS'
+      ? ''
+      : mode === 'EXAM_PREP'
+      ? 'Exam or subject focus'
+      : 'What are you studying?'
+    : mode === 'SYLLABUS'
+    ? 'Course Name'
+    : mode === 'EXAM_PREP'
+    ? 'Subject'
+    : 'What do you want to learn?'
+  const topicPlaceholder = isStudent
+    ? mode === 'SYLLABUS'
+      ? 'e.g., Grade 10 Biology'
+      : mode === 'EXAM_PREP'
+      ? 'e.g., Algebra final exam'
+      : 'e.g., Photosynthesis, Linear equations'
+    : mode === 'SYLLABUS'
+    ? 'e.g., CS101 Introduction to Computer Science'
+    : mode === 'EXAM_PREP'
+    ? 'e.g., Data Structures and Algorithms'
+    : 'e.g., I want to learn REST APIs'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create Learning Roadmap</DialogTitle>
+          <DialogTitle>Create Study Plan</DialogTitle>
           <DialogDescription>
-            AI will generate the topics and milestones. Students choose which sources to capture.
+            {isStudent
+              ? 'Choose a subject, then Colearner will build a simple plan and help you add captures.'
+              : `Step ${step} of 2. AI will generate a practical path, then you choose which sources to capture.`}
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={mode} onValueChange={(v) => setMode(v as RoadmapMode)} className="mt-2">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="TOPIC">Learn a Topic</TabsTrigger>
-            <TabsTrigger value="SYLLABUS">Import Syllabus</TabsTrigger>
-            <TabsTrigger value="EXAM_PREP">Exam Prep</TabsTrigger>
-          </TabsList>
-
+        {step === 1 ? (
           <div className="mt-4 space-y-4">
-            <div>
-              <Label htmlFor="topic">
-                {mode === 'SYLLABUS' ? 'Course Name' : mode === 'EXAM_PREP' ? 'Subject' : 'What do you want to learn?'}
-              </Label>
+            {isStudent && (
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <Label>Choose subject</Label>
+                  {subjectId && (
+                    <button
+                      type="button"
+                      onClick={() => setSubjectId('')}
+                      className="text-xs font-medium text-muted-foreground hover:text-foreground"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="mt-2 grid max-h-48 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+                  {displaySubjects.map((subject) => {
+                    const isSelected = subjectId === subject.id
+                    return (
+                      <button
+                        key={subject.id}
+                        type="button"
+                        onClick={() => setSubjectId(isSelected ? '' : subject.id)}
+                        className={cn(
+                          'flex min-h-12 items-center gap-3 rounded-lg border p-3 text-left transition-colors',
+                          isSelected
+                            ? 'border-brand-orange bg-brand-orange/5'
+                            : 'border-border hover:border-brand-orange/40',
+                        )}
+                      >
+                        <Checkbox
+                          checked={isSelected}
+                          className="pointer-events-none border-brand-orange data-checked:bg-brand-orange"
+                        />
+                        <span className="min-w-0 text-sm font-medium">{subject.name}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {gradeLabel ? `${gradeLabel} is already saved in your profile. ` : ''}
+                  Your captures and practice will stay organized under this subject.
+                </p>
+              </div>
+            )}
+
+            {isStudent ? (
+              <div>
+                <Label>What do you want help with?</Label>
+                <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                  {studentHelpOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setStudentHelpMode(option.value)}
+                      className={cn(
+                        'rounded-lg border p-3 text-left transition-colors',
+                        studentHelpMode === option.value
+                          ? 'border-brand-orange bg-brand-orange/5'
+                          : 'border-border hover:border-brand-orange/40',
+                      )}
+                    >
+                      <span className="block text-sm font-semibold">{option.label}</span>
+                      <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
+                        {option.description}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <Label>Plan type</Label>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                    {planTypes.map((type) => (
+                      <button
+                        key={type.value}
+                        type="button"
+                        onClick={() => setMode(type.value)}
+                        className={cn(
+                          'rounded-lg border p-3 text-left transition-colors',
+                          mode === type.value
+                            ? 'border-brand-orange bg-brand-orange/5'
+                            : 'border-border hover:border-brand-orange/40',
+                        )}
+                      >
+                        <span className="block text-sm font-semibold">{type.label}</span>
+                        <span className="mt-1 block text-[11px] leading-snug text-muted-foreground">
+                          {type.description}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="topic">{topicLabel}</Label>
+                  <Input
+                    id="topic"
+                    placeholder={topicPlaceholder}
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="mt-4 space-y-4">
+
+            {!isStudent && (
+              <div>
+              <Label htmlFor="phases">Number of phases</Label>
               <Input
-                id="topic"
-                placeholder={
-                  mode === 'SYLLABUS'
-                    ? 'e.g., CS101 Introduction to Computer Science'
-                    : mode === 'EXAM_PREP'
-                    ? 'e.g., Data Structures and Algorithms'
-                    : 'e.g., I want to learn REST APIs'
-                }
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
+                id="phases"
+                type="number"
+                min={1}
+                max={8}
+                value={phases}
+                onChange={(e) => setPhases(e.target.value)}
                 className="mt-1"
               />
-            </div>
+              </div>
+            )}
 
-            <div>
-              <Label htmlFor="phases">Number of phases</Label>
-              <Select value={phases} onValueChange={(v) => { if (v) setPhases(v) }}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
-                    <SelectItem key={n} value={String(n)}>
-                      {n} {n === 1 ? 'phase' : 'phases'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <TabsContent value="SYLLABUS" className="mt-0 space-y-4">
+            {(!isStudent && mode === 'SYLLABUS') || (isStudent && studentHelpMode === 'SYLLABUS') ? (
               <div>
-                <Label htmlFor="syllabus">Paste your syllabus</Label>
+                <Label htmlFor="syllabus">{isStudent ? 'Paste syllabus or chapter list' : 'Paste your syllabus'}</Label>
                 <Textarea
                   id="syllabus"
-                  placeholder="Paste your course syllabus or topic list here..."
+                  placeholder={isStudent ? 'e.g., Motion, Force and Laws of Motion, Gravitation...' : 'Paste your course syllabus or topic list here...'}
                   value={syllabusText}
                   onChange={(e) => setSyllabusText(e.target.value)}
                   className="mt-1 min-h-[120px]"
                 />
               </div>
-            </TabsContent>
+            ) : null}
 
-            <TabsContent value="EXAM_PREP" className="mt-0 space-y-4">
+            {(!isStudent && mode === 'EXAM_PREP') || (isStudent && studentHelpMode === 'TEST_PREP') ? (
+              <>
               <div>
-                <Label htmlFor="examDate">Exam Date</Label>
+                <Label htmlFor="examDate">{isStudent ? 'Test date' : 'Exam Date'}</Label>
                 <Input
                   id="examDate"
                   type="date"
@@ -138,27 +306,54 @@ export function CreateRoadmapModal({ open, onOpenChange }: Props) {
                 />
               </div>
               <div>
-                <Label htmlFor="examTopics">Key Topics (comma-separated)</Label>
+                <Label htmlFor="examTopics">{isStudent ? 'Chapters or topics to revise' : 'Key Topics (comma-separated)'}</Label>
                 <Input
                   id="examTopics"
-                  placeholder="e.g., trees, graphs, sorting, dynamic programming"
+                  placeholder={isStudent ? 'e.g., acids and bases, metals, light' : 'e.g., trees, graphs, sorting, dynamic programming'}
                   value={examTopics}
                   onChange={(e) => setExamTopics(e.target.value)}
                   className="mt-1"
                 />
               </div>
-            </TabsContent>
+              </>
+            ) : null}
           </div>
-        </Tabs>
+        )}
 
         <div className="flex justify-end gap-3 mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={!canSubmit}>
-            {createRoadmap.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Generate Roadmap
-          </Button>
+          {step === 1 ? (
+            <>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (isStudent && !studentNeedsDetail) {
+                    void handleSubmit()
+                  } else {
+                    setStep(2)
+                  }
+                }}
+                disabled={!canContinue || createRoadmap.isPending}
+              >
+                {isStudent && !studentNeedsDetail && createRoadmap.isPending && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {isStudent && !studentNeedsDetail ? 'Generate Study Plan' : 'Continue'}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => setStep(1)}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button onClick={handleSubmit} disabled={!canSubmit}>
+                {createRoadmap.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Generate Study Plan
+              </Button>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

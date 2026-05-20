@@ -10,13 +10,13 @@ export function useLearnerTerms() {
     isStudent,
     planLabel: isStudent ? 'Subject' : 'Study Plan',
     plansLabel: isStudent ? 'Subjects' : 'Study Plans',
-    goalLabel: isStudent ? 'Subject' : 'Goal',
-    goalsLabel: isStudent ? 'Subjects' : 'Goals',
-    newPlanLabel: isStudent ? 'New Subject' : 'New Study Plan',
-    phaseLabel: isStudent ? 'Level' : 'Phase',
-    phasesLabel: isStudent ? 'Levels' : 'Phases',
+    goalLabel: 'Goal',
+    goalsLabel: 'Goals',
+    newPlanLabel: isStudent ? 'Add Subject' : 'New Study Plan',
+    phaseLabel: isStudent ? 'Learning Step' : 'Phase',
+    phasesLabel: isStudent ? 'Learning Steps' : 'Phases',
     pageSubtitle: isStudent
-      ? 'Your academic subjects and learning progress'
+      ? 'Organize captures by the subjects and interests you study.'
       : 'AI-generated learning paths, syllabus imports, and exam prep plans',
   }
 }

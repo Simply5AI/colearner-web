@@ -168,6 +168,16 @@ export interface TopicItem {
   category?: string | null
 }
 
+export interface SubjectItem {
+  id: string
+  name: string
+  slug: string
+  icon: string | null
+  sortOrder?: number
+  isPredefined?: boolean
+  ownerUserId?: string | null
+}
+
 export interface UserProfile {
   id: string
   email: string
@@ -183,6 +193,7 @@ export interface UserProfile {
   learningGoal?: string | null
   dailyTimeMinutes?: number | null
   topics?: TopicItem[]
+  subjects?: SubjectItem[]
   /** @deprecated Use learningGoal instead */
   goals?: LearningGoal[]
   /** @deprecated Use dailyTimeMinutes instead */
@@ -432,6 +443,7 @@ export interface Extraction {
   completedAt: string | null
   createdAt: string
   topics?: ExtractionTopicInfo[]
+  subject?: SubjectItem | null
   totalRecallSeconds?: number
   sessionCount?: number
   roadmaps?: ExtractionRoadmapInfo[]
@@ -751,12 +763,14 @@ export interface Roadmap {
   mode: RoadmapMode
   status: RoadmapStatus
   goalId: string | null
+  subjectId?: string | null
   totalPhases: number
   examDate: string | null
   createdAt: string
   updatedAt: string
   phases: RoadmapPhase[]
   goal?: { id: string; title: string; icon: string | null; color: string | null } | null
+  subject?: SubjectItem | null
 }
 
 export type StudyPlanListItem =
@@ -795,6 +809,7 @@ export interface CreateRoadmapInput {
   topic: string
   phases?: number
   goalId?: string
+  subjectId?: string
   syllabusText?: string
   examDate?: string
   examTopics?: string[]

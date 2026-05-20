@@ -4,6 +4,10 @@ on: [push, pull_request]
 jobs:
   unit-integration:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SENTRY_DSN: ''
+      NEXT_PUBLIC_SENTRY_ENVIRONMENT: development
+      NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE: '1.0'
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
@@ -20,6 +24,10 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SENTRY_DSN: ''
+      NEXT_PUBLIC_SENTRY_ENVIRONMENT: development
+      NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE: '1.0'
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2

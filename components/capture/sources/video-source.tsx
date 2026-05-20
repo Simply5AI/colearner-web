@@ -17,6 +17,7 @@ export function VideoSource() {
   const setSourceFile = useCaptureStore((s) => s.setSourceFile)
   const setExtractionId = useCaptureStore((s) => s.setExtractionId)
   const selectedRoadmapId = useCaptureStore((s) => s.selectedRoadmapId)
+  const selectedSubjectId = useCaptureStore((s) => s.selectedSubjectId)
   const processingMode = useCaptureStore((s) => s.processingMode)
   const [submitting, setSubmitting] = useState(false)
   const [dragOver, setDragOver] = useState(false)
@@ -45,6 +46,7 @@ export function VideoSource() {
         headers,
         selectedFile as File,
         selectedRoadmapId || undefined,
+        selectedSubjectId || undefined,
       )
       if (deduped) {
         toast.info('You already have an active capture for this file — opening the existing one.')

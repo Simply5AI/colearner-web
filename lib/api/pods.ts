@@ -1,15 +1,23 @@
-import { apiClient } from '@/lib/api/client'
+import { ApiError, apiClient, getApiUrl } from '@/lib/api/client'
 import type {
   Pod,
   PodCapture,
   PodInvite,
   LeaderboardEntry,
   PodActivity,
+  PodMessage,
+  PodCaptureComment,
+  PodSavedCapture,
+  PodCapturePreview,
   CreatePodInput,
   UpdatePodInput,
   UpdatePrivacyInput,
   ShareCaptureInput,
   PodMember,
+  CreateMessageInput,
+  CreateCommentInput,
+  PodAttachment,
+  PodAttachmentDownload,
 } from '@/lib/types/pods'
 
 // ---- Pod CRUD ----
@@ -137,6 +145,62 @@ export async function getPodCaptures(
   )
 }
 
+export async function savePodCapture(
+  headers: Record<string, string>,
+  podId: string,
+  captureId: string
+): Promise<PodSavedCapture> {
+  return apiClient<PodSavedCapture>(`/api/pods/${podId}/captures/${captureId}/save`, {
+    method: 'POST',
+    headers,
+  })
+}
+
+export async function unsavePodCapture(
+  headers: Record<string, string>,
+  podId: string,
+  captureId: string
+): Promise<{ message: string }> {
+  return apiClient<{ message: string }>(`/api/pods/${podId}/captures/${captureId}/save`, {
+    method: 'DELETE',
+    headers,
+  })
+}
+
+export async function getPodCaptureComments(
+  headers: Record<string, string>,
+  podId: string,
+  captureId: string
+): Promise<PodCaptureComment[]> {
+  return apiClient<PodCaptureComment[]>(
+    `/api/pods/${podId}/captures/${captureId}/comments`,
+    { headers }
+  )
+}
+
+export async function getPodCapturePreview(
+  headers: Record<string, string>,
+  podId: string,
+  captureId: string
+): Promise<PodCapturePreview> {
+  return apiClient<PodCapturePreview>(
+    `/api/pods/${podId}/captures/${captureId}/preview`,
+    { headers }
+  )
+}
+
+export async function createPodCaptureComment(
+  headers: Record<string, string>,
+  podId: string,
+  captureId: string,
+  data: CreateCommentInput
+): Promise<PodCaptureComment> {
+  return apiClient<PodCaptureComment>(
+    `/api/pods/${podId}/captures/${captureId}/comments`,
+    { method: 'POST', headers, body: data }
+  )
+}
+
 export async function addCaptureToQueue(
   headers: Record<string, string>,
   podId: string,
@@ -162,4 +226,57 @@ export async function getPodActivity(
   podId: string
 ): Promise<PodActivity[]> {
   return apiClient<PodActivity[]>(`/api/pods/${podId}/activity`, { headers })
+}
+
+export async function getPodMessages(
+  headers: Record<string, string>,
+  podId: string
+): Promise<PodMessage[]> {
+  return apiClient<PodMessage[]>(`/api/pods/${podId}/messages`, { headers })
+}
+
+export async function createPodMessage(
+  headers: Record<string, string>,
+  podId: string,
+  data: CreateMessageInput
+): Promise<PodMessage> {
+  return apiClient<PodMessage>(`/api/pods/${podId}/messages`, {
+    method: 'POST',
+    headers,
+    body: data,
+  })
+}
+
+export async function uploadPodAttachment(
+  headers: Record<string, string>,
+  podId: string,
+  file: File
+): Promise<PodAttachment> {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const res = await fetch(`${getApiUrl()}/api/pods/${podId}/attachments`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: res.statusText }))
+    throw new ApiError(res.status, error.data?.message || error.message || res.statusText)
+  }
+
+  const json = await res.json()
+  return json.data !== undefined ? json.data : json
+}
+
+export async function getPodAttachmentDownload(
+  headers: Record<string, string>,
+  podId: string,
+  attachmentId: string
+): Promise<PodAttachmentDownload> {
+  return apiClient<PodAttachmentDownload>(
+    `/api/pods/${podId}/attachments/${attachmentId}/download`,
+    { headers }
+  )
 }

@@ -18,9 +18,10 @@ function RecallPageInner() {
 
   const topicSlug = searchParams.get('topic') || undefined
   const sourceType = searchParams.get('source') || undefined
+  const subjectId = searchParams.get('subject') || undefined
 
   const { data, isLoading } = useQuery({
-    queryKey: ['extractions', 'completed', { topicSlug, sourceType }],
+    queryKey: ['extractions', 'completed', { topicSlug, sourceType, subjectId }],
     queryFn: async () => {
       if (!session?.accessToken) throw new Error('Not authenticated')
       const headers = { Authorization: `Bearer ${session.accessToken}` }
@@ -29,6 +30,7 @@ function RecallPageInner() {
         limit: 50,
         topicSlug,
         sourceType,
+        subjectId,
       })
 
       // Auto-refresh metadata for extractions missing titles
@@ -55,13 +57,13 @@ function RecallPageInner() {
 
   function handleDeleted(id: string) {
     queryClient.setQueryData(
-      ['extractions', 'completed', { topicSlug, sourceType }],
+      ['extractions', 'completed', { topicSlug, sourceType, subjectId }],
       (old: typeof data) => old?.filter((e) => e.id !== id)
     )
   }
 
   const extractions = data || []
-  const hasFilters = !!topicSlug || !!sourceType
+  const hasFilters = !!topicSlug || !!sourceType || !!subjectId
   const totalRecallTime = extractions.reduce(
     (sum, e) => sum + (e.totalRecallSeconds ?? 0),
     0,

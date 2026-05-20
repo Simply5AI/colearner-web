@@ -28,6 +28,7 @@ export const queryKeys = {
   onboarding: {
     all: ['onboarding'] as const,
     topics: () => [...queryKeys.onboarding.all, 'topics'] as const,
+    subjects: () => [...queryKeys.onboarding.all, 'subjects'] as const,
     suggestionStatus: () => [...queryKeys.onboarding.all, 'suggestion-status'] as const,
   },
 
@@ -88,6 +89,9 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.pods.all, 'detail', id] as const,
     leaderboard: (id: string) => [...queryKeys.pods.all, 'leaderboard', id] as const,
     activity: (id: string) => [...queryKeys.pods.all, 'activity', id] as const,
+    messages: (id: string) => [...queryKeys.pods.all, 'messages', id] as const,
+    comments: (id: string, captureId: string) =>
+      [...queryKeys.pods.all, 'comments', id, captureId] as const,
     captures: (id: string, page?: number) =>
       [...queryKeys.pods.all, 'captures', id, page] as const,
   },

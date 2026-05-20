@@ -9,15 +9,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useProfile } from '@/lib/hooks/use-profile'
 import { useRoadmaps } from '@/lib/hooks/use-roadmap'
 import { useCaptureStore } from '@/lib/stores/capture-store'
 
 const NONE_VALUE = '__none__'
 
 export function StudyPlanCapturePicker() {
+  const { data: profile } = useProfile()
   const { data: roadmaps, isLoading } = useRoadmaps()
   const selectedRoadmapId = useCaptureStore((s) => s.selectedRoadmapId)
   const setSelectedRoadmapId = useCaptureStore((s) => s.setSelectedRoadmapId)
+
+  if (profile?.learnerType === 'STUDENT') return null
 
   const activeRoadmaps = (roadmaps ?? []).filter((r) => r.status !== 'ARCHIVED')
   const current = selectedRoadmapId ?? NONE_VALUE

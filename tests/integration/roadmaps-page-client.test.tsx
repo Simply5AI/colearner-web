@@ -3,9 +3,16 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RoadmapsPageClient } from '@/components/roadmap/roadmaps-page-client'
+import type { Goal, Roadmap, StudyPlanListItem } from '@/lib/types'
 
 const pushMock = vi.hoisted(() => vi.fn())
 const createRoadmapMock = vi.hoisted(() => vi.fn())
+const updateSubjectsMock = vi.hoisted(() => vi.fn())
+const createCustomSubjectMock = vi.hoisted(() => vi.fn())
+const profileState = vi.hoisted(() => ({
+  learnerType: 'PROFESSIONAL' as 'STUDENT' | 'PROFESSIONAL',
+  subjects: [] as Array<{ id: string; name: string; slug: string; icon: string | null; sortOrder: number }>,
+}))
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -17,9 +24,9 @@ vi.mock('next/navigation', () => ({
 }))
 
 const unifiedData = vi.hoisted(() => ({
-  studyPlans: [] as any[],
-  roadmaps: [] as any[],
-  goalsWithoutRoadmap: [] as any[],
+  studyPlans: [] as StudyPlanListItem[],
+  roadmaps: [] as Roadmap[],
+  goalsWithoutRoadmap: [] as Goal[],
 }))
 
 vi.mock('@/lib/hooks/use-roadmap', () => ({
@@ -41,14 +48,42 @@ vi.mock('@/lib/hooks/use-goals', () => ({
   }),
 }))
 
+vi.mock('@/lib/hooks/use-profile', () => ({
+  useProfile: () => ({
+    data: profileState,
+  }),
+}))
+
+vi.mock('@/lib/hooks/use-onboarding', () => ({
+  useSubjects: () => ({
+    data: [
+      { id: 'subject-science', name: 'Science', slug: 'science', icon: 'flask', sortOrder: 2 },
+      { id: 'subject-math', name: 'Mathematics', slug: 'mathematics', icon: 'calculator', sortOrder: 1 },
+    ],
+  }),
+  useUpdateOnboardingSubjects: () => ({
+    mutateAsync: updateSubjectsMock,
+    isPending: false,
+  }),
+  useCreateCustomSubject: () => ({
+    mutateAsync: createCustomSubjectMock,
+    isPending: false,
+  }),
+}))
+
 vi.mock('@/lib/hooks/use-learner-terms', () => ({
   useLearnerTerms: () => ({
-    planLabel: 'Study Plan',
-    plansLabel: 'Study Plans',
-    newPlanLabel: 'New Study Plan',
+    planLabel: profileState.learnerType === 'STUDENT' ? 'Subject' : 'Study Plan',
+    plansLabel: profileState.learnerType === 'STUDENT' ? 'Subjects' : 'Study Plans',
+    newPlanLabel: profileState.learnerType === 'STUDENT' ? 'Add Subject' : 'New Study Plan',
     goalLabel: 'Goal',
     goalsLabel: 'Goals',
-    pageSubtitle: 'AI-generated learning paths, syllabus imports, and exam prep plans',
+    pageSubtitle: profileState.learnerType === 'STUDENT'
+      ? 'Organize captures by the subjects and interests you study.'
+      : 'AI-generated learning paths, syllabus imports, and exam prep plans',
+    phaseLabel: 'Phase',
+    phasesLabel: 'Phases',
+    isStudent: profileState.learnerType === 'STUDENT',
   }),
 }))
 
@@ -75,6 +110,18 @@ describe('RoadmapsPageClient', () => {
   beforeEach(() => {
     pushMock.mockReset()
     createRoadmapMock.mockReset()
+    updateSubjectsMock.mockReset()
+    createCustomSubjectMock.mockReset()
+    updateSubjectsMock.mockResolvedValue({ subjectIds: [], count: 0 })
+    createCustomSubjectMock.mockResolvedValue({
+      id: 'custom-robotics',
+      name: 'Robotics',
+      slug: 'robotics',
+      icon: 'book-open',
+      sortOrder: 1000,
+    })
+    profileState.learnerType = 'PROFESSIONAL'
+    profileState.subjects = []
     unifiedData.roadmaps = []
     unifiedData.goalsWithoutRoadmap = []
     unifiedData.studyPlans = [
@@ -170,5 +217,49 @@ describe('RoadmapsPageClient', () => {
       goalId: 'goal-1',
     })
     expect(pushMock).toHaveBeenCalledWith('/roadmaps/roadmap-new')
+  })
+
+  it('uses subjects as the student entry point instead of generating study plans', async () => {
+    profileState.learnerType = 'STUDENT'
+    profileState.subjects = [
+      { id: 'subject-science', name: 'Science', slug: 'science', icon: 'flask', sortOrder: 2 },
+    ]
+    unifiedData.studyPlans = []
+    unifiedData.goalsWithoutRoadmap = []
+    unifiedData.roadmaps = []
+
+    renderPage()
+
+    expect(screen.getByText('My Subjects')).toBeInTheDocument()
+    expect(screen.getByText('All Captures')).toBeInTheDocument()
+    expect(screen.getByText('Science')).toBeInTheDocument()
+    expect(screen.queryByText(/no study plans/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Study Plan$/i })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /capture/i }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: /practice/i }).length).toBeGreaterThan(0)
+
+    await userEvent.click(screen.getByRole('button', { name: /add subject/i }))
+
+    expect(screen.getByRole('dialog', { name: /add subjects/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /mathematics/i })).toBeInTheDocument()
+    expect(screen.queryByText(/generate study plan/i)).not.toBeInTheDocument()
+  })
+
+  it('lets students create a custom subject', async () => {
+    profileState.learnerType = 'STUDENT'
+    profileState.subjects = [
+      { id: 'subject-science', name: 'Science', slug: 'science', icon: 'flask', sortOrder: 2 },
+    ]
+    unifiedData.studyPlans = []
+    unifiedData.goalsWithoutRoadmap = []
+    unifiedData.roadmaps = []
+
+    renderPage()
+    await userEvent.click(screen.getByRole('button', { name: /add subject/i }))
+    await userEvent.type(screen.getByLabelText(/add your own subject/i), 'Robotics')
+    await userEvent.click(screen.getByRole('button', { name: /save subjects/i }))
+
+    expect(createCustomSubjectMock).toHaveBeenCalledWith({ name: 'Robotics' })
+    expect(updateSubjectsMock).toHaveBeenCalledWith(['subject-science', 'custom-robotics'])
   })
 })

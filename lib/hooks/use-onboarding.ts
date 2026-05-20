@@ -8,6 +8,9 @@ import {
   completeOnboarding,
   updateProfile,
   getTopics,
+  getSubjects,
+  updateOnboardingSubjects,
+  createCustomSubject,
   uploadAvatar,
 } from '@/lib/api/user'
 import { queryKeys } from '@/lib/api/query-keys'
@@ -25,6 +28,52 @@ export function useTopics() {
     },
     enabled: !!session?.accessToken,
     staleTime: 1000 * 60 * 10, // 10 minutes
+  })
+}
+
+export function useSubjects() {
+  const { data: session } = useSession()
+
+  return useQuery({
+    queryKey: queryKeys.onboarding.subjects(),
+    queryFn: () => {
+      if (!session?.accessToken) throw new Error('Not authenticated')
+      return getSubjects(session.accessToken)
+    },
+    enabled: !!session?.accessToken,
+    staleTime: 1000 * 60 * 10,
+  })
+}
+
+export function useUpdateOnboardingSubjects() {
+  const { data: session } = useSession()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (subjectIds: string[]) => {
+      if (!session?.accessToken) throw new Error('Not authenticated')
+      return updateOnboardingSubjects(session.accessToken, { subjectIds })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.user.profile() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.subjects() })
+    },
+  })
+}
+
+export function useCreateCustomSubject() {
+  const { data: session } = useSession()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (data: { name: string }) => {
+      if (!session?.accessToken) throw new Error('Not authenticated')
+      return createCustomSubject(session.accessToken, data)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.user.profile() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.onboarding.subjects() })
+    },
   })
 }
 

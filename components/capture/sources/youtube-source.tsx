@@ -27,6 +27,7 @@ export function YouTubeSource() {
   const localError = useCaptureStore((s) => s.localError)
   const setLocalError = useCaptureStore((s) => s.setLocalError)
   const selectedRoadmapId = useCaptureStore((s) => s.selectedRoadmapId)
+  const selectedSubjectId = useCaptureStore((s) => s.selectedSubjectId)
 
   async function handleCloudSubmit() {
     if (!session?.accessToken) return
@@ -40,6 +41,7 @@ export function YouTubeSource() {
       },
       undefined,
       selectedRoadmapId || undefined,
+      selectedSubjectId || undefined,
     )
     if (deduped) {
       toast.info('You already have an active capture for this source — opening the existing one.')
@@ -111,6 +113,7 @@ export function YouTubeSource() {
     await saveLocalResults(headers, {
       videoUrl: url.trim(),
       title: url.trim(),
+      subjectId: selectedSubjectId || undefined,
       concepts,
       questions,
     })

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { io, type Socket } from 'socket.io-client'
 import { queryKeys } from '@/lib/api/query-keys'
 
 /**
@@ -10,7 +11,7 @@ import { queryKeys } from '@/lib/api/query-keys'
  * and invalidates React Query caches on incoming events.
  */
 export function usePodWebSocket(podId: string, token: string | undefined) {
-  const ws = useRef<WebSocket | null>(null)
+  const socketRef = useRef<Socket | null>(null)
   const queryClient = useQueryClient()
 
   useEffect(() => {
@@ -19,36 +20,49 @@ export function usePodWebSocket(podId: string, token: string | undefined) {
     const WS_URL = process.env.NEXT_PUBLIC_WS_URL
     if (!WS_URL) return
 
-    ws.current = new WebSocket(
-      `${WS_URL}/pods?pod=${podId}&token=${token}`
-    )
+    const socket = io(`${WS_URL}/pods`, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+    })
+    socketRef.current = socket
 
-    ws.current.onopen = () => {
-      ws.current?.send(JSON.stringify({ type: 'pod:join', podId }))
+    socket.on('connect', () => {
+      socket.emit('pod:join', { podId })
+    })
+
+    const refreshCaptures = () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.pods.captures(podId) })
+    }
+    const refreshMessages = () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.pods.messages(podId) })
+    }
+    const refreshMembers = () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.pods.detail(podId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.pods.leaderboard(podId) })
     }
 
-    ws.current.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-
-      switch (data.type) {
-        case 'pod:capture:shared':
-          queryClient.invalidateQueries({ queryKey: queryKeys.pods.captures(podId) })
-          break
-        case 'pod:member:joined':
-        case 'pod:member:left':
-          queryClient.invalidateQueries({ queryKey: queryKeys.pods.detail(podId) })
-          queryClient.invalidateQueries({ queryKey: queryKeys.pods.leaderboard(podId) })
-          break
-        case 'pod:leaderboard:update':
-          queryClient.invalidateQueries({ queryKey: queryKeys.pods.leaderboard(podId) })
-          break
+    socket.on('pod:capture:shared', refreshCaptures)
+    socket.on('pod:capture:saved', refreshCaptures)
+    socket.on('pod:capture:unsaved', refreshCaptures)
+    socket.on('pod:capture:comment:created', (data: { captureId?: string }) => {
+      refreshCaptures()
+      if (data.captureId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.pods.comments(podId, data.captureId),
+        })
       }
-    }
+    })
+    socket.on('pod:message:created', refreshMessages)
+    socket.on('pod:member:joined', refreshMembers)
+    socket.on('pod:member:left', refreshMembers)
+    socket.on('pod:leaderboard:update', () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.pods.leaderboard(podId) })
+    })
 
     return () => {
-      ws.current?.send(JSON.stringify({ type: 'pod:leave', podId }))
-      ws.current?.close()
-      ws.current = null
+      socket.emit('pod:leave', { podId })
+      socket.disconnect()
+      socketRef.current = null
     }
   }, [podId, token, queryClient])
 }

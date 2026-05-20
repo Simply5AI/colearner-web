@@ -17,6 +17,7 @@ import {
   Dialog,
   DialogContent,
 } from '@/components/ui/dialog'
+import { useLearnerTerms } from '@/lib/hooks/use-learner-terms'
 
 interface NavItem {
   href: string
@@ -24,10 +25,9 @@ interface NavItem {
   icon: React.ElementType
 }
 
-const navItems: NavItem[] = [
+const baseNavItems: NavItem[] = [
   { href: '/dashboard', label: 'Home', icon: Home },
   { href: '/capture', label: 'Library', icon: Download },
-  { href: '/roadmaps', label: 'Study Plans', icon: BookOpen },
   { href: '/practice', label: 'Practice', icon: Clock },
   { href: '/progress', label: 'Progress', icon: BarChart3 },
   { href: '/pods', label: 'Study Groups', icon: Users },
@@ -39,6 +39,16 @@ export function CommandSearch() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const router = useRouter()
+  const terms = useLearnerTerms()
+  const navItems = useMemo(
+    () => [
+      baseNavItems[0],
+      baseNavItems[1],
+      { href: '/roadmaps', label: terms.plansLabel, icon: BookOpen },
+      ...baseNavItems.slice(2),
+    ].filter(Boolean) as NavItem[],
+    [terms.plansLabel],
+  )
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -56,7 +66,7 @@ export function CommandSearch() {
       navItems.filter((item) =>
         item.label.toLowerCase().includes(query.toLowerCase())
       ),
-    [query]
+    [navItems, query]
   )
 
   const navigate = useCallback(

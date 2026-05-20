@@ -3,7 +3,7 @@ import type { Extraction, ExtractionListResponse, TopicItem } from '@/lib/types'
 
 export async function listExtractions(
   headers: Record<string, string>,
-  params?: { status?: string; page?: number; limit?: number; topicSlug?: string; sourceType?: string; roadmapId?: string }
+  params?: { status?: string; page?: number; limit?: number; topicSlug?: string; sourceType?: string; roadmapId?: string; subjectId?: string }
 ): Promise<ExtractionListResponse> {
   const searchParams = new URLSearchParams()
   if (params?.status) searchParams.set('status', params.status)
@@ -12,6 +12,7 @@ export async function listExtractions(
   if (params?.topicSlug) searchParams.set('topicSlug', params.topicSlug)
   if (params?.sourceType) searchParams.set('sourceType', params.sourceType)
   if (params?.roadmapId) searchParams.set('roadmapId', params.roadmapId)
+  if (params?.subjectId) searchParams.set('subjectId', params.subjectId)
 
   const query = searchParams.toString() ? `?${searchParams.toString()}` : ''
   return apiClient<ExtractionListResponse>(`/api/extractions${query}`, {

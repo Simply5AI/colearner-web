@@ -11,6 +11,8 @@ interface PodCardProps {
 }
 
 export function PodCard({ pod }: PodCardProps) {
+  const memberCount = pod._count?.members ?? pod.members.length
+
   return (
     <Link href={`/pods/${pod.id}`}>
       <Card className="hover:shadow-md transition-shadow cursor-pointer">
@@ -37,7 +39,7 @@ export function PodCard({ pod }: PodCardProps) {
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Users className="h-3 w-3" />
-              {pod.members.length} / {pod.maxMembers} members
+              {memberCount} / {pod.maxMembers} members
             </span>
             <span>Code: {pod.code}</span>
           </div>

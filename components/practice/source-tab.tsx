@@ -51,6 +51,7 @@ export function SourceTab() {
 
   const sourceType = searchParams.get('source') || undefined
   const roadmapId = searchParams.get('roadmap') || undefined
+  const subjectId = searchParams.get('subject') || undefined
 
   // Fetch in-progress extractions (poll every 5s while any exist)
   const { data: processingData } = useQuery({
@@ -94,7 +95,7 @@ export function SourceTab() {
   }, [processingData?.length, queryClient])
 
   const { data, isLoading } = useQuery({
-    queryKey: ['extractions', 'completed', { sourceType, roadmapId }],
+    queryKey: ['extractions', 'completed', { sourceType, roadmapId, subjectId }],
     queryFn: async () => {
       if (!session?.accessToken) throw new Error('Not authenticated')
       const headers = { Authorization: `Bearer ${session.accessToken}` }
@@ -103,6 +104,7 @@ export function SourceTab() {
         limit: 50,
         sourceType,
         roadmapId,
+        subjectId,
       })
 
       // Auto-refresh metadata for extractions missing titles
@@ -129,14 +131,14 @@ export function SourceTab() {
 
   function handleDeleted(id: string) {
     queryClient.setQueryData(
-      ['extractions', 'completed', { sourceType, roadmapId }],
+      ['extractions', 'completed', { sourceType, roadmapId, subjectId }],
       (old: typeof data) => old?.filter((e) => e.id !== id)
     )
   }
 
   const extractions = data || []
   const processingExtractions = processingData || []
-  const hasFilters = !!sourceType || !!roadmapId
+  const hasFilters = !!sourceType || !!roadmapId || !!subjectId
   const totalRecallTime = extractions.reduce(
     (sum, e) => sum + (e.totalRecallSeconds ?? 0),
     0,

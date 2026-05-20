@@ -282,16 +282,13 @@ export function RoadmapDetailClient({ roadmapId }: { roadmapId: string }) {
   const { data: roadmap, isLoading, refetch } = useRoadmap(roadmapId)
   const deleteRoadmap = useDeleteRoadmap()
   const terms = useLearnerTerms()
-  const [isPolling, setIsPolling] = useState(false)
 
   // Poll while GENERATING
   useEffect(() => {
     if (roadmap?.status !== 'GENERATING') {
-      setIsPolling(false)
       return
     }
 
-    setIsPolling(true)
     const interval = setInterval(() => refetch(), 3000)
     return () => clearInterval(interval)
   }, [roadmap?.status, refetch])
@@ -327,7 +324,7 @@ export function RoadmapDetailClient({ roadmapId }: { roadmapId: string }) {
           )}
           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
             <span>{roadmap.totalPhases} {terms.phasesLabel.toLowerCase()}</span>
-            <span>{totalItems} topics</span>
+            <span>{totalItems} {terms.isStudent ? 'study resources' : 'topics'}</span>
             <span>{capturedItems} captured</span>
             {roadmap.goal && <span>Goal: {roadmap.goal.title}</span>}
           </div>

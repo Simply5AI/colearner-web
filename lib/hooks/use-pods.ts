@@ -14,10 +14,18 @@ import {
   removeMember,
   updatePrivacy,
   shareCapture,
+  savePodCapture,
+  unsavePodCapture,
+  getPodCaptureComments,
+  getPodCapturePreview,
+  createPodCaptureComment,
   getPodCaptures,
   addCaptureToQueue,
   getPodLeaderboard,
   getPodActivity,
+  getPodMessages,
+  createPodMessage,
+  uploadPodAttachment,
 } from '@/lib/api/pods'
 import { queryKeys } from '@/lib/api/query-keys'
 import type {
@@ -26,6 +34,8 @@ import type {
   UpdatePodInput,
   UpdatePrivacyInput,
   ShareCaptureInput,
+  CreateMessageInput,
+  CreateCommentInput,
 } from '@/lib/types/pods'
 
 function useAuthHeaders() {
@@ -99,6 +109,54 @@ export function usePodCaptures(podId: string, page = 1) {
       )
     },
     enabled: !!session?.accessToken,
+  })
+}
+
+export function usePodMessages(podId: string) {
+  const { data: session } = useSession()
+  return useQuery({
+    queryKey: queryKeys.pods.messages(podId),
+    queryFn: () => {
+      if (!session?.accessToken) throw new Error('Not authenticated')
+      return getPodMessages({ Authorization: `Bearer ${session.accessToken}` }, podId)
+    },
+    enabled: !!session?.accessToken,
+  })
+}
+
+export function usePodCaptureComments(podId: string, captureId: string | null) {
+  const { data: session } = useSession()
+  return useQuery({
+    queryKey: captureId
+      ? queryKeys.pods.comments(podId, captureId)
+      : [...queryKeys.pods.all, 'comments', podId, '__none__'],
+    queryFn: () => {
+      if (!session?.accessToken || !captureId) throw new Error('Not authenticated')
+      return getPodCaptureComments(
+        { Authorization: `Bearer ${session.accessToken}` },
+        podId,
+        captureId
+      )
+    },
+    enabled: !!session?.accessToken && !!captureId,
+  })
+}
+
+export function usePodCapturePreview(podId: string, captureId: string | null) {
+  const { data: session } = useSession()
+  return useQuery({
+    queryKey: captureId
+      ? [...queryKeys.pods.captures(podId), 'preview', captureId]
+      : [...queryKeys.pods.all, 'captures', podId, 'preview', '__none__'],
+    queryFn: () => {
+      if (!session?.accessToken || !captureId) throw new Error('Not authenticated')
+      return getPodCapturePreview(
+        { Authorization: `Bearer ${session.accessToken}` },
+        podId,
+        captureId
+      )
+    },
+    enabled: !!session?.accessToken && !!captureId,
   })
 }
 
@@ -223,6 +281,87 @@ export function useShareCapture() {
       return shareCapture({ Authorization: `Bearer ${session.accessToken}` }, podId, data)
     },
     onSuccess: (_result, { podId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.pods.captures(podId) })
+    },
+  })
+}
+
+export function useSavePodCapture() {
+  const { data: session } = useSession()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ podId, captureId }: { podId: string; captureId: string }) => {
+      if (!session?.accessToken) throw new Error('Not authenticated')
+      return savePodCapture({ Authorization: `Bearer ${session.accessToken}` }, podId, captureId)
+    },
+    onSuccess: (_result, { podId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.pods.captures(podId) })
+    },
+  })
+}
+
+export function useUnsavePodCapture() {
+  const { data: session } = useSession()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ podId, captureId }: { podId: string; captureId: string }) => {
+      if (!session?.accessToken) throw new Error('Not authenticated')
+      return unsavePodCapture({ Authorization: `Bearer ${session.accessToken}` }, podId, captureId)
+    },
+    onSuccess: (_result, { podId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.pods.captures(podId) })
+    },
+  })
+}
+
+export function useCreatePodMessage() {
+  const { data: session } = useSession()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ podId, data }: { podId: string; data: CreateMessageInput }) => {
+      if (!session?.accessToken) throw new Error('Not authenticated')
+      return createPodMessage({ Authorization: `Bearer ${session.accessToken}` }, podId, data)
+    },
+    onSuccess: (_result, { podId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.pods.messages(podId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.pods.activity(podId) })
+    },
+  })
+}
+
+export function useUploadPodAttachment() {
+  const { data: session } = useSession()
+  return useMutation({
+    mutationFn: ({ podId, file }: { podId: string; file: File }) => {
+      if (!session?.accessToken) throw new Error('Not authenticated')
+      return uploadPodAttachment({ Authorization: `Bearer ${session.accessToken}` }, podId, file)
+    },
+  })
+}
+
+export function useCreatePodCaptureComment() {
+  const { data: session } = useSession()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      podId,
+      captureId,
+      data,
+    }: {
+      podId: string
+      captureId: string
+      data: CreateCommentInput
+    }) => {
+      if (!session?.accessToken) throw new Error('Not authenticated')
+      return createPodCaptureComment(
+        { Authorization: `Bearer ${session.accessToken}` },
+        podId,
+        captureId,
+        data
+      )
+    },
+    onSuccess: (_result, { podId, captureId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.pods.comments(podId, captureId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.pods.captures(podId) })
     },
   })

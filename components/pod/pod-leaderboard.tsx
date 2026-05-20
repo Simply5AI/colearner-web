@@ -69,8 +69,10 @@ export function PodLeaderboard({ podId }: PodLeaderboardProps) {
                 <span className="ml-1 text-xs text-muted-foreground">(you)</span>
               )}
             </span>
-            <span className="text-sm font-semibold text-primary">{entry.weeklyCorrect}</span>
-            {entry.currentStreak > 0 && (
+            <span className="text-sm font-semibold text-primary">
+              {entry.weeklyCorrect ?? 'Private'}
+            </span>
+            {(entry.currentStreak ?? 0) > 0 && (
               <span className="text-xs text-muted-foreground">
                 🔥 {entry.currentStreak}d
               </span>

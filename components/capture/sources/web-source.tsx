@@ -24,6 +24,7 @@ export function WebSource() {
   const localError = useCaptureStore((s) => s.localError)
   const setLocalError = useCaptureStore((s) => s.setLocalError)
   const selectedRoadmapId = useCaptureStore((s) => s.selectedRoadmapId)
+  const selectedSubjectId = useCaptureStore((s) => s.selectedSubjectId)
 
   async function handleCloudSubmit() {
     if (!session?.accessToken) return
@@ -33,6 +34,7 @@ export function WebSource() {
       url.trim(),
       undefined,
       selectedRoadmapId || undefined,
+      selectedSubjectId || undefined,
     )
     if (deduped) {
       toast.info('You already have an active capture for this source — opening the existing one.')
@@ -104,6 +106,7 @@ export function WebSource() {
     await saveLocalResults(headers, {
       videoUrl: url.trim(),
       title: title || url.trim(),
+      subjectId: selectedSubjectId || undefined,
       concepts,
       questions,
       sourceType: 'WEB',

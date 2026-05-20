@@ -31,12 +31,13 @@ export async function captureYouTube(
   url: string,
   options?: { autoTranscript?: boolean; questionTypes?: string[] },
   topicIds?: string[],
-  roadmapId?: string
+  roadmapId?: string,
+  subjectId?: string
 ): Promise<CaptureResult> {
   const response = await apiClient<CaptureResponse>('/api/capture/youtube', {
     method: 'POST',
     headers,
-    body: { url, options, topicIds, roadmapId },
+    body: { url, options, topicIds, roadmapId, subjectId },
   })
   return normalizeExtractionId(response)
 }
@@ -45,12 +46,13 @@ export async function captureWeb(
   headers: Record<string, string>,
   url: string,
   topicIds?: string[],
-  roadmapId?: string
+  roadmapId?: string,
+  subjectId?: string
 ): Promise<CaptureResult> {
   const response = await apiClient<CaptureResponse>('/api/capture/web', {
     method: 'POST',
     headers,
-    body: { url, topicIds, roadmapId },
+    body: { url, topicIds, roadmapId, subjectId },
   })
   return normalizeExtractionId(response)
 }
@@ -84,33 +86,39 @@ async function uploadFile(
 export async function captureDocument(
   headers: Record<string, string>,
   file: File,
-  roadmapId?: string
+  roadmapId?: string,
+  subjectId?: string
 ): Promise<CaptureResult> {
   const formData = new FormData()
   formData.append('file', file)
   if (roadmapId) formData.append('roadmapId', roadmapId)
+  if (subjectId) formData.append('subjectId', subjectId)
   return uploadFile('/api/capture/document', headers, formData)
 }
 
 export async function captureAudio(
   headers: Record<string, string>,
   file: File | Blob,
-  roadmapId?: string
+  roadmapId?: string,
+  subjectId?: string
 ): Promise<CaptureResult> {
   const formData = new FormData()
   formData.append('file', file)
   if (roadmapId) formData.append('roadmapId', roadmapId)
+  if (subjectId) formData.append('subjectId', subjectId)
   return uploadFile('/api/capture/audio', headers, formData)
 }
 
 export async function captureVideo(
   headers: Record<string, string>,
   file: File,
-  roadmapId?: string
+  roadmapId?: string,
+  subjectId?: string
 ): Promise<CaptureResult> {
   const formData = new FormData()
   formData.append('file', file)
   if (roadmapId) formData.append('roadmapId', roadmapId)
+  if (subjectId) formData.append('subjectId', subjectId)
   return uploadFile('/api/capture/video', headers, formData)
 }
 
@@ -119,6 +127,7 @@ export interface SaveLocalResultsPayload {
   title: string
   sourceType?: string
   topicIds?: string[]
+  subjectId?: string
   concepts: { title: string; description: string; order: number }[]
   questions: {
     conceptIndex: number

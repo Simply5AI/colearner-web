@@ -3,9 +3,10 @@
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useQuery } from '@tanstack/react-query'
-import { Youtube, Globe, FileText, Headphones, Video, Map } from 'lucide-react'
+import { Youtube, Globe, FileText, Headphones, Video, Map, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getExtractionRoadmaps } from '@/lib/api/extraction'
+import { useProfile } from '@/lib/hooks/use-profile'
 
 const SOURCE_TYPES = [
   { value: 'YOUTUBE', label: 'YouTube', icon: <Youtube className="h-3 w-3" /> },
@@ -22,6 +23,10 @@ export function RecallFilters() {
 
   const activeSource = searchParams.get('source') || ''
   const activeRoadmap = searchParams.get('roadmap') || ''
+  const activeSubject = searchParams.get('subject') || ''
+  const { data: profile } = useProfile()
+  const isStudent = profile?.learnerType === 'STUDENT'
+  const subjects = profile?.subjects ?? []
 
   const { data: roadmaps = [] } = useQuery<{ id: string; title: string; status: string }[]>({
     queryKey: ['extractions', 'roadmaps'],
@@ -75,7 +80,7 @@ export function RecallFilters() {
       </div>
 
       {/* Study plan filters */}
-      {roadmaps.length > 0 && (
+      {!isStudent && roadmaps.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setFilter('roadmap', '')}
@@ -101,6 +106,37 @@ export function RecallFilters() {
             >
               <Map className="h-3 w-3" />
               {rm.title}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {isStudent && (
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            onClick={() => setFilter('subject', '')}
+            className={cn(
+              'rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors',
+              !activeSubject
+                ? 'bg-brand-orange/15 text-brand-orange'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            )}
+          >
+            All Captures
+          </button>
+          {subjects.map((subject) => (
+            <button
+              key={subject.id}
+              onClick={() => setFilter('subject', activeSubject === subject.id ? '' : subject.id)}
+              className={cn(
+                'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors',
+                activeSubject === subject.id
+                  ? 'bg-brand-orange/15 text-brand-orange'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              )}
+            >
+              <BookOpen className="h-3 w-3" />
+              {subject.name}
             </button>
           ))}
         </div>

@@ -55,6 +55,7 @@ interface CaptureState {
   extractionId: string | null
 
   selectedRoadmapId: string | null
+  selectedSubjectId: string | null
 
   processingMode: ProcessingMode
   ollamaStatus: 'unchecked' | 'checking' | 'available' | 'unavailable'
@@ -72,6 +73,7 @@ interface CaptureState {
   setSourceFile: (source: keyof CaptureState['selectedFiles'], file: File | null) => void
   setExtractionId: (id: string | null) => void
   setSelectedRoadmapId: (id: string | null) => void
+  setSelectedSubjectId: (id: string | null) => void
   setProcessingMode: (mode: ProcessingMode) => void
   setOllamaStatus: (status: CaptureState['ollamaStatus']) => void
   setOllamaModels: (models: string[]) => void
@@ -100,6 +102,7 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
   },
   extractionId: null,
   selectedRoadmapId: null,
+  selectedSubjectId: null,
   processingMode: loadProcessingMode(),
   ollamaStatus: 'unchecked',
   ollamaModels: [],
@@ -121,6 +124,7 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
     })),
   setExtractionId: (id) => set({ extractionId: id }),
   setSelectedRoadmapId: (id) => set({ selectedRoadmapId: id }),
+  setSelectedSubjectId: (id) => set({ selectedSubjectId: id }),
   setProcessingMode: (mode) => {
     try { localStorage.setItem(PROCESSING_MODE_KEY, mode) } catch {}
     set({ processingMode: mode })
@@ -161,6 +165,7 @@ export const useCaptureStore = create<CaptureState>((set, get) => ({
       },
       extractionId: null,
       selectedRoadmapId: null,
+      selectedSubjectId: null,
       localProgress: null,
       localError: null,
     }),

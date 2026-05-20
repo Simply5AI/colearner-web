@@ -31,6 +31,7 @@ export function DocumentSource() {
   const localError = useCaptureStore((s) => s.localError)
   const setLocalError = useCaptureStore((s) => s.setLocalError)
   const selectedRoadmapId = useCaptureStore((s) => s.selectedRoadmapId)
+  const selectedSubjectId = useCaptureStore((s) => s.selectedSubjectId)
 
   const handleFile = useCallback(
     (file: File) => {
@@ -59,6 +60,7 @@ export function DocumentSource() {
       headers,
       selectedFile,
       selectedRoadmapId || undefined,
+      selectedSubjectId || undefined,
     )
     if (deduped) {
       toast.info('You already have an active capture for this file — opening the existing one.')
@@ -122,6 +124,7 @@ export function DocumentSource() {
     await saveLocalResults(headers, {
       videoUrl: `file://${selectedFile.name}`,
       title,
+      subjectId: selectedSubjectId || undefined,
       concepts,
       questions,
       sourceType: 'DOCUMENT',
