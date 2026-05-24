@@ -12,6 +12,7 @@ import {
   Library,
   Search,
   Shield,
+  Sparkles,
   Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -43,6 +44,12 @@ const navGroups = [
   {
     title: 'Billing',
     items: [{ href: '/admin/billing', label: 'Billing', icon: CreditCard }],
+  },
+  {
+    title: 'AI & Costs',
+    items: [
+      { href: '/admin/ai-consumption', label: 'Consumption', icon: Sparkles },
+    ],
   },
 ]
 
