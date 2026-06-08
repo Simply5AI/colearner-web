@@ -11,8 +11,12 @@ import {
 } from '@/lib/api/admin'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { AdminLearningLayout, CursorPager, EmptyState, formatDate, formatDuration, recordBadge, useLearningFilters } from './shared'
+
+const ALL = 'all'
 
 export function AdminLearningSessions({
   data,
@@ -23,7 +27,7 @@ export function AdminLearningSessions({
   user: AdminLearningUser
   authHeaders: Record<string, string>
 }) {
-  const { params, setParam } = useLearningFilters()
+  const { params, setParam, clearParams } = useLearningFilters()
   const [detail, setDetail] = useState<AdminLearningSessionDetailResponse | null>(null)
   const [open, setOpen] = useState(false)
 
@@ -36,42 +40,71 @@ export function AdminLearningSessions({
   return (
     <AdminLearningLayout user={user} active="sessions">
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <select
-          aria-label="Session status"
-          value={params.get('status') ?? ''}
-          onChange={(event) => setParam('status', event.target.value)}
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+        <Select
+          value={params.get('status') ?? ALL}
+          onValueChange={(value) => setParam('status', value && value !== ALL ? value : '')}
         >
-          <option value="">All statuses</option>
-          <option value="IN_PROGRESS">In progress</option>
-          <option value="COMPLETED">Completed</option>
-          <option value="ABANDONED">Abandoned</option>
-        </select>
-        <input
+          <SelectTrigger className="h-9 w-44" aria-label="Session status">
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>All statuses</SelectItem>
+            <SelectItem value="IN_PROGRESS">In progress</SelectItem>
+            <SelectItem value="COMPLETED">Completed</SelectItem>
+            <SelectItem value="ABANDONED">Abandoned</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={params.get('sourceId') ?? ALL}
+          onValueChange={(value) => setParam('sourceId', value && value !== ALL ? value : '')}
+        >
+          <SelectTrigger className="h-9 w-48" aria-label="Session source">
+            <SelectValue placeholder="All sources" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>All sources</SelectItem>
+            {data.sources.map((source) => (
+              <SelectItem key={source.id} value={source.id}>
+                {source.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Input
           aria-label="From date"
           type="date"
           value={params.get('from') ?? ''}
           onChange={(event) => setParam('from', event.target.value)}
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+          className="h-9 w-40"
         />
-        <input
+        <Input
           aria-label="To date"
           type="date"
           value={params.get('to') ?? ''}
           onChange={(event) => setParam('to', event.target.value)}
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+          className="h-9 w-40"
         />
-        <select
-          aria-label="Sort"
+
+        <Select
           value={params.get('sort') ?? 'started_desc'}
-          onChange={(event) => setParam('sort', event.target.value)}
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+          onValueChange={(value) => value && setParam('sort', value)}
         >
-          <option value="started_desc">Newest</option>
-          <option value="started_asc">Oldest</option>
-          <option value="score_desc">Score</option>
-          <option value="attempts_desc">Attempts</option>
-        </select>
+          <SelectTrigger className="h-9 w-40" aria-label="Session sort">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="started_desc">Newest</SelectItem>
+            <SelectItem value="started_asc">Oldest</SelectItem>
+            <SelectItem value="score_desc">Score</SelectItem>
+            <SelectItem value="attempts_desc">Attempts</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button variant="outline" size="sm" className="h-9" onClick={clearParams}>
+          Clear
+        </Button>
       </div>
 
       <section className="overflow-hidden rounded-xl border bg-card">
@@ -79,7 +112,7 @@ export function AdminLearningSessions({
           <EmptyState />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[1040px] text-sm">
               <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3">Started</th>
@@ -97,10 +130,14 @@ export function AdminLearningSessions({
                   <tr key={session.id} className="border-b last:border-0">
                     <td className="px-4 py-3 text-muted-foreground">{formatDate(session.startedAt)}</td>
                     <td className="px-4 py-3">{recordBadge(session.status)}</td>
-                    <td className="px-4 py-3">{session.score === null ? '—' : `${Math.round(session.score)}%`}</td>
-                    <td className="px-4 py-3">{session.attempts}</td>
+                    <td className="px-4 py-3">{formatScore(session.score)}</td>
+                    <td className="px-4 py-3">
+                      {session.correctCount}/{session.attempts || session.totalQuestions}
+                    </td>
                     <td className="px-4 py-3">{formatDuration(session.durationSeconds)}</td>
-                    <td className="px-4 py-3">{session.conceptCount}</td>
+                    <td className="px-4 py-3">
+                      <span title={session.concepts.join(', ') || undefined}>{session.conceptCount}</span>
+                    </td>
                     <td className="px-4 py-3">{session.source?.title ?? 'Source unavailable'}</td>
                     <td className="px-4 py-3 text-right">
                       <Button variant="ghost" size="sm" onClick={() => loadDetail(session.id)}>
@@ -118,7 +155,7 @@ export function AdminLearningSessions({
       </section>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent className="overflow-y-auto sm:max-w-2xl">
+        <SheetContent className="overflow-y-auto sm:max-w-3xl">
           <SheetHeader>
             <SheetTitle>Session detail</SheetTitle>
           </SheetHeader>
@@ -129,11 +166,16 @@ export function AdminLearningSessions({
               <div className="rounded-lg border p-3">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   {recordBadge(detail.session.status)}
-                  <span className="text-sm font-semibold">{detail.session.score ?? 0}% score</span>
+                  <span className="text-sm font-semibold">{formatScore(detail.session.score)} score</span>
                   <span className="text-sm text-muted-foreground">{formatDuration(detail.session.durationSeconds)}</span>
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {formatDate(detail.session.startedAt)} - {formatDate(detail.session.completedAt)}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  <span>{detail.session.attempts} attempts</span>
+                  <span>{detail.session.conceptCount} concepts</span>
+                  <span>{detail.session.source?.title ?? 'Source unavailable'}</span>
                 </div>
               </div>
               {detail.attempts.length === 0 ? (
@@ -147,8 +189,32 @@ export function AdminLearningSessions({
                     </div>
                     {attempt.isCorrect ? <Badge variant="secondary">correct</Badge> : <Badge variant="destructive">incorrect</Badge>}
                   </div>
-                  <div className="whitespace-pre-wrap break-words rounded-lg bg-muted/40 p-2 text-sm">{attempt.userAnswer}</div>
-                  {attempt.feedback && <div className="mt-2 text-xs text-muted-foreground">{attempt.feedback}</div>}
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                      <div className="mb-1 text-xs font-semibold text-muted-foreground">Learner answer</div>
+                      <ExpandableText value={attempt.userAnswer} />
+                    </div>
+                    <div>
+                      <div className="mb-1 text-xs font-semibold text-muted-foreground">Correct answer</div>
+                      {attempt.correctAnswer ? (
+                        <div className="whitespace-pre-wrap break-words rounded-lg bg-muted/40 p-2 text-sm">
+                          {attempt.correctAnswer}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground">No answer key stored</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    <span>Attempt score: {attempt.score ?? 'No data yet'}</span>
+                    <span>Time spent: {formatDuration(attempt.timeSpentSeconds)}</span>
+                    <span>Answered: {formatDate(attempt.createdAt)}</span>
+                  </div>
+                  {attempt.feedback && (
+                    <div className="mt-2 rounded-lg border bg-background p-2 text-xs text-muted-foreground">
+                      {attempt.feedback}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -156,5 +222,28 @@ export function AdminLearningSessions({
         </SheetContent>
       </Sheet>
     </AdminLearningLayout>
+  )
+}
+
+function formatScore(score: number | null) {
+  if (score === null) return '-'
+  const normalized = score <= 1 ? score * 100 : score
+  return `${Math.round(normalized)}%`
+}
+
+function ExpandableText({ value }: { value: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const isLong = value.length > 180
+  const visible = !isLong || expanded ? value : `${value.slice(0, 180)}...`
+
+  return (
+    <div>
+      <div className="whitespace-pre-wrap break-words rounded-lg bg-muted/40 p-2 text-sm">{visible}</div>
+      {isLong && (
+        <Button variant="ghost" size="sm" className="mt-1 h-7 px-2" onClick={() => setExpanded((current) => !current)}>
+          {expanded ? 'Show less' : 'Show full answer'}
+        </Button>
+      )}
+    </div>
   )
 }

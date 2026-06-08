@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Activity,
-  BarChart3,
   BookOpen,
   Building2,
   CreditCard,
@@ -17,7 +16,25 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const navGroups = [
+type AdminNavItem = {
+  href: string
+  label: string
+  icon: typeof Gauge
+  match?: (pathname: string) => boolean
+}
+
+const learningUserPathPattern = /^\/admin\/users\/[^/]+\/learning(?:\/.*)?$/
+
+function isLearningPath(pathname: string) {
+  return pathname === '/admin/learning' || learningUserPathPattern.test(pathname)
+}
+
+function defaultMatchesPath(pathname: string, href: string) {
+  if (href === '/admin') return pathname === '/admin'
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
+
+const navGroups: Array<{ title: string; items: AdminNavItem[] }> = [
   {
     title: 'Overview',
     items: [{ href: '/admin', label: 'Dashboard', icon: Gauge }],
@@ -25,14 +42,19 @@ const navGroups = [
   {
     title: 'Users & Orgs',
     items: [
-      { href: '/admin/users', label: 'Users', icon: Users },
+      {
+        href: '/admin/users',
+        label: 'Users',
+        icon: Users,
+        match: (pathname) => defaultMatchesPath(pathname, '/admin/users') && !isLearningPath(pathname),
+      },
       { href: '/admin/orgs', label: 'Organizations', icon: Building2 },
       { href: '/admin/roles', label: 'Roles', icon: Shield },
     ],
   },
   {
     title: 'Learning',
-    items: [{ href: '/admin/users', label: 'Learning views', icon: BookOpen }],
+    items: [{ href: '/admin/learning', label: 'Learning', icon: BookOpen, match: isLearningPath }],
   },
   {
     title: 'Content',
@@ -98,10 +120,9 @@ function AdminSidebar() {
             <div className="space-y-1">
               {group.items.map((item) => {
                 const Icon = item.icon
-                const active =
-                  item.href === '/admin'
-                    ? pathname === '/admin'
-                    : pathname.startsWith(item.href)
+                const active = item.match
+                  ? item.match(pathname)
+                  : defaultMatchesPath(pathname, item.href)
 
                 return (
                   <Link

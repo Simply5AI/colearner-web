@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AdminLearningOverview } from '@/components/admin/admin-learning/overview'
 import { AdminLearningMastery } from '@/components/admin/admin-learning/mastery'
 import { AdminLearningSessions } from '@/components/admin/admin-learning/sessions'
@@ -114,6 +114,7 @@ function sessionsFixture(): AdminLearningSessionsResponse {
       concepts: ['Variables', 'Equations'],
       source: { id: 'extraction-1', title: 'Algebra Notes' },
     }],
+    sources: [{ id: 'extraction-1', title: 'Algebra Notes' }],
     nextCursor: null,
   }
 }
@@ -147,6 +148,10 @@ describe('Admin learning views', () => {
     roadmapDetailMock.mockReset()
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('renders overview KPIs, chart, activity, and learning tabs', () => {
     render(<AdminLearningOverview data={overviewFixture()} />)
 
@@ -162,7 +167,23 @@ describe('Admin learning views', () => {
 
   it('updates mastery filters and opens question history', async () => {
     const user = userEvent.setup()
-    conceptAttemptsMock.mockResolvedValue({ items: [], nextCursor: null })
+    conceptAttemptsMock.mockResolvedValue({
+      items: [{
+        id: 'attempt-1',
+        questionId: 'question-1',
+        questionText: 'What is a variable?',
+        correctAnswer: 'A symbol for a value',
+        userAnswer: 'A letter',
+        isCorrect: false,
+        score: 4,
+        feedback: 'Needs more precision',
+        timeSpentSeconds: 20,
+        createdAt: '2026-05-21T00:00:00.000Z',
+        sessionId: 'session-1',
+        sessionScore: 72,
+      }],
+      nextCursor: '1',
+    })
     render(<AdminLearningMastery data={masteryFixture()} user={overviewFixture().user} authHeaders={{ Authorization: 'Bearer token' }} />)
 
     await user.type(screen.getByPlaceholderText(/search concepts/i), 'calc')
@@ -170,13 +191,26 @@ describe('Admin learning views', () => {
       expect(replaceMock).toHaveBeenCalledWith(expect.stringContaining('search=calc'), { scroll: false })
     })
 
+    await user.click(screen.getByLabelText('Learning level'))
+    await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Review' }))
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith(expect.stringContaining('levels=REVIEW'), { scroll: false })
+    })
+
     await user.click(screen.getByRole('button', { name: /view question history/i }))
     await waitFor(() => {
-      expect(conceptAttemptsMock).toHaveBeenCalledWith({ Authorization: 'Bearer token' }, 'user-1', 'concept-1')
+      expect(conceptAttemptsMock).toHaveBeenCalledWith(
+        { Authorization: 'Bearer token' },
+        'user-1',
+        'concept-1',
+        { cursor: undefined }
+      )
     })
+    expect(await screen.findByText('A symbol for a value')).toBeInTheDocument()
+    expect(screen.getByText('Load more attempts')).toBeInTheDocument()
   })
 
-  it('opens session detail with long answer content', async () => {
+  it('filters sessions by source and opens detail with answer keys', async () => {
     const user = userEvent.setup()
     sessionDetailMock.mockResolvedValue({
       session: sessionsFixture().items[0],
@@ -184,7 +218,8 @@ describe('Admin learning views', () => {
         id: 'attempt-1',
         questionId: 'question-1',
         questionText: 'Explain variables',
-        userAnswer: 'A very long free-text answer about symbols and values.',
+        correctAnswer: 'Variables name values that can change.',
+        userAnswer: 'A very long free-text answer about symbols and values. '.repeat(8),
         isCorrect: true,
         score: 1,
         feedback: 'Good',
@@ -195,9 +230,28 @@ describe('Admin learning views', () => {
     })
     render(<AdminLearningSessions data={sessionsFixture()} user={overviewFixture().user} authHeaders={{ Authorization: 'Bearer token' }} />)
 
+    await user.click(screen.getByLabelText('Session source'))
+    await user.click(await screen.findByRole('option', { name: 'Algebra Notes' }))
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith(expect.stringContaining('sourceId=extraction-1'), { scroll: false })
+    })
+
     await user.click(screen.getByRole('button', { name: /view session detail/i }))
 
     expect(await screen.findByText(/very long free-text answer/i)).toBeInTheDocument()
+    expect(screen.getByText('Variables name values that can change.')).toBeInTheDocument()
+    expect(screen.getByText('Show full answer')).toBeInTheDocument()
+  })
+
+  it('polls while roadmaps are generating', () => {
+    vi.useFakeTimers()
+    render(<AdminLearningRoadmaps data={roadmapsFixture()} user={overviewFixture().user} authHeaders={{ Authorization: 'Bearer token' }} />)
+
+    act(() => {
+      vi.advanceTimersByTime(5000)
+    })
+
+    expect(refreshMock).toHaveBeenCalled()
   })
 
   it('renders roadmap progress and opens detail', async () => {
@@ -206,15 +260,30 @@ describe('Admin learning views', () => {
       ...roadmapsFixture().items[0],
       goal: null,
       subject: null,
-      phases: [],
+      phases: [{
+        id: 'phase-1',
+        title: 'Foundations',
+        description: 'Start here',
+        sortOrder: 1,
+        items: [{
+          id: 'item-1',
+          title: 'Forces intro',
+          status: 'COMPLETED',
+          sourceType: 'YOUTUBE',
+          extraction: { id: 'extraction-1', title: 'Forces Video', status: 'COMPLETED' },
+        }],
+      }],
       concepts: [{ id: 'rc-1', conceptId: 'concept-1', title: 'Forces', description: null, masteryState: 'MASTERED', phase: null, addedAt: '2026-05-21T00:00:00.000Z', updatedAt: '2026-05-21T00:00:00.000Z' }],
     })
     render(<AdminLearningRoadmaps data={roadmapsFixture()} user={overviewFixture().user} authHeaders={{ Authorization: 'Bearer token' }} />)
 
     expect(screen.getByText('Generation slow')).toBeInTheDocument()
     expect(screen.getByText('40%')).toBeInTheDocument()
+
     await user.click(screen.getByRole('button', { name: /view roadmap detail/i }))
 
     expect(await screen.findByText('Forces')).toBeInTheDocument()
+    expect(screen.getByText('Foundations')).toBeInTheDocument()
+    expect(screen.getByText('Forces intro')).toBeInTheDocument()
   })
 })

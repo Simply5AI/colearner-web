@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { ArrowLeft } from 'lucide-react'
 
@@ -10,6 +10,8 @@ import type { AdminLearningUser, AdminLearningUserStatus } from '@/lib/api/admin
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
 export interface LearningViewProps<T> {
@@ -52,7 +54,7 @@ export function relativeDate(value: string | null | undefined) {
 }
 
 export function formatDuration(seconds: number | null | undefined) {
-  if (!seconds) return 'No data yet'
+  if (seconds === null || seconds === undefined) return 'No data yet'
   const minutes = Math.floor(seconds / 60)
   const remaining = seconds % 60
   if (minutes === 0) return `${remaining}s`
@@ -101,7 +103,7 @@ export function AdminLearningLayout({
               <Badge variant="outline">{user.systemRole}</Badge>
             </div>
             <div className="mt-1 text-sm text-muted-foreground">
-              {user.email} · <span className="text-foreground/80">{user.org.name}</span>
+              {user.email} - <span className="text-foreground/80">{user.org.name}</span>
             </div>
           </div>
         </div>
@@ -135,16 +137,33 @@ export function useLearningFilters() {
 
   const params = useMemo(() => new URLSearchParams(searchParams.toString()), [searchParams])
 
-  const setParam = (key: string, value: string) => {
-    const next = new URLSearchParams(params.toString())
-    if (value) next.set(key, value)
-    else next.delete(key)
+  const replaceWithParams = useCallback((next: URLSearchParams) => {
     next.delete('cursor')
     const qs = next.toString()
     router.replace(`${pathname}${qs ? `?${qs}` : ''}`, { scroll: false })
-  }
+  }, [pathname, router])
 
-  return { params, setParam, router }
+  const setParam = useCallback((key: string, value: string) => {
+    const next = new URLSearchParams(params.toString())
+    if (value) next.set(key, value)
+    else next.delete(key)
+    replaceWithParams(next)
+  }, [params, replaceWithParams])
+
+  const setParams = useCallback((updates: Record<string, string | undefined>) => {
+    const next = new URLSearchParams(params.toString())
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) next.set(key, value)
+      else next.delete(key)
+    })
+    replaceWithParams(next)
+  }, [params, replaceWithParams])
+
+  const clearParams = useCallback(() => {
+    router.replace(pathname, { scroll: false })
+  }, [pathname, router])
+
+  return { params, setParam, setParams, clearParams, pathname, router }
 }
 
 export function DebouncedInput({
@@ -164,11 +183,11 @@ export function DebouncedInput({
   }, [onValue, value])
 
   return (
-    <input
+    <Input
       value={value}
       onChange={(event) => setValue(event.target.value)}
       placeholder={placeholder}
-      className="h-9 rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+      className="h-9 min-w-[220px]"
     />
   )
 }
@@ -178,29 +197,45 @@ export function CursorPager({
 }: {
   nextCursor: string | null
 }) {
-  const { params, router } = useLearningFilters()
+  const { params, setParam, pathname, router } = useLearningFilters()
+  const limit = params.get('limit') ?? '50'
 
   const goNext = () => {
     if (!nextCursor) return
     const next = new URLSearchParams(params.toString())
     next.set('cursor', nextCursor)
-    router.replace(`?${next.toString()}`, { scroll: false })
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false })
   }
 
   const reset = () => {
     const next = new URLSearchParams(params.toString())
     next.delete('cursor')
-    router.replace(`?${next.toString()}`, { scroll: false })
+    const qs = next.toString()
+    router.replace(`${pathname}${qs ? `?${qs}` : ''}`, { scroll: false })
   }
 
   return (
-    <div className="flex items-center justify-end gap-2 border-t px-4 py-3">
-      <Button variant="outline" size="sm" onClick={reset} disabled={!params.get('cursor')}>
-        Previous
-      </Button>
-      <Button variant="outline" size="sm" onClick={goNext} disabled={!nextCursor}>
-        Next
-      </Button>
+    <div className="flex flex-col gap-3 border-t px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <span>Rows</span>
+        <Select value={limit} onValueChange={(value) => value && setParam('limit', value)}>
+          <SelectTrigger className="h-8 w-24">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="50">50</SelectItem>
+            <SelectItem value="100">100</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex items-center justify-end gap-2">
+        <Button variant="outline" size="sm" onClick={reset} disabled={!params.get('cursor')}>
+          Previous
+        </Button>
+        <Button variant="outline" size="sm" onClick={goNext} disabled={!nextCursor}>
+          Next
+        </Button>
+      </div>
     </div>
   )
 }

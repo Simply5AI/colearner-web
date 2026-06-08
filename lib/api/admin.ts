@@ -90,6 +90,111 @@ export interface AdminUsersQuery {
   limit?: number
 }
 
+export type AdminOrgType = 'PERSONAL' | 'TEAM' | 'ENTERPRISE'
+export type AdminSubscriptionPlan = 'FREE' | 'PRO' | 'ENTERPRISE'
+export type AdminOrgSsoFilter = 'true' | 'false' | 'any'
+
+export type AdminOrgSort =
+  | 'created_desc'
+  | 'created_asc'
+  | 'member_count_desc'
+  | 'member_count_asc'
+  | 'mrr_desc'
+  | 'mrr_asc'
+
+export interface AdminOrgListRow {
+  id: string
+  name: string
+  slug: string
+  type: AdminOrgType
+  ssoEnabled: boolean
+  ownerId: string | null
+  ownerEmail: string | null
+  createdAt: string
+  deletedAt: string | null
+  memberCount: number
+  mrr: number
+  plan: AdminSubscriptionPlan
+}
+
+export interface AdminOrgsResponse {
+  items: AdminOrgListRow[]
+  nextCursor: string | null
+  total: number
+}
+
+export interface AdminOrgsQuery {
+  search?: string
+  type?: AdminOrgType
+  plan?: AdminSubscriptionPlan
+  sso?: AdminOrgSsoFilter
+  sort?: AdminOrgSort
+  cursor?: string
+  limit?: number
+  showArchived?: boolean
+}
+
+export interface CreateAdminOrgBody {
+  name: string
+  slug: string
+  type: AdminOrgType
+  ownerEmail: string
+  plan: AdminSubscriptionPlan
+}
+
+export type AdminBillingCycle = 'MONTHLY' | 'YEARLY'
+
+export interface AdminOrgRoleOption {
+  id: string
+  name: string
+  description: string | null
+  isSystem: boolean
+  orgId: string | null
+}
+
+export interface AdminOrgDetail {
+  id: string
+  name: string
+  slug: string
+  type: AdminOrgType
+  ssoEnabled: boolean
+  owner: {
+    id: string
+    name: string
+    email: string
+  } | null
+  plan: AdminSubscriptionPlan
+  billingCycle: AdminBillingCycle | null
+  nextRenewal: string | null
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+  stats: {
+    memberCount: number
+    extractionCount: number
+    recallSessionCount: number
+    mrr: number
+  }
+  availableRoles: AdminOrgRoleOption[]
+}
+
+export interface AdminOrgMember {
+  id: string
+  name: string
+  email: string
+  avatarUrl: string | null
+  systemRole: string
+  roleId: string | null
+  role: string
+  joinedAt: string
+  lastActiveAt: string | null
+}
+
+export interface AdminOrgMembersResponse {
+  items: AdminOrgMember[]
+  nextCursor: string | null
+}
+
 export interface AdminBulkUsersResponse {
   succeeded: string[]
   failed: Array<{ userId: string; reason: string }>
@@ -120,9 +225,12 @@ async function settlePanel<T>(promise: Promise<T>): Promise<AdminPanel<T>> {
   }
 }
 
-function buildQueryString(query: AdminUsersQuery) {
+type QueryStringValue = string | number | boolean | undefined | null
+
+function buildQueryString(query: object) {
   const params = new URLSearchParams()
-  Object.entries(query).forEach(([key, value]) => {
+  const entries = Object.entries(query) as Array<[string, QueryStringValue]>
+  entries.forEach(([key, value]) => {
     if (value === undefined || value === null || value === '') return
     params.set(key, String(value))
   })
@@ -157,6 +265,134 @@ export async function getAdminUsers(
   const qs = buildQueryString(query)
   return apiClient<AdminUsersResponse>(`/api/admin/users${qs ? `?${qs}` : ''}`, {
     headers,
+  })
+}
+
+export async function getAdminOrgs(
+  headers: Record<string, string>,
+  query: AdminOrgsQuery = {}
+): Promise<AdminOrgsResponse> {
+  const qs = buildQueryString(query)
+  return apiClient<AdminOrgsResponse>(`/api/admin/orgs${qs ? `?${qs}` : ''}`, {
+    headers,
+  })
+}
+
+export async function createAdminOrg(
+  headers: Record<string, string>,
+  body: CreateAdminOrgBody
+): Promise<AdminOrgListRow> {
+  return apiClient<AdminOrgListRow>('/api/admin/orgs', {
+    method: 'POST',
+    headers,
+    body,
+  })
+}
+
+export async function archiveAdminOrg(
+  headers: Record<string, string>,
+  id: string
+): Promise<{ success: true }> {
+  return apiClient<{ success: true }>(`/api/admin/orgs/${id}`, {
+    method: 'DELETE',
+    headers,
+  })
+}
+
+export async function getAdminOrg(
+  headers: Record<string, string>,
+  id: string
+): Promise<AdminOrgDetail> {
+  return apiClient<AdminOrgDetail>(`/api/admin/orgs/${id}`, { headers })
+}
+
+export async function patchAdminOrg(
+  headers: Record<string, string>,
+  id: string,
+  body: {
+    name?: string
+    slug?: string
+    type?: AdminOrgType
+    ssoEnabled?: boolean
+    updatedAt?: string
+  }
+): Promise<AdminOrgDetail> {
+  return apiClient<AdminOrgDetail>(`/api/admin/orgs/${id}`, {
+    method: 'PATCH',
+    headers,
+    body,
+  })
+}
+
+export async function updateAdminOrgPlan(
+  headers: Record<string, string>,
+  id: string,
+  body: { plan: AdminSubscriptionPlan; billingCycle?: AdminBillingCycle }
+): Promise<AdminOrgDetail> {
+  return apiClient<AdminOrgDetail>(`/api/admin/orgs/${id}/plan`, {
+    method: 'POST',
+    headers,
+    body,
+  })
+}
+
+export async function transferAdminOrgOwnership(
+  headers: Record<string, string>,
+  id: string,
+  newOwnerUserId: string
+): Promise<AdminOrgDetail> {
+  return apiClient<AdminOrgDetail>(`/api/admin/orgs/${id}/transfer-ownership`, {
+    method: 'POST',
+    headers,
+    body: { newOwnerUserId },
+  })
+}
+
+export async function getAdminOrgMembers(
+  headers: Record<string, string>,
+  id: string,
+  query: { cursor?: string; limit?: number } = {}
+): Promise<AdminOrgMembersResponse> {
+  const qs = buildQueryString(query)
+  return apiClient<AdminOrgMembersResponse>(
+    `/api/admin/orgs/${id}/members${qs ? `?${qs}` : ''}`,
+    { headers }
+  )
+}
+
+export async function inviteAdminOrgMember(
+  headers: Record<string, string>,
+  id: string,
+  body: { email: string; roleId: string }
+): Promise<AdminOrgMember> {
+  return apiClient<AdminOrgMember>(`/api/admin/orgs/${id}/members/invite`, {
+    method: 'POST',
+    headers,
+    body,
+  })
+}
+
+export async function removeAdminOrgMember(
+  headers: Record<string, string>,
+  id: string,
+  userId: string
+): Promise<{ success: true }> {
+  return apiClient<{ success: true }>(`/api/admin/orgs/${id}/members/${userId}`, {
+    method: 'DELETE',
+    headers,
+  })
+}
+
+export async function updateAdminOrgMemberRole(
+  headers: Record<string, string>,
+  id: string,
+  userId: string,
+  roleId: string
+): Promise<{ success: true }> {
+  return apiClient<{ success: true }>(`/api/admin/orgs/${id}/members/${userId}`, {
+    method: 'PATCH',
+    headers,
+    body: { roleId },
   })
 }
 
@@ -547,6 +783,7 @@ export interface AdminLearningConceptAttemptsResponse {
     id: string
     questionId: string
     questionText: string
+    correctAnswer: string | null
     userAnswer: string
     isCorrect: boolean
     score: number | null
@@ -576,6 +813,7 @@ export interface AdminLearningSessionRow {
 
 export interface AdminLearningSessionsResponse {
   items: AdminLearningSessionRow[]
+  sources: Array<{ id: string; title: string }>
   nextCursor: string | null
 }
 
@@ -585,6 +823,7 @@ export interface AdminLearningSessionDetailResponse {
     id: string
     questionId: string | null
     questionText: string
+    correctAnswer: string | null
     userAnswer: string
     isCorrect: boolean
     score: number | null
@@ -628,9 +867,10 @@ export interface AdminLearningRoadmapDetail extends AdminLearningRoadmapRow {
   }>
 }
 
-function queryString(query: Record<string, string | number | undefined | null>) {
+function queryString(query: object) {
   const params = new URLSearchParams()
-  Object.entries(query).forEach(([key, value]) => {
+  const entries = Object.entries(query) as Array<[string, QueryStringValue]>
+  entries.forEach(([key, value]) => {
     if (value === undefined || value === null || value === '') return
     params.set(key, String(value))
   })
@@ -656,10 +896,12 @@ export async function getAdminLearningMastery(
 export async function getAdminLearningConceptAttempts(
   headers: Record<string, string>,
   id: string,
-  conceptId: string
+  conceptId: string,
+  query: Record<string, string | number | undefined | null> = {}
 ): Promise<AdminLearningConceptAttemptsResponse> {
+  const qs = queryString(query)
   return apiClient<AdminLearningConceptAttemptsResponse>(
-    `/api/admin/users/${id}/learning/concepts/${conceptId}/attempts`,
+    `/api/admin/users/${id}/learning/concepts/${conceptId}/attempts${qs ? `?${qs}` : ''}`,
     { headers }
   )
 }
@@ -702,4 +944,113 @@ export async function getAdminLearningRoadmapDetail(
     `/api/admin/users/${id}/learning/roadmaps/${roadmapId}`,
     { headers }
   )
+}
+
+// ─── Roles & Permissions ─────────────────────────────────────────────────────
+
+export interface AdminPermission {
+  id: string
+  action: string
+  subject: string
+  description: string | null
+}
+
+export interface AdminPermissionsGrouped {
+  groups: Array<{
+    subject: string
+    permissions: AdminPermission[]
+  }>
+}
+
+export interface AdminRoleListItem {
+  id: string
+  name: string
+  description: string | null
+  isSystem: boolean
+  orgId: string | null
+  orgName: string | null
+  assigneeCount: number
+  permissionIds: string[]
+  updatedAt: string
+}
+
+export interface AdminRoleDetail extends AdminRoleListItem {
+  permissions: AdminPermission[]
+}
+
+export interface AdminRolesResponse {
+  items: AdminRoleListItem[]
+}
+
+export interface AdminRolesQuery {
+  search?: string
+  orgId?: string
+}
+
+export interface CreateAdminRoleBody {
+  name: string
+  description?: string
+  orgId: string
+  permissionIds: string[]
+}
+
+export interface UpdateAdminRoleBody {
+  name?: string
+  description?: string
+  permissionIds?: string[]
+  updatedAt?: string
+}
+
+export async function getAdminRoles(
+  headers: Record<string, string>,
+  query: AdminRolesQuery = {}
+): Promise<AdminRolesResponse> {
+  const qs = queryString(query)
+  return apiClient<AdminRolesResponse>(`/api/admin/roles${qs ? `?${qs}` : ''}`, { headers })
+}
+
+export async function getAdminRole(
+  headers: Record<string, string>,
+  id: string
+): Promise<AdminRoleDetail> {
+  return apiClient<AdminRoleDetail>(`/api/admin/roles/${id}`, { headers })
+}
+
+export async function getAdminPermissions(
+  headers: Record<string, string>
+): Promise<AdminPermissionsGrouped> {
+  return apiClient<AdminPermissionsGrouped>('/api/admin/permissions', { headers })
+}
+
+export async function createAdminRole(
+  headers: Record<string, string>,
+  body: CreateAdminRoleBody
+): Promise<AdminRoleDetail> {
+  return apiClient<AdminRoleDetail>('/api/admin/roles', {
+    method: 'POST',
+    headers,
+    body,
+  })
+}
+
+export async function updateAdminRole(
+  headers: Record<string, string>,
+  id: string,
+  body: UpdateAdminRoleBody
+): Promise<AdminRoleDetail> {
+  return apiClient<AdminRoleDetail>(`/api/admin/roles/${id}`, {
+    method: 'PATCH',
+    headers,
+    body,
+  })
+}
+
+export async function deleteAdminRole(
+  headers: Record<string, string>,
+  id: string
+): Promise<{ deleted: true }> {
+  return apiClient<{ deleted: true }>(`/api/admin/roles/${id}`, {
+    method: 'DELETE',
+    headers,
+  })
 }
