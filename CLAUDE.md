@@ -3,6 +3,27 @@
 > This file is the master context for Claude Code sessions on the `colearner-web` repository.
 > Claude Code reads this automatically. Do NOT delete.
 
+## Task Management (READ FIRST)
+
+Tasks are tracked in **two places** — always keep both in sync:
+
+1. **GitHub Issues** (source of truth): `https://github.com/Simply5AI/colearner-web/issues`
+   - Labels: `super-admin`, `teacher-role`, `frontend`, `blocked`, `in-progress`, `done-code`
+   - When starting a task: add `in-progress` label
+   - When code is done: add `done-code` label + comment with what was built
+
+2. **Status Tracker**: `../tasks/TASK-STATUS-TRACKER.md` — quick reference for all task statuses
+
+3. **Task Specs**: `../tasks/TASK-XX-*.md` — full requirements for each task
+
+### Done criteria
+- `pnpm type-check` passes
+- GitHub issue updated with `done-code` label
+- `TASK-STATUS-TRACKER.md` updated
+
+### Backend dependency
+This repo depends on `Simply5AI/colearner-platform`. Backend issues are tracked there. Frontend issues reference their backend counterparts in cross-repo links.
+
 ## Project Identity
 
 - **Product**: CoLearner — AI-powered adaptive learning platform
