@@ -4,7 +4,7 @@ import type { FormEvent, ReactNode } from 'react'
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+
 import { format, formatDistanceToNow } from 'date-fns'
 import {
   Archive,
@@ -25,7 +25,9 @@ import {
   getAdminOrgMembers,
   inviteAdminOrgMember,
   patchAdminOrg,
+  reactivateAdminOrg,
   removeAdminOrgMember,
+  suspendAdminOrg,
   transferAdminOrgOwnership,
   updateAdminOrgMemberRole,
   updateAdminOrgPlan,
@@ -63,6 +65,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { useAdminMutation } from '@/lib/hooks/use-admin-mutation'
+import { Textarea } from '@/components/ui/textarea'
 
 const ORG_TYPES: AdminOrgType[] = ['PERSONAL', 'TEAM', 'ENTERPRISE']
 const PLANS: AdminSubscriptionPlan[] = ['FREE', 'PRO', 'ENTERPRISE']
@@ -70,7 +74,7 @@ const BILLING_CYCLES: AdminBillingCycle[] = ['MONTHLY', 'YEARLY']
 const SLUG_PATTERN = /^[a-z0-9-]{3,40}$/
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-type DialogState = 'plan' | 'transfer' | 'archive' | 'invite' | null
+type DialogState = 'plan' | 'transfer' | 'archive' | 'invite' | 'suspend' | null
 
 interface AdminOrgDetailViewProps {
   detail: AdminOrgDetail
@@ -79,13 +83,9 @@ interface AdminOrgDetailViewProps {
 
 export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailViewProps) {
   const router = useRouter()
-  const { data: session } = useSession()
+  const { runSensitive } = useAdminMutation()
   const [isPending, startTransition] = useTransition()
-  const authHeaders = useMemo<Record<string, string>>(() => {
-    const headers: Record<string, string> = {}
-    if (session?.accessToken) headers.Authorization = `Bearer ${session.accessToken}`
-    return headers
-  }, [session?.accessToken])
+  const authHeaders = useMemo<Record<string, string>>(() => ({}), [])
 
   const [members, setMembers] = useState(initialMembers.items)
   const [nextMembersCursor, setNextMembersCursor] = useState(initialMembers.nextCursor)
@@ -98,6 +98,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
   const [roleId, setRoleId] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRoleId, setInviteRoleId] = useState(defaultRoleId(detail.availableRoles))
+  const [suspendReason, setSuspendReason] = useState('')
   const [plan, setPlan] = useState<AdminSubscriptionPlan>(detail.plan)
   const [billingCycle, setBillingCycle] = useState<AdminBillingCycle>(detail.billingCycle ?? 'MONTHLY')
   const [settings, setSettings] = useState({
@@ -127,18 +128,13 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
 
   const ownerMember = members.find((member) => member.id === detail.owner?.id)
   const isArchived = Boolean(detail.deletedAt)
-  const canToggleSso = detail.type === 'ENTERPRISE' && !isArchived
+  const isSuspended = Boolean(detail.suspendedAt)
+  const canToggleSso = detail.type === 'ENTERPRISE' && !isArchived && !isSuspended
 
   const refresh = () => startTransition(() => router.refresh())
 
-  const requireAuth = () => {
-    if (authHeaders.Authorization) return true
-    toast.error('Admin session is missing an access token')
-    return false
-  }
-
   const loadMoreMembers = async () => {
-    if (!nextMembersCursor || !requireAuth()) return
+    if (!nextMembersCursor) return
     setBusy(true)
     try {
       const response = await getAdminOrgMembers(authHeaders, detail.id, {
@@ -157,13 +153,15 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
   }
 
   const toggleSso = async () => {
-    if (!canToggleSso || !requireAuth()) return
+    if (!canToggleSso) return
     setBusy(true)
     try {
-      await patchAdminOrg(authHeaders, detail.id, {
-        ssoEnabled: !detail.ssoEnabled,
-        updatedAt: detail.updatedAt,
-      })
+      await runSensitive(() =>
+        patchAdminOrg(authHeaders, detail.id, {
+          ssoEnabled: !detail.ssoEnabled,
+          updatedAt: detail.updatedAt,
+        })
+      )
       toast.success(detail.ssoEnabled ? 'SSO disabled' : 'SSO enabled')
       refresh()
     } catch (error) {
@@ -176,7 +174,6 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
   }
 
   const savePlan = async () => {
-    if (!requireAuth()) return
     setBusy(true)
     try {
       await updateAdminOrgPlan(authHeaders, detail.id, { plan, billingCycle })
@@ -193,7 +190,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
   }
 
   const transferOwnership = async () => {
-    if (!transferUserId || !requireAuth()) return
+    if (!transferUserId) return
     setBusy(true)
     try {
       await transferAdminOrgOwnership(authHeaders, detail.id, transferUserId)
@@ -211,14 +208,13 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
   }
 
   const archiveOrg = async () => {
-    if (!requireAuth()) return
     if (archiveConfirm.trim() !== detail.slug) {
       toast.error('Slug confirmation does not match')
       return
     }
     setBusy(true)
     try {
-      await archiveAdminOrg(authHeaders, detail.id)
+      await runSensitive(() => archiveAdminOrg(authHeaders, detail.id))
       toast.success('Organization archived')
       setDialog(null)
       setArchiveConfirm('')
@@ -232,9 +228,46 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
     }
   }
 
+  const suspendOrg = async () => {
+    if (!suspendReason.trim()) {
+      toast.error('A reason is required to suspend')
+      return
+    }
+    setBusy(true)
+    try {
+      await runSensitive(() =>
+        suspendAdminOrg(authHeaders, detail.id, { reason: suspendReason.trim() })
+      )
+      toast.success('Organization suspended')
+      setDialog(null)
+      setSuspendReason('')
+      refresh()
+    } catch (error) {
+      toast.error('Suspend failed', {
+        description: error instanceof Error ? error.message : undefined,
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const reactivateOrg = async () => {
+    setBusy(true)
+    try {
+      await runSensitive(() => reactivateAdminOrg(authHeaders, detail.id))
+      toast.success('Organization reactivated')
+      refresh()
+    } catch (error) {
+      toast.error('Reactivate failed', {
+        description: error instanceof Error ? error.message : undefined,
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const inviteMember = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!requireAuth()) return
     if (!EMAIL_PATTERN.test(inviteEmail.trim())) {
       toast.error('Enter a valid email address')
       return
@@ -265,7 +298,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
   }
 
   const removeMember = async () => {
-    if (!removeTarget || !requireAuth()) return
+    if (!removeTarget) return
     setBusy(true)
     try {
       await removeAdminOrgMember(authHeaders, detail.id, removeTarget.id)
@@ -283,7 +316,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
   }
 
   const changeMemberRole = async () => {
-    if (!roleTarget || !roleId || !requireAuth()) return
+    if (!roleTarget || !roleId) return
     setBusy(true)
     try {
       await updateAdminOrgMemberRole(authHeaders, detail.id, roleTarget.id, roleId)
@@ -321,17 +354,17 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
       setSettingsError('Slug must be 3 to 40 lowercase letters, numbers, or hyphens.')
       return
     }
-    if (!requireAuth()) return
-
     setBusy(true)
     try {
-      await patchAdminOrg(authHeaders, detail.id, {
-        name,
-        slug,
-        type: settings.type,
-        ssoEnabled: settings.type === 'ENTERPRISE' ? settings.ssoEnabled : false,
-        updatedAt: detail.updatedAt,
-      })
+      await runSensitive(() =>
+        patchAdminOrg(authHeaders, detail.id, {
+          name,
+          slug,
+          type: settings.type,
+          ssoEnabled: settings.type === 'ENTERPRISE' ? settings.ssoEnabled : false,
+          updatedAt: detail.updatedAt,
+        })
+      )
       toast.success('Organization settings saved')
       refresh()
     } catch (error) {
@@ -373,7 +406,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold">{detail.name}</h1>
-              <StatusBadge archived={isArchived} />
+              <StatusBadge archived={isArchived} suspended={isSuspended} />
               <Badge variant="outline">{formatEnum(detail.type)}</Badge>
               <Badge variant={detail.plan === 'ENTERPRISE' ? 'default' : 'secondary'}>
                 {formatPlan(detail.plan)}
@@ -442,9 +475,40 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
               busy={busy}
               onSubmit={saveSettings}
               onArchive={() => setDialog('archive')}
+              onSuspend={() => setDialog('suspend')}
+              onReactivate={reactivateOrg}
             />
           </TabsContent>
         </Tabs>
+
+        <Dialog open={dialog === 'suspend'} onOpenChange={(open) => !open && setDialog(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Suspend {detail.name}?</DialogTitle>
+              <DialogDescription>
+                Members will be blocked from signing in to this organization until it is reactivated.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="org-suspend-reason">Reason (required)</Label>
+              <Textarea
+                id="org-suspend-reason"
+                value={suspendReason}
+                onChange={(event) => setSuspendReason(event.target.value)}
+                placeholder="Billing dispute, policy violation…"
+                maxLength={500}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialog(null)} disabled={busy}>
+                Cancel
+              </Button>
+              <Button onClick={suspendOrg} disabled={busy || !suspendReason.trim()}>
+                Suspend organization
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={dialog === 'plan'} onOpenChange={(open) => !open && setDialog(null)}>
           <DialogContent>
@@ -738,7 +802,19 @@ function OverviewTab({ detail }: { detail: AdminOrgDetail }) {
           <Field label="SSO" value={detail.ssoEnabled ? 'Enabled' : 'Disabled'} />
           <Field label="Created" value={formatDateTime(detail.createdAt)} />
           <Field label="Updated" value={formatDateTime(detail.updatedAt)} />
-          <Field label="Status" value={detail.deletedAt ? `Archived ${formatDateTime(detail.deletedAt)}` : 'Active'} />
+          <Field
+            label="Status"
+            value={
+              detail.deletedAt
+                ? `Archived ${formatDateTime(detail.deletedAt)}`
+                : detail.suspendedAt
+                  ? `Suspended ${formatDateTime(detail.suspendedAt)}`
+                  : 'Active'
+            }
+          />
+          {detail.suspendedAt && (
+            <Field label="Suspension reason" value={detail.suspensionReason ?? '—'} />
+          )}
         </CardContent>
       </Card>
     </div>
@@ -893,6 +969,8 @@ function SettingsTab({
   busy,
   onSubmit,
   onArchive,
+  onSuspend,
+  onReactivate,
 }: {
   detail: AdminOrgDetail
   settings: { name: string; slug: string; type: AdminOrgType; ssoEnabled: boolean }
@@ -901,6 +979,8 @@ function SettingsTab({
   busy: boolean
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onArchive: () => void
+  onSuspend: () => void
+  onReactivate: () => void
 }) {
   const ssoAvailable = settings.type === 'ENTERPRISE'
   return (
@@ -982,17 +1062,45 @@ function SettingsTab({
         <CardHeader className="border-b">
           <CardTitle>Danger zone</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="font-medium">Archive organization</div>
-            <div className="text-sm text-muted-foreground">
-              Soft-archives the organization and cancels active subscriptions.
+        <CardContent className="space-y-4 p-5">
+          {!detail.suspendedAt && !detail.deletedAt && (
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="font-medium">Suspend organization</div>
+                <div className="text-sm text-muted-foreground">
+                  Blocks member sign-in without deleting data.
+                </div>
+              </div>
+              <Button variant="outline" onClick={onSuspend} disabled={busy}>
+                Suspend org
+              </Button>
             </div>
+          )}
+          {detail.suspendedAt && !detail.deletedAt && (
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="font-medium">Reactivate organization</div>
+                <div className="text-sm text-muted-foreground">
+                  Restores member access to this organization.
+                </div>
+              </div>
+              <Button onClick={onReactivate} disabled={busy}>
+                Reactivate org
+              </Button>
+            </div>
+          )}
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="font-medium">Archive organization</div>
+              <div className="text-sm text-muted-foreground">
+                Soft-archives the organization and cancels active subscriptions.
+              </div>
+            </div>
+            <Button variant="destructive" disabled={Boolean(detail.deletedAt)} onClick={onArchive}>
+              <Archive className="h-4 w-4" />
+              Archive org
+            </Button>
           </div>
-          <Button variant="destructive" disabled={Boolean(detail.deletedAt)} onClick={onArchive}>
-            <Archive className="h-4 w-4" />
-            Archive org
-          </Button>
         </CardContent>
       </Card>
     </div>
@@ -1019,8 +1127,9 @@ function Field({ label, value }: { label: string; value: ReactNode }) {
   )
 }
 
-function StatusBadge({ archived }: { archived: boolean }) {
+function StatusBadge({ archived, suspended }: { archived: boolean; suspended: boolean }) {
   if (archived) return <Badge variant="outline">Archived</Badge>
+  if (suspended) return <Badge variant="destructive">Suspended</Badge>
   return <Badge variant="secondary">Active</Badge>
 }
 

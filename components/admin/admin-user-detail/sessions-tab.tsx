@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { RefreshCw, Trash2 } from 'lucide-react'
+import { LogOut, RefreshCw, Trash2 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 
 import {
+  forceLogoutAdminUser,
   getAdminUserSessions,
   revokeAdminUserSession,
   type AdminUserSession,
@@ -13,6 +14,14 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 interface SessionsTabProps {
   userId: string
@@ -24,6 +33,7 @@ export function SessionsTab({ userId, authHeaders }: SessionsTabProps) {
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [confirmForceLogout, setConfirmForceLogout] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -57,83 +67,132 @@ export function SessionsTab({ userId, authHeaders }: SessionsTabProps) {
     }
   }
 
+  const forceLogout = async () => {
+    setBusy('force-logout')
+    try {
+      await forceLogoutAdminUser(authHeaders, userId)
+      toast.success('All sessions revoked')
+      setSessions([])
+      setConfirmForceLogout(false)
+    } catch (err) {
+      toast.error('Force logout failed', {
+        description: err instanceof Error ? err.message : undefined,
+      })
+    } finally {
+      setBusy(null)
+    }
+  }
+
   return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <div className="text-sm text-muted-foreground">
-            Active refresh tokens (Redis-backed)
+    <>
+      <Card>
+        <CardContent className="p-0">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
+            <div className="text-sm text-muted-foreground">
+              Active refresh tokens (Redis-backed)
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmForceLogout(true)}
+                disabled={loading || busy === 'force-logout'}
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                Force logout all
+              </Button>
+              <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+                <RefreshCw className="h-3.5 w-3.5" />
+                Refresh
+              </Button>
+            </div>
           </div>
-          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-            <RefreshCw className="h-3.5 w-3.5" />
-            Refresh
-          </Button>
-        </div>
-        {loading && (
-          <div className="px-4 py-6 text-center text-sm text-muted-foreground">
-            Loading sessions…
-          </div>
-        )}
-        {error && (
-          <div className="px-4 py-6 text-center text-sm text-destructive">{error}</div>
-        )}
-        {!loading && !error && sessions && (
-          <table className="w-full text-sm">
-            <thead className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3">Token ID</th>
-                <th className="px-4 py-3">Expires</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sessions.length === 0 && (
+          {loading && (
+            <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+              Loading sessions…
+            </div>
+          )}
+          {error && (
+            <div className="px-4 py-6 text-center text-sm text-destructive">{error}</div>
+          )}
+          {!loading && !error && sessions && (
+            <table className="w-full text-sm">
+              <thead className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">
-                    No active sessions
-                  </td>
+                  <th className="px-4 py-3">Token ID</th>
+                  <th className="px-4 py-3">Expires</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
-              )}
-              {sessions.map((s) => (
-                <tr key={s.tokenId} className="border-b last:border-0">
-                  <td className="px-4 py-3 font-mono text-xs">
-                    {s.tokenId.slice(0, 10)}…{s.tokenId.slice(-6)}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {s.expiresAt ? (
-                      <span title={s.expiresAt}>
-                        {format(new Date(s.expiresAt), 'PP p')} (
-                        {formatDistanceToNow(new Date(s.expiresAt), { addSuffix: true })})
-                      </span>
-                    ) : (
-                      '—'
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {s.isExpired ? (
-                      <Badge variant="outline">expired</Badge>
-                    ) : (
-                      <Badge variant="secondary">active</Badge>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => revoke(s.tokenId)}
-                      disabled={busy === s.tokenId}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Revoke
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </CardContent>
-    </Card>
+              </thead>
+              <tbody>
+                {sessions.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">
+                      No active sessions
+                    </td>
+                  </tr>
+                )}
+                {sessions.map((s) => (
+                  <tr key={s.tokenId} className="border-b last:border-0">
+                    <td className="px-4 py-3 font-mono text-xs">
+                      {s.tokenId.slice(0, 10)}…{s.tokenId.slice(-6)}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {s.expiresAt ? (
+                        <span title={s.expiresAt}>
+                          {format(new Date(s.expiresAt), 'PP p')} (
+                          {formatDistanceToNow(new Date(s.expiresAt), { addSuffix: true })})
+                        </span>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {s.isExpired ? (
+                        <Badge variant="outline">expired</Badge>
+                      ) : (
+                        <Badge variant="secondary">active</Badge>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => revoke(s.tokenId)}
+                        disabled={busy === s.tokenId}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Revoke
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={confirmForceLogout} onOpenChange={setConfirmForceLogout}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Force logout all devices?</DialogTitle>
+            <DialogDescription>
+              Revokes every refresh token for this user. They will need to sign in again on all
+              devices.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmForceLogout(false)} disabled={busy === 'force-logout'}>
+              Cancel
+            </Button>
+            <Button onClick={forceLogout} disabled={busy === 'force-logout'}>
+              Force logout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

@@ -172,15 +172,8 @@ export function AdminOrgsView({ data, query }: AdminOrgsViewProps) {
     setCreateErrors(errors)
     if (Object.keys(errors).length > 0) return
 
-    if (!session?.accessToken) {
-      toast.error('Unable to create organization', {
-        description: 'Your admin session is missing an access token.',
-      })
-      return
-    }
-
     setIsMutating(true)
-    const headers = { Authorization: `Bearer ${session.accessToken}` }
+    const headers: Record<string, string> = {}
     const body: CreateAdminOrgBody = {
       name: createForm.name.trim(),
       slug: createForm.slug.trim().toLowerCase(),
@@ -213,11 +206,11 @@ export function AdminOrgsView({ data, query }: AdminOrgsViewProps) {
   }
 
   const handleArchive = async () => {
-    if (!archiveTarget || !session?.accessToken) return
+    if (!archiveTarget) return
 
     setIsMutating(true)
     try {
-      await archiveAdminOrg({ Authorization: `Bearer ${session.accessToken}` }, archiveTarget.id)
+      await archiveAdminOrg({}, archiveTarget.id)
       toast.success('Organization archived', {
         description: `${archiveTarget.name} is now hidden from the active list.`,
       })

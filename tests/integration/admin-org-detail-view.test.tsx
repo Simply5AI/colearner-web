@@ -28,6 +28,12 @@ vi.mock('next-auth/react', () => ({
   useSession: () => ({ data: { accessToken: 'token' } }),
 }))
 
+vi.mock('@/lib/hooks/use-admin-mutation', () => ({
+  useAdminMutation: () => ({
+    runSensitive: <T,>(fn: () => Promise<T>) => fn(),
+  }),
+}))
+
 vi.mock('sonner', () => ({
   toast: {
     success: toastSuccessMock,
@@ -68,6 +74,9 @@ function makeDetail(overrides: Partial<AdminOrgDetail> = {}): AdminOrgDetail {
     createdAt: '2026-05-01T10:00:00.000Z',
     updatedAt: '2026-05-20T10:00:00.000Z',
     deletedAt: null,
+    suspendedAt: null,
+    suspendedBy: null,
+    suspensionReason: null,
     stats: {
       memberCount: 2,
       extractionCount: 7,
@@ -171,7 +180,7 @@ describe('AdminOrgDetailView', () => {
 
     await waitFor(() => {
       expect(updatePlanMock).toHaveBeenCalledWith(
-        { Authorization: 'Bearer token' },
+        {},
         'org-1',
         { plan: 'ENTERPRISE', billingCycle: 'MONTHLY' }
       )
@@ -191,7 +200,7 @@ describe('AdminOrgDetailView', () => {
 
     await waitFor(() => {
       expect(patchOrgMock).toHaveBeenCalledWith(
-        { Authorization: 'Bearer token' },
+        {},
         'org-1',
         {
           name: 'Acme Updated',
@@ -226,7 +235,7 @@ describe('AdminOrgDetailView', () => {
 
     await waitFor(() => {
       expect(inviteMock).toHaveBeenCalledWith(
-        { Authorization: 'Bearer token' },
+        {},
         'org-1',
         { email: 'new@acme.test', roleId: 'member-role' }
       )
@@ -247,7 +256,7 @@ describe('AdminOrgDetailView', () => {
     await user.click(screen.getByRole('button', { name: /^archive org$/i }))
 
     await waitFor(() => {
-      expect(archiveMock).toHaveBeenCalledWith({ Authorization: 'Bearer token' }, 'org-1')
+      expect(archiveMock).toHaveBeenCalledWith({}, 'org-1')
     })
     expect(toastSuccessMock).toHaveBeenCalledWith('Organization archived')
   }, INTERACTION_TIMEOUT)

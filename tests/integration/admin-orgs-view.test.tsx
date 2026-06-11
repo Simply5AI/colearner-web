@@ -54,6 +54,7 @@ function makeOrg(overrides: Partial<AdminOrgListRow> = {}): AdminOrgListRow {
     ownerEmail: 'owner@acme.test',
     createdAt: '2026-05-01T10:00:00.000Z',
     deletedAt: null,
+    suspendedAt: null,
     memberCount: 12,
     mrr: 120,
     plan: 'PRO',
@@ -191,7 +192,7 @@ describe('AdminOrgsView', () => {
 
     await waitFor(() => {
       expect(createMock).toHaveBeenCalledWith(
-        { Authorization: 'Bearer token' },
+        {},
         {
           name: 'New Company',
           slug: 'new-company',
@@ -229,7 +230,7 @@ describe('AdminOrgsView', () => {
     await user.click(screen.getByRole('button', { name: /^archive org$/i }))
 
     await waitFor(() => {
-      expect(archiveMock).toHaveBeenCalledWith({ Authorization: 'Bearer token' }, 'org-1')
+      expect(archiveMock).toHaveBeenCalledWith({}, 'org-1')
     })
     expect(toastSuccessMock).toHaveBeenCalledWith('Organization archived', {
       description: 'Acme Learning is now hidden from the active list.',

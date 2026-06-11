@@ -1,4 +1,24 @@
 import { apiClient } from '@/lib/api/client'
+import { adminBrowserClient, toAdminBffPath } from '@/lib/api/admin-browser'
+
+type AdminApiOptions = {
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+  body?: unknown
+  headers?: Record<string, string>
+  signal?: AbortSignal
+}
+
+/** Server: forwards cookie/bearer headers to the API. Browser: uses the web BFF. */
+async function adminApiClient<T>(path: string, options: AdminApiOptions = {}): Promise<T> {
+  if (typeof window !== 'undefined') {
+    return adminBrowserClient<T>(toAdminBffPath(path), {
+      method: options.method,
+      body: options.body,
+      signal: options.signal,
+    })
+  }
+  return apiClient<T>(path, options)
+}
 
 export interface AdminMetric {
   total: number
@@ -112,6 +132,7 @@ export interface AdminOrgListRow {
   ownerEmail: string | null
   createdAt: string
   deletedAt: string | null
+  suspendedAt: string | null
   memberCount: number
   mrr: number
   plan: AdminSubscriptionPlan
@@ -169,6 +190,9 @@ export interface AdminOrgDetail {
   createdAt: string
   updatedAt: string
   deletedAt: string | null
+  suspendedAt: string | null
+  suspendedBy: string | null
+  suspensionReason: string | null
   stats: {
     memberCount: number
     extractionCount: number
@@ -241,11 +265,11 @@ export async function getAdminDashboardData(
   headers: Record<string, string>
 ): Promise<AdminDashboardData> {
   const [overview, activeUsers, signups, queues, recentUsers] = await Promise.all([
-    settlePanel(apiClient<AdminOverviewMetrics>('/api/admin/metrics/overview', { headers })),
-    settlePanel(apiClient<AdminActiveUsers>('/api/admin/metrics/active-users?window=7d', { headers })),
-    settlePanel(apiClient<AdminSignups>('/api/admin/metrics/signups?days=30', { headers })),
-    settlePanel(apiClient<AdminQueueMetrics>('/api/admin/metrics/queues', { headers })),
-    settlePanel(apiClient<AdminRecentUser[]>('/api/admin/users/recent?limit=10', { headers })),
+    settlePanel(adminApiClient<AdminOverviewMetrics>('/api/admin/metrics/overview', { headers })),
+    settlePanel(adminApiClient<AdminActiveUsers>('/api/admin/metrics/active-users?window=7d', { headers })),
+    settlePanel(adminApiClient<AdminSignups>('/api/admin/metrics/signups?days=30', { headers })),
+    settlePanel(adminApiClient<AdminQueueMetrics>('/api/admin/metrics/queues', { headers })),
+    settlePanel(adminApiClient<AdminRecentUser[]>('/api/admin/users/recent?limit=10', { headers })),
   ])
 
   return {
@@ -263,7 +287,7 @@ export async function getAdminUsers(
   query: AdminUsersQuery = {}
 ): Promise<AdminUsersResponse> {
   const qs = buildQueryString(query)
-  return apiClient<AdminUsersResponse>(`/api/admin/users${qs ? `?${qs}` : ''}`, {
+  return adminApiClient<AdminUsersResponse>(`/api/admin/users${qs ? `?${qs}` : ''}`, {
     headers,
   })
 }
@@ -273,7 +297,7 @@ export async function getAdminOrgs(
   query: AdminOrgsQuery = {}
 ): Promise<AdminOrgsResponse> {
   const qs = buildQueryString(query)
-  return apiClient<AdminOrgsResponse>(`/api/admin/orgs${qs ? `?${qs}` : ''}`, {
+  return adminApiClient<AdminOrgsResponse>(`/api/admin/orgs${qs ? `?${qs}` : ''}`, {
     headers,
   })
 }
@@ -282,7 +306,7 @@ export async function createAdminOrg(
   headers: Record<string, string>,
   body: CreateAdminOrgBody
 ): Promise<AdminOrgListRow> {
-  return apiClient<AdminOrgListRow>('/api/admin/orgs', {
+  return adminApiClient<AdminOrgListRow>('/api/admin/orgs', {
     method: 'POST',
     headers,
     body,
@@ -293,7 +317,7 @@ export async function archiveAdminOrg(
   headers: Record<string, string>,
   id: string
 ): Promise<{ success: true }> {
-  return apiClient<{ success: true }>(`/api/admin/orgs/${id}`, {
+  return adminApiClient<{ success: true }>(`/api/admin/orgs/${id}`, {
     method: 'DELETE',
     headers,
   })
@@ -303,7 +327,7 @@ export async function getAdminOrg(
   headers: Record<string, string>,
   id: string
 ): Promise<AdminOrgDetail> {
-  return apiClient<AdminOrgDetail>(`/api/admin/orgs/${id}`, { headers })
+  return adminApiClient<AdminOrgDetail>(`/api/admin/orgs/${id}`, { headers })
 }
 
 export async function patchAdminOrg(
@@ -317,10 +341,32 @@ export async function patchAdminOrg(
     updatedAt?: string
   }
 ): Promise<AdminOrgDetail> {
-  return apiClient<AdminOrgDetail>(`/api/admin/orgs/${id}`, {
+  return adminApiClient<AdminOrgDetail>(`/api/admin/orgs/${id}`, {
     method: 'PATCH',
     headers,
     body,
+  })
+}
+
+export async function suspendAdminOrg(
+  headers: Record<string, string>,
+  id: string,
+  body: { reason: string }
+): Promise<AdminOrgDetail> {
+  return adminApiClient<AdminOrgDetail>(`/api/admin/orgs/${id}/suspend`, {
+    method: 'POST',
+    headers,
+    body,
+  })
+}
+
+export async function reactivateAdminOrg(
+  headers: Record<string, string>,
+  id: string
+): Promise<AdminOrgDetail> {
+  return adminApiClient<AdminOrgDetail>(`/api/admin/orgs/${id}/reactivate`, {
+    method: 'POST',
+    headers,
   })
 }
 
@@ -329,7 +375,7 @@ export async function updateAdminOrgPlan(
   id: string,
   body: { plan: AdminSubscriptionPlan; billingCycle?: AdminBillingCycle }
 ): Promise<AdminOrgDetail> {
-  return apiClient<AdminOrgDetail>(`/api/admin/orgs/${id}/plan`, {
+  return adminApiClient<AdminOrgDetail>(`/api/admin/orgs/${id}/plan`, {
     method: 'POST',
     headers,
     body,
@@ -341,7 +387,7 @@ export async function transferAdminOrgOwnership(
   id: string,
   newOwnerUserId: string
 ): Promise<AdminOrgDetail> {
-  return apiClient<AdminOrgDetail>(`/api/admin/orgs/${id}/transfer-ownership`, {
+  return adminApiClient<AdminOrgDetail>(`/api/admin/orgs/${id}/transfer-ownership`, {
     method: 'POST',
     headers,
     body: { newOwnerUserId },
@@ -354,7 +400,7 @@ export async function getAdminOrgMembers(
   query: { cursor?: string; limit?: number } = {}
 ): Promise<AdminOrgMembersResponse> {
   const qs = buildQueryString(query)
-  return apiClient<AdminOrgMembersResponse>(
+  return adminApiClient<AdminOrgMembersResponse>(
     `/api/admin/orgs/${id}/members${qs ? `?${qs}` : ''}`,
     { headers }
   )
@@ -365,7 +411,7 @@ export async function inviteAdminOrgMember(
   id: string,
   body: { email: string; roleId: string }
 ): Promise<AdminOrgMember> {
-  return apiClient<AdminOrgMember>(`/api/admin/orgs/${id}/members/invite`, {
+  return adminApiClient<AdminOrgMember>(`/api/admin/orgs/${id}/members/invite`, {
     method: 'POST',
     headers,
     body,
@@ -377,7 +423,7 @@ export async function removeAdminOrgMember(
   id: string,
   userId: string
 ): Promise<{ success: true }> {
-  return apiClient<{ success: true }>(`/api/admin/orgs/${id}/members/${userId}`, {
+  return adminApiClient<{ success: true }>(`/api/admin/orgs/${id}/members/${userId}`, {
     method: 'DELETE',
     headers,
   })
@@ -389,44 +435,58 @@ export async function updateAdminOrgMemberRole(
   userId: string,
   roleId: string
 ): Promise<{ success: true }> {
-  return apiClient<{ success: true }>(`/api/admin/orgs/${id}/members/${userId}`, {
+  return adminApiClient<{ success: true }>(`/api/admin/orgs/${id}/members/${userId}`, {
     method: 'PATCH',
     headers,
     body: { roleId },
   })
 }
 
+async function runBulkUserAction(
+  headers: Record<string, string>,
+  userIds: string[],
+  action: (id: string) => Promise<unknown>
+): Promise<AdminBulkUsersResponse> {
+  const succeeded: string[] = []
+  const failed: Array<{ userId: string; reason: string }> = []
+
+  for (const userId of userIds) {
+    try {
+      await action(userId)
+      succeeded.push(userId)
+    } catch (error) {
+      failed.push({
+        userId,
+        reason: error instanceof Error ? error.message : 'Request failed',
+      })
+    }
+  }
+
+  return { succeeded, failed }
+}
+
 export async function suspendAdminUsers(
   headers: Record<string, string>,
   body: { userIds: string[]; reason?: string }
 ) {
-  return apiClient<AdminBulkUsersResponse>('/api/admin/users/bulk/suspend', {
-    method: 'POST',
-    headers,
-    body,
-  })
+  const reason = body.reason?.trim() || 'Suspended by admin'
+  return runBulkUserAction(headers, body.userIds, (id) =>
+    suspendAdminUser(headers, id, { reason })
+  )
 }
 
 export async function reactivateAdminUsers(
   headers: Record<string, string>,
   body: { userIds: string[] }
 ) {
-  return apiClient<AdminBulkUsersResponse>('/api/admin/users/bulk/reactivate', {
-    method: 'POST',
-    headers,
-    body,
-  })
+  return runBulkUserAction(headers, body.userIds, (id) => reactivateAdminUser(headers, id))
 }
 
 export async function deleteAdminUsers(
   headers: Record<string, string>,
   body: { userIds: string[] }
 ) {
-  return apiClient<AdminBulkUsersResponse>('/api/admin/users/bulk/delete', {
-    method: 'POST',
-    headers,
-    body,
-  })
+  return runBulkUserAction(headers, body.userIds, (id) => deleteAdminUser(headers, id))
 }
 
 // ─── Single-user detail screen ────────────────────────────────────────────
@@ -482,7 +542,7 @@ export async function getAdminUser(
   headers: Record<string, string>,
   id: string
 ): Promise<AdminUserDetail> {
-  return apiClient<AdminUserDetail>(`/api/admin/users/${id}`, { headers })
+  return adminApiClient<AdminUserDetail>(`/api/admin/users/${id}`, { headers })
 }
 
 export async function patchAdminUser(
@@ -490,7 +550,7 @@ export async function patchAdminUser(
   id: string,
   body: { name?: string }
 ): Promise<AdminUserDetail> {
-  return apiClient<AdminUserDetail>(`/api/admin/users/${id}`, {
+  return adminApiClient<AdminUserDetail>(`/api/admin/users/${id}`, {
     method: 'PATCH',
     headers,
     body,
@@ -502,7 +562,7 @@ export async function suspendAdminUser(
   id: string,
   body: { reason: string }
 ): Promise<AdminUserDetail> {
-  return apiClient<AdminUserDetail>(`/api/admin/users/${id}/suspend`, {
+  return adminApiClient<AdminUserDetail>(`/api/admin/users/${id}/suspend`, {
     method: 'POST',
     headers,
     body,
@@ -513,7 +573,7 @@ export async function reactivateAdminUser(
   headers: Record<string, string>,
   id: string
 ): Promise<AdminUserDetail> {
-  return apiClient<AdminUserDetail>(`/api/admin/users/${id}/reactivate`, {
+  return adminApiClient<AdminUserDetail>(`/api/admin/users/${id}/reactivate`, {
     method: 'POST',
     headers,
   })
@@ -523,17 +583,27 @@ export async function resetAdminUserPassword(
   headers: Record<string, string>,
   id: string
 ): Promise<{ success: true; sent: boolean }> {
-  return apiClient<{ success: true; sent: boolean }>(
-    `/api/admin/users/${id}/reset-password`,
+  return adminApiClient<{ success: true; sent: boolean }>(
+    `/api/admin/users/${id}/password-reset`,
     { method: 'POST', headers }
   )
+}
+
+export async function forceLogoutAdminUser(
+  headers: Record<string, string>,
+  id: string
+): Promise<{ success: true }> {
+  return adminApiClient<{ success: true }>(`/api/admin/users/${id}/force-logout`, {
+    method: 'POST',
+    headers,
+  })
 }
 
 export async function deleteAdminUser(
   headers: Record<string, string>,
   id: string
 ): Promise<{ success: true }> {
-  return apiClient<{ success: true }>(`/api/admin/users/${id}`, {
+  return adminApiClient<{ success: true }>(`/api/admin/users/${id}`, {
     method: 'DELETE',
     headers,
   })
@@ -544,7 +614,7 @@ export async function assignAdminUserRole(
   id: string,
   roleId: string
 ): Promise<AdminUserDetail> {
-  return apiClient<AdminUserDetail>(`/api/admin/users/${id}/roles`, {
+  return adminApiClient<AdminUserDetail>(`/api/admin/users/${id}/roles`, {
     method: 'POST',
     headers,
     body: { roleId },
@@ -556,7 +626,7 @@ export async function revokeAdminUserRole(
   id: string,
   roleId: string
 ): Promise<AdminUserDetail> {
-  return apiClient<AdminUserDetail>(`/api/admin/users/${id}/roles/${roleId}`, {
+  return adminApiClient<AdminUserDetail>(`/api/admin/users/${id}/roles/${roleId}`, {
     method: 'DELETE',
     headers,
   })
@@ -566,7 +636,7 @@ export async function getAdminUserSessions(
   headers: Record<string, string>,
   id: string
 ): Promise<AdminUserSession[]> {
-  return apiClient<AdminUserSession[]>(`/api/admin/users/${id}/sessions`, { headers })
+  return adminApiClient<AdminUserSession[]>(`/api/admin/users/${id}/sessions`, { headers })
 }
 
 export async function revokeAdminUserSession(
@@ -574,7 +644,7 @@ export async function revokeAdminUserSession(
   id: string,
   tokenId: string
 ): Promise<{ success: true }> {
-  return apiClient<{ success: true }>(
+  return adminApiClient<{ success: true }>(
     `/api/admin/users/${id}/sessions/${tokenId}`,
     { method: 'DELETE', headers }
   )
@@ -639,8 +709,8 @@ export async function getLlmConsumption(
   range: ConsumptionRange = '30d',
   groupBy: ConsumptionGroupBy = 'agent',
 ): Promise<ConsumptionReport> {
-  return apiClient<ConsumptionReport>(
-    `/api/admin/metrics/llm-consumption?range=${range}&groupBy=${groupBy}`,
+  return adminApiClient<ConsumptionReport>(
+    `/api/admin/ai-usage?range=${range}&groupBy=${groupBy}`,
     { headers },
   )
 }
@@ -650,8 +720,8 @@ export async function getLlmConsumptionByOrg(
   orgId: string,
   range: ConsumptionRange = '30d',
 ): Promise<OrgConsumptionReport> {
-  return apiClient<OrgConsumptionReport>(
-    `/api/admin/metrics/llm-consumption/by-org/${orgId}?range=${range}`,
+  return adminApiClient<OrgConsumptionReport>(
+    `/api/admin/ai-usage/by-org/${orgId}?range=${range}`,
     { headers },
   )
 }
@@ -664,7 +734,43 @@ export function buildLlmConsumptionCsvUrl(params: {
   const qs = new URLSearchParams({ range: params.range })
   if (params.orgId) qs.set('orgId', params.orgId)
   if (params.agent) qs.set('agent', params.agent)
-  return `/api/admin/metrics/llm-consumption/export.csv?${qs.toString()}`
+  return `/api/admin/ai-usage/export.csv?${qs.toString()}`
+}
+
+export function buildLlmConsumptionJsonUrl(params: {
+  range: ConsumptionRange
+  orgId?: string
+  agent?: string
+}): string {
+  const qs = new URLSearchParams({ range: params.range })
+  if (params.orgId) qs.set('orgId', params.orgId)
+  if (params.agent) qs.set('agent', params.agent)
+  return `/api/admin/ai-usage/export.json?${qs.toString()}`
+}
+
+export interface LlmRateLimitsReport {
+  summary: {
+    recentCalls: number
+    totalCostUsd: number
+    providers: string[]
+  }
+  byProvider: Array<{
+    provider: string
+    calls: number
+    costUsd: number
+    avgCostPerCall: number
+    topModels: string[]
+  }>
+  note: string
+}
+
+export async function getLlmRateLimits(
+  headers: Record<string, string>,
+): Promise<LlmRateLimitsReport> {
+  return adminApiClient<LlmRateLimitsReport>(
+    `/api/admin/ai-usage/rate-limits`,
+    { headers },
+  )
 }
 
 export async function getAdminUserActivity(
@@ -673,7 +779,7 @@ export async function getAdminUserActivity(
   limit?: number
 ): Promise<AdminUserActivityEntry[]> {
   const qs = limit ? `?limit=${limit}` : ''
-  return apiClient<AdminUserActivityEntry[]>(
+  return adminApiClient<AdminUserActivityEntry[]>(
     `/api/admin/users/${id}/activity${qs}`,
     { headers }
   )
@@ -881,7 +987,7 @@ export async function getAdminLearningOverview(
   headers: Record<string, string>,
   id: string
 ): Promise<AdminLearningOverviewResponse> {
-  return apiClient<AdminLearningOverviewResponse>(`/api/admin/users/${id}/learning/overview`, { headers })
+  return adminApiClient<AdminLearningOverviewResponse>(`/api/admin/users/${id}/learning/overview`, { headers })
 }
 
 export async function getAdminLearningMastery(
@@ -890,7 +996,7 @@ export async function getAdminLearningMastery(
   query: Record<string, string | number | undefined | null> = {}
 ): Promise<AdminLearningMasteryResponse> {
   const qs = queryString(query)
-  return apiClient<AdminLearningMasteryResponse>(`/api/admin/users/${id}/learning/mastery${qs ? `?${qs}` : ''}`, { headers })
+  return adminApiClient<AdminLearningMasteryResponse>(`/api/admin/users/${id}/learning/mastery${qs ? `?${qs}` : ''}`, { headers })
 }
 
 export async function getAdminLearningConceptAttempts(
@@ -900,7 +1006,7 @@ export async function getAdminLearningConceptAttempts(
   query: Record<string, string | number | undefined | null> = {}
 ): Promise<AdminLearningConceptAttemptsResponse> {
   const qs = queryString(query)
-  return apiClient<AdminLearningConceptAttemptsResponse>(
+  return adminApiClient<AdminLearningConceptAttemptsResponse>(
     `/api/admin/users/${id}/learning/concepts/${conceptId}/attempts${qs ? `?${qs}` : ''}`,
     { headers }
   )
@@ -912,7 +1018,7 @@ export async function getAdminLearningSessions(
   query: Record<string, string | number | undefined | null> = {}
 ): Promise<AdminLearningSessionsResponse> {
   const qs = queryString(query)
-  return apiClient<AdminLearningSessionsResponse>(`/api/admin/users/${id}/learning/sessions${qs ? `?${qs}` : ''}`, { headers })
+  return adminApiClient<AdminLearningSessionsResponse>(`/api/admin/users/${id}/learning/sessions${qs ? `?${qs}` : ''}`, { headers })
 }
 
 export async function getAdminLearningSessionDetail(
@@ -920,7 +1026,7 @@ export async function getAdminLearningSessionDetail(
   id: string,
   sessionId: string
 ): Promise<AdminLearningSessionDetailResponse> {
-  return apiClient<AdminLearningSessionDetailResponse>(
+  return adminApiClient<AdminLearningSessionDetailResponse>(
     `/api/admin/users/${id}/learning/sessions/${sessionId}`,
     { headers }
   )
@@ -932,7 +1038,7 @@ export async function getAdminLearningRoadmaps(
   query: Record<string, string | number | undefined | null> = {}
 ): Promise<AdminLearningRoadmapsResponse> {
   const qs = queryString(query)
-  return apiClient<AdminLearningRoadmapsResponse>(`/api/admin/users/${id}/learning/roadmaps${qs ? `?${qs}` : ''}`, { headers })
+  return adminApiClient<AdminLearningRoadmapsResponse>(`/api/admin/users/${id}/learning/roadmaps${qs ? `?${qs}` : ''}`, { headers })
 }
 
 export async function getAdminLearningRoadmapDetail(
@@ -940,7 +1046,7 @@ export async function getAdminLearningRoadmapDetail(
   id: string,
   roadmapId: string
 ): Promise<AdminLearningRoadmapDetail> {
-  return apiClient<AdminLearningRoadmapDetail>(
+  return adminApiClient<AdminLearningRoadmapDetail>(
     `/api/admin/users/${id}/learning/roadmaps/${roadmapId}`,
     { headers }
   )
@@ -1006,27 +1112,27 @@ export async function getAdminRoles(
   query: AdminRolesQuery = {}
 ): Promise<AdminRolesResponse> {
   const qs = queryString(query)
-  return apiClient<AdminRolesResponse>(`/api/admin/roles${qs ? `?${qs}` : ''}`, { headers })
+  return adminApiClient<AdminRolesResponse>(`/api/admin/roles${qs ? `?${qs}` : ''}`, { headers })
 }
 
 export async function getAdminRole(
   headers: Record<string, string>,
   id: string
 ): Promise<AdminRoleDetail> {
-  return apiClient<AdminRoleDetail>(`/api/admin/roles/${id}`, { headers })
+  return adminApiClient<AdminRoleDetail>(`/api/admin/roles/${id}`, { headers })
 }
 
 export async function getAdminPermissions(
   headers: Record<string, string>
 ): Promise<AdminPermissionsGrouped> {
-  return apiClient<AdminPermissionsGrouped>('/api/admin/permissions', { headers })
+  return adminApiClient<AdminPermissionsGrouped>('/api/admin/permissions', { headers })
 }
 
 export async function createAdminRole(
   headers: Record<string, string>,
   body: CreateAdminRoleBody
 ): Promise<AdminRoleDetail> {
-  return apiClient<AdminRoleDetail>('/api/admin/roles', {
+  return adminApiClient<AdminRoleDetail>('/api/admin/roles', {
     method: 'POST',
     headers,
     body,
@@ -1038,7 +1144,7 @@ export async function updateAdminRole(
   id: string,
   body: UpdateAdminRoleBody
 ): Promise<AdminRoleDetail> {
-  return apiClient<AdminRoleDetail>(`/api/admin/roles/${id}`, {
+  return adminApiClient<AdminRoleDetail>(`/api/admin/roles/${id}`, {
     method: 'PATCH',
     headers,
     body,
@@ -1049,7 +1155,7 @@ export async function deleteAdminRole(
   headers: Record<string, string>,
   id: string
 ): Promise<{ deleted: true }> {
-  return apiClient<{ deleted: true }>(`/api/admin/roles/${id}`, {
+  return adminApiClient<{ deleted: true }>(`/api/admin/roles/${id}`, {
     method: 'DELETE',
     headers,
   })

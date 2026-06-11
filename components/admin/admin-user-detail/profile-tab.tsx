@@ -7,6 +7,7 @@ import { Pencil } from 'lucide-react'
 import { format } from 'date-fns'
 
 import { patchAdminUser, type AdminUserDetail } from '@/lib/api/admin'
+import { useAdminMutation } from '@/lib/hooks/use-admin-mutation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -44,6 +45,7 @@ function formatDateOrDash(value: string | null) {
 
 export function ProfileTab({ detail, authHeaders }: ProfileTabProps) {
   const router = useRouter()
+  const { runSensitive } = useAdminMutation()
   const [isPending, startTransition] = useTransition()
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(detail.name)
@@ -56,7 +58,9 @@ export function ProfileTab({ detail, authHeaders }: ProfileTabProps) {
     }
     setBusy(true)
     try {
-      await patchAdminUser(authHeaders, detail.id, { name: name.trim() })
+      await runSensitive(() =>
+        patchAdminUser(authHeaders, detail.id, { name: name.trim() })
+      )
       toast.success('Name updated')
       setEditing(false)
       startTransition(() => router.refresh())

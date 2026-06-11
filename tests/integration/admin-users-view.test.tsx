@@ -26,6 +26,12 @@ vi.mock('next-auth/react', () => ({
   useSession: () => ({ data: { accessToken: 'token' } }),
 }))
 
+vi.mock('@/lib/hooks/use-admin-mutation', () => ({
+  useAdminMutation: () => ({
+    runSensitive: <T,>(fn: () => Promise<T>) => fn(),
+  }),
+}))
+
 vi.mock('sonner', () => ({
   toast: {
     success: toastSuccessMock,
@@ -168,6 +174,23 @@ describe('AdminUsersView', () => {
     expect(screen.getByLabelText('Cannot select your own account')).toHaveAttribute('aria-disabled', 'true')
   })
 
+  it('runs bulk reactivate and reports successful results', async () => {
+    const user = userEvent.setup()
+    reactivateMock.mockResolvedValue({ succeeded: ['user-1'], failed: [] })
+    renderView(makeUsers({
+      items: [makeUser({ id: 'user-1', status: 'SUSPENDED', suspendedAt: '2026-05-10T10:00:00.000Z' })],
+    }))
+
+    await user.click(screen.getByLabelText('Select ada@example.com'))
+    await user.click(screen.getByRole('button', { name: /^reactivate$/i }))
+    await user.click(screen.getByRole('button', { name: /reactivate users/i }))
+
+    await waitFor(() => {
+      expect(reactivateMock).toHaveBeenCalledWith({}, { userIds: ['user-1'] })
+    })
+    expect(toastSuccessMock).toHaveBeenCalledWith('1 user reactivated')
+  })
+
   it('runs bulk suspend and reports successful results', async () => {
     const user = userEvent.setup()
     suspendMock.mockResolvedValue({ succeeded: ['user-1'], failed: [] })
@@ -179,10 +202,7 @@ describe('AdminUsersView', () => {
     await user.click(screen.getByRole('button', { name: /suspend users/i }))
 
     await waitFor(() => {
-      expect(suspendMock).toHaveBeenCalledWith(
-        { Authorization: 'Bearer token' },
-        { userIds: ['user-1'], reason: 'Policy review' }
-      )
+      expect(suspendMock).toHaveBeenCalledWith({}, { userIds: ['user-1'], reason: 'Policy review' })
     })
     expect(toastSuccessMock).toHaveBeenCalledWith('1 user suspended')
     expect(refreshMock).toHaveBeenCalled()

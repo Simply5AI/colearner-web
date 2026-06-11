@@ -48,6 +48,14 @@ export function RolesTab({ detail, currentAdminId, authHeaders }: RolesTabProps)
   const systemRoles = availableForAssign.filter((r) => r.isSystem)
   const orgRoles = availableForAssign.filter((r) => !r.isSystem)
 
+  const roleLabelById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const role of detail.availableRoles) {
+      map.set(role.id, formatRoleLabel(role.name, role.isSystem))
+    }
+    return map
+  }, [detail.availableRoles])
+
   const refresh = () => startTransition(() => router.refresh())
 
   const assign = async () => {
@@ -101,7 +109,11 @@ export function RolesTab({ detail, currentAdminId, authHeaders }: RolesTabProps)
                       ? 'No additional roles available'
                       : 'Select a role…'
                   }
-                />
+                >
+                  {(value: string | null) =>
+                    value ? (roleLabelById.get(value) ?? 'Select a role…') : null
+                  }
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {availableForAssign.length === 0 && (
@@ -111,14 +123,12 @@ export function RolesTab({ detail, currentAdminId, authHeaders }: RolesTabProps)
                 )}
                 {systemRoles.map((role) => (
                   <SelectItem key={role.id} value={role.id}>
-                    {role.name}
-                    <span className="ml-2 text-xs text-muted-foreground">system</span>
+                    {formatRoleLabel(role.name, true)}
                   </SelectItem>
                 ))}
                 {orgRoles.map((role) => (
                   <SelectItem key={role.id} value={role.id}>
-                    {role.name}
-                    <span className="ml-2 text-xs text-muted-foreground">org</span>
+                    {formatRoleLabel(role.name, false)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -200,4 +210,13 @@ export function RolesTab({ detail, currentAdminId, authHeaders }: RolesTabProps)
       </Card>
     </div>
   )
+}
+
+function formatRoleLabel(name: string, isSystem: boolean) {
+  const readable = name
+    .toLowerCase()
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+  return `${readable} (${isSystem ? 'system' : 'org'})`
 }

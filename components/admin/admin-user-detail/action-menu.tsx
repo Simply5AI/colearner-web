@@ -12,6 +12,7 @@ import {
   suspendAdminUser,
   type AdminUserDetail,
 } from '@/lib/api/admin'
+import { useAdminMutation } from '@/lib/hooks/use-admin-mutation'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -42,6 +43,7 @@ interface ActionMenuProps {
 
 export function AdminUserActionMenu({ detail, currentAdminId, authHeaders }: ActionMenuProps) {
   const router = useRouter()
+  const { runSensitive } = useAdminMutation()
   const [isPending, startTransition] = useTransition()
   const [open, setOpen] = useState<AdminAction | null>(null)
   const [reason, setReason] = useState('')
@@ -71,7 +73,9 @@ export function AdminUserActionMenu({ detail, currentAdminId, authHeaders }: Act
     }
     setBusy(true)
     try {
-      await suspendAdminUser(authHeaders, detail.id, { reason: reason.trim() })
+      await runSensitive(() =>
+        suspendAdminUser(authHeaders, detail.id, { reason: reason.trim() })
+      )
       toast.success(`Suspended ${detail.email}`)
       close()
       refresh()
@@ -87,7 +91,7 @@ export function AdminUserActionMenu({ detail, currentAdminId, authHeaders }: Act
   const runReactivate = async () => {
     setBusy(true)
     try {
-      await reactivateAdminUser(authHeaders, detail.id)
+      await runSensitive(() => reactivateAdminUser(authHeaders, detail.id))
       toast.success(`Reactivated ${detail.email}`)
       close()
       refresh()
@@ -103,7 +107,7 @@ export function AdminUserActionMenu({ detail, currentAdminId, authHeaders }: Act
   const runResetPassword = async () => {
     setBusy(true)
     try {
-      await resetAdminUserPassword(authHeaders, detail.id)
+      await runSensitive(() => resetAdminUserPassword(authHeaders, detail.id))
       toast.success(`Password-reset email sent to ${detail.email}`)
       close()
     } catch (error) {
@@ -122,7 +126,7 @@ export function AdminUserActionMenu({ detail, currentAdminId, authHeaders }: Act
     }
     setBusy(true)
     try {
-      await deleteAdminUser(authHeaders, detail.id)
+      await runSensitive(() => deleteAdminUser(authHeaders, detail.id))
       toast.success(`Deleted ${detail.email}`)
       close()
       refresh()

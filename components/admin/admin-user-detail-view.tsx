@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { useMemo } from 'react'
 import { useSession } from 'next-auth/react'
-import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Copy, ExternalLink } from 'lucide-react'
+import { toast } from 'sonner'
 
 import type { AdminUserDetail } from '@/lib/api/admin'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -75,11 +76,28 @@ export function AdminUserDetailView({ detail, currentAdminId }: AdminUserDetailV
             {statusBadge(detail.status)}
             <Badge variant="outline">{detail.systemRole}</Badge>
           </div>
-          <div className="mt-1 text-sm text-muted-foreground">
-            {detail.email} ·{' '}
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+            <span>{detail.email}</span>
+            <span>·</span>
             <span className="text-foreground/80">
               {detail.org.name} <span className="opacity-60">({detail.org.slug})</span>
             </span>
+            <span>·</span>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground hover:text-foreground"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(detail.id)
+                  toast.success('User ID copied')
+                } catch {
+                  toast.error('Could not copy user ID')
+                }
+              }}
+            >
+              {detail.id.slice(0, 8)}…
+              <Copy className="h-3 w-3" />
+            </button>
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+
 import { format, formatDistanceToNow } from 'date-fns'
 import {
   ChevronLeft,
@@ -56,6 +56,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { useAdminMutation } from '@/lib/hooks/use-admin-mutation'
 
 const ALL = 'all'
 const PAGE_SIZES = [25, 50, 100]
@@ -81,7 +82,7 @@ interface AdminUsersViewProps {
 export function AdminUsersView({ data, query, currentAdminId }: AdminUsersViewProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { data: session } = useSession()
+  const { runSensitive } = useAdminMutation()
   const [isPending, startTransition] = useTransition()
   const [search, setSearch] = useState(query.search ?? '')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -174,19 +175,21 @@ export function AdminUsersView({ data, query, currentAdminId }: AdminUsersViewPr
   }
 
   const performAction = async () => {
-    if (!confirmAction || !session?.accessToken || selectedIds.size === 0) return
+    if (!confirmAction || selectedIds.size === 0) return
     setIsMutating(true)
-    const headers = { Authorization: `Bearer ${session.accessToken}` }
+    const headers: Record<string, string> = {}
     const userIds = Array.from(selectedIds)
 
     try {
       let result: AdminBulkUsersResponse
       if (confirmAction === 'suspend') {
-        result = await suspendAdminUsers(headers, { userIds, reason: suspendReason })
+        result = await runSensitive(() =>
+          suspendAdminUsers(headers, { userIds, reason: suspendReason })
+        )
       } else if (confirmAction === 'reactivate') {
-        result = await reactivateAdminUsers(headers, { userIds })
+        result = await runSensitive(() => reactivateAdminUsers(headers, { userIds }))
       } else {
-        result = await deleteAdminUsers(headers, { userIds })
+        result = await runSensitive(() => deleteAdminUsers(headers, { userIds }))
       }
 
       showBulkResult(confirmAction, result)
@@ -405,7 +408,8 @@ export function AdminUsersView({ data, query, currentAdminId }: AdminUsersViewPr
                       key={user.id}
                       className={cn(
                         'border-b transition-colors hover:bg-muted/30',
-                        user.status === 'DELETED' && 'bg-muted/30 text-muted-foreground'
+                        (user.status === 'DELETED' || user.status === 'SUSPENDED') &&
+                          'bg-muted/30 text-muted-foreground'
                       )}
                     >
                       <td className="px-4 py-3">
@@ -460,16 +464,22 @@ export function AdminUsersView({ data, query, currentAdminId }: AdminUsersViewPr
                               Open details
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem disabled={isSelf || user.status === 'DELETED'} onClick={() => openSingleAction('suspend', user.id)}>
+                            <DropdownMenuItem
+                              disabled={isSelf || user.status !== 'ACTIVE'}
+                              onClick={() => openSingleAction('suspend', user.id)}
+                            >
                               <UserX className="h-4 w-4" />
                               Suspend
                             </DropdownMenuItem>
-                            <DropdownMenuItem disabled={isSelf || user.status === 'DELETED'} onClick={() => openSingleAction('reactivate', user.id)}>
+                            <DropdownMenuItem
+                              disabled={isSelf || user.status !== 'SUSPENDED'}
+                              onClick={() => openSingleAction('reactivate', user.id)}
+                            >
                               <RotateCcw className="h-4 w-4" />
                               Reactivate
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              disabled={isSelf}
+                              disabled={isSelf || user.status === 'DELETED'}
                               variant="destructive"
                               onClick={() => openSingleAction('delete', user.id)}
                             >
