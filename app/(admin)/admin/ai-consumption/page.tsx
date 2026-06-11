@@ -4,10 +4,10 @@ import { getLlmConsumption } from '@/lib/api/admin'
 import { AiConsumptionView } from '@/components/admin/ai-consumption-view'
 
 export const metadata: Metadata = {
-  title: 'AI Consumption — Admin',
+  title: 'AI Usage — Admin',
 }
 
-export default async function AdminAiConsumptionPage() {
+export default async function AdminAiUsagePage() {
   const headers = await getAdminHeaders()
   const initial = await getLlmConsumption(headers, '30d', 'agent')
   return <AiConsumptionView initial={initial} />

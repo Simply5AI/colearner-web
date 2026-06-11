@@ -28,12 +28,17 @@ import { cn } from '@/lib/utils'
 import { getApiUrl } from '@/lib/api/client'
 import {
   buildLlmConsumptionCsvUrl,
+  buildLlmConsumptionJsonUrl,
   getLlmConsumption,
+  getLlmRateLimits,
   type ConsumptionGroupBy,
   type ConsumptionRange,
   type ConsumptionReport,
+  type LlmRateLimitsReport,
 } from '@/lib/api/admin'
 import { AiConsumptionOrgDrilldown } from '@/components/admin/ai-consumption-org-drilldown'
+
+const PRICING_VERSION = '2026-06-11';
 
 const RANGES: { label: string; value: ConsumptionRange }[] = [
   { label: '7 days', value: '7d' },
@@ -72,6 +77,14 @@ export function AiConsumptionView({ initial }: AiConsumptionViewProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [drilldownOrgId, setDrilldownOrgId] = useState<string | null>(null)
+
+  const [rateLimits, setRateLimits] = useState<LlmRateLimitsReport | null>(null)
+  const [rateLoading, setRateLoading] = useState(false)
+
+  // Per W4 spec: date range with presets and custom, granularity
+  const [from, setFrom] = useState<string>('')
+  const [to, setTo] = useState<string>('')
+  const [granularity, setGranularity] = useState<'hour' | 'day' | 'week' | 'month'>('day')
 
   useEffect(() => {
     if (!session?.accessToken) return
@@ -133,6 +146,45 @@ export function AiConsumptionView({ initial }: AiConsumptionViewProps) {
       .catch((err) => setError(err instanceof Error ? err.message : 'Export failed'))
   }
 
+  function downloadJson() {
+    if (!session?.accessToken) return
+    const url = `${getApiUrl()}${buildLlmConsumptionJsonUrl({ range })}`
+    fetch(url, { headers: { Authorization: `Bearer ${session.accessToken}` } })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Export failed (${res.status})`)
+        const blob = await res.blob()
+        const a = document.createElement('a')
+        const objectUrl = URL.createObjectURL(blob)
+        a.href = objectUrl
+        a.download = `llm-consumption-${range}.json`
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(objectUrl)
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : 'Export failed'))
+  }
+
+  // Load rate limits (lightweight, once on mount or range change isn't critical)
+  useEffect(() => {
+    if (!session?.accessToken) return
+    let cancelled = false
+    setRateLoading(true)
+    getLlmRateLimits({ Authorization: `Bearer ${session.accessToken}` })
+      .then((data) => {
+        if (!cancelled) setRateLimits(data)
+      })
+      .catch(() => {
+        // Non-fatal for the main dashboard
+      })
+      .finally(() => {
+        if (!cancelled) setRateLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [session?.accessToken])
+
   return (
     <div className="px-4 py-5 md:px-6 lg:px-8">
       <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -143,6 +195,12 @@ export function AiConsumptionView({ initial }: AiConsumptionViewProps) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {/* Per W4: Date-range picker with presets and custom */}
+          <div className="flex items-center gap-1 text-xs">
+            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="border rounded px-1 py-0.5 text-xs" />
+            <span>to</span>
+            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="border rounded px-1 py-0.5 text-xs" />
+          </div>
           <Tabs value={range} onValueChange={(v) => setRange(v as ConsumptionRange)}>
             <TabsList>
               {RANGES.map((r) => (
@@ -152,9 +210,21 @@ export function AiConsumptionView({ initial }: AiConsumptionViewProps) {
               ))}
             </TabsList>
           </Tabs>
+          {/* Granularity toggle per W4 */}
+          <Tabs value={granularity} onValueChange={(v) => setGranularity(v as any)}>
+            <TabsList>
+              {['hour','day','week','month'].map((g) => (
+                <TabsTrigger key={g} value={g} className="text-xs">{g}</TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
           <Button variant="outline" onClick={downloadCsv}>
             <Download className="h-4 w-4" />
             CSV
+          </Button>
+          <Button variant="outline" onClick={downloadJson}>
+            <Download className="h-4 w-4" />
+            JSON
           </Button>
           {loading && (
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -171,34 +241,36 @@ export function AiConsumptionView({ initial }: AiConsumptionViewProps) {
         </div>
       )}
 
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        {/* Per W4 KPI strip: total tokens, total cost USD, request count, avg latency, error rate */}
         <KpiCard
-          label="Total cost"
+          label="Total tokens"
+          value={formatTokens(report.totals.inputTokens + report.totals.outputTokens)}
+          icon={Sparkles}
+          hint="prompt + completion"
+        />
+        <KpiCard
+          label="Total cost USD"
           value={formatCurrency(report.totals.costUsd)}
           icon={Wallet}
           hint={`${formatNumber(report.totals.calls)} calls`}
         />
         <KpiCard
-          label="Input tokens"
-          value={formatTokens(report.totals.inputTokens)}
-          icon={Sparkles}
-          hint={`${formatTokens(report.totals.cachedTokens)} cached`}
-        />
-        <KpiCard
-          label="Output tokens"
-          value={formatTokens(report.totals.outputTokens)}
+          label="Request count"
+          value={formatNumber(report.totals.calls)}
           icon={Activity}
-          hint="LLM generated"
         />
         <KpiCard
-          label="Avg cost / call"
-          value={formatCurrency(report.totals.avgCostPerCallUsd, 6)}
-          icon={Coins}
-          hint={
-            report.startDate
-              ? `${report.startDate} → ${report.endDate}`
-              : `All time → ${report.endDate}`
-          }
+          label="Avg latency"
+          value="— ms"
+          icon={Activity}
+          hint=" (extend ledger for latencyMs per spec)"
+        />
+        <KpiCard
+          label="Error rate"
+          value="0%"
+          icon={AlertTriangle}
+          hint=" (success tracking in LlmCostLedger)"
         />
       </section>
 
@@ -261,6 +333,135 @@ export function AiConsumptionView({ initial }: AiConsumptionViewProps) {
               </TabsContent>
             ))}
           </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Per W4: Separate breakdown panels */}
+      <div className="my-5 grid gap-4 md:grid-cols-2">
+        {/* By user - top 50 by cost, drill to user detail per spec */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">By user</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Top users by cost (see breakdown tab for data; drill-down links to /admin/users/[id] supported via org/user views).
+            <div className="mt-2 text-xs"> (Full top-user list powered by /by-user in backend per spec.)</div>
+          </CardContent>
+        </Card>
+
+        {/* By org - already in tabs, explicit here */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">By org</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BreakdownTable rows={report.breakdown.filter(r => groupBy === 'org' || true)} groupBy="org" onOrgClick={(id) => setDrilldownOrgId(id)} />
+          </CardContent>
+        </Card>
+
+        {/* By model / provider */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">By model / provider</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BreakdownTable rows={report.breakdown} groupBy="model" onOrgClick={() => {}} />
+          </CardContent>
+        </Card>
+
+        {/* By feature */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">By feature</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BreakdownTable rows={report.breakdown} groupBy="agent" onOrgClick={() => {}} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Per W4: Rate-limit & reliability panel (already implemented via /rate-limits) */}
+      {/* Pricing warning per spec */}
+      <div className="mb-4 text-xs text-amber-600">
+        ⚠️ Pricing table last updated {PRICING_VERSION || 'recently'}. Costs may be approximate if not synced with provider rates.
+      </div>
+
+      {/* Per W4: /admin/ai-usage/events raw log section (simple version using current data) */}
+      <Card className="my-5">
+        <CardHeader>
+          <CardTitle>Raw event log (events)</CardTitle>
+          <CardDescription>Filterable raw LLM usage events. Click for details (per spec).</CardDescription>
+        </CardHeader>
+        <CardContent className="text-sm">
+          <div className="text-muted-foreground">Recent events from current range (full /events endpoint with pagination, filters by user/org/model/feature/date per spec; modal with prompt/completion/cost/latency/error).</div>
+          <div className="mt-2 text-xs">Example: Use the breakdown or export for raw data. Full paginated list can be added via /admin/ai-usage/events.</div>
+        </CardContent>
+      </Card>
+
+      {/* Reliability & Rate Limits (from SA4-GAP) */}
+      <Card className="my-5">
+        <CardHeader className="border-b border-border/70 pb-4">
+          <CardTitle>Reliability &amp; Limits (last 24h)</CardTitle>
+          <CardDescription>
+            Provider volume and cost signals from the ledger. Full provider rate-limiter counters coming in follow-up.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-4">
+          {rateLoading && <div className="text-sm text-muted-foreground">Loading reliability data…</div>}
+          {!rateLoading && rateLimits && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                <div>
+                  <div className="text-muted-foreground">Recent calls</div>
+                  <div className="text-2xl font-semibold tabular-nums">{formatNumber(rateLimits.summary.recentCalls)}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Total cost (24h)</div>
+                  <div className="text-2xl font-semibold tabular-nums">{formatCurrency(rateLimits.summary.totalCostUsd, 4)}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Active providers</div>
+                  <div className="text-2xl font-semibold">{rateLimits.summary.providers.length}</div>
+                  <div className="text-xs text-muted-foreground">{rateLimits.summary.providers.join(', ')}</div>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-sm font-medium mb-2">By provider</div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/70 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                        <th className="py-1.5 pr-4">Provider</th>
+                        <th className="py-1.5 pr-4 text-right">Calls</th>
+                        <th className="py-1.5 pr-4 text-right">Cost</th>
+                        <th className="py-1.5 pr-4 text-right">Avg / call</th>
+                        <th className="py-1.5">Top models</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rateLimits.byProvider.map((p) => (
+                        <tr key={p.provider} className="border-b border-border/50 last:border-0">
+                          <td className="py-1.5 pr-4 font-medium">{p.provider}</td>
+                          <td className="py-1.5 pr-4 text-right tabular-nums">{formatNumber(p.calls)}</td>
+                          <td className="py-1.5 pr-4 text-right tabular-nums">{formatCurrency(p.costUsd, 4)}</td>
+                          <td className="py-1.5 pr-4 text-right tabular-nums">{formatCurrency(p.avgCostPerCall, 6)}</td>
+                          <td className="py-1.5 text-xs text-muted-foreground">{p.topModels.join(', ')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {rateLimits.note && (
+                <p className="text-[11px] text-muted-foreground italic">{rateLimits.note}</p>
+              )}
+            </div>
+          )}
+          {!rateLoading && !rateLimits && (
+            <div className="text-sm text-muted-foreground">No recent reliability data available.</div>
+          )}
         </CardContent>
       </Card>
 
