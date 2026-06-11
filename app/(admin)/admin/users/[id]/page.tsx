@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { auth } from '@/lib/auth/config'
-import { getAuthHeaders } from '@/lib/api/auth-headers'
+import { getAdminHeaders } from '@/lib/api/admin-session'
 import { getAdminUser } from '@/lib/api/admin'
 import { AdminUserDetailView } from '@/components/admin/admin-user-detail-view'
 
@@ -14,7 +14,7 @@ type AdminUserDetailPageProps = {
 }
 
 export default async function AdminUserDetailPage({ params }: AdminUserDetailPageProps) {
-  const [{ id }, headers, session] = await Promise.all([params, getAuthHeaders(), auth()])
+  const [{ id }, headers, session] = await Promise.all([params, getAdminHeaders(), auth()])
 
   let detail
   try {

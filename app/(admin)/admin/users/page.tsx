@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { auth } from '@/lib/auth/config'
-import { getAuthHeaders } from '@/lib/api/auth-headers'
+import { getAdminHeaders } from '@/lib/api/admin-session'
 import { getAdminUsers, type AdminUserSort, type AdminUserStatus, type AdminUsersQuery } from '@/lib/api/admin'
 import { AdminUsersView } from '@/components/admin/admin-users-view'
 
@@ -23,7 +23,7 @@ const USER_SORTS = new Set<AdminUserSort>([
 ])
 
 export default async function AdminUsersPage({ searchParams }: AdminUsersPageProps) {
-  const [params, headers, session] = await Promise.all([searchParams, getAuthHeaders(), auth()])
+  const [params, headers, session] = await Promise.all([searchParams, getAdminHeaders(), auth()])
   const query = normalizeQuery(params)
   const data = await getAdminUsers(headers, query)
 

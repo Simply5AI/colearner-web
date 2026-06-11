@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   Activity,
   BookOpen,
@@ -9,12 +9,17 @@ import {
   CreditCard,
   Gauge,
   Library,
+  LogOut,
   Search,
   Shield,
   Sparkles,
   Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { adminLogout } from '@/lib/api/admin-auth-client'
+import { AdminIdleGuard } from '@/components/admin/admin-auth/admin-idle-guard'
+import { AdminReauthProvider } from '@/components/admin/admin-auth/admin-reauth-provider'
 
 type AdminNavItem = {
   href: string
@@ -82,13 +87,16 @@ interface AdminShellProps {
 
 export function AdminShell({ children, adminEmail }: AdminShellProps) {
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
-      <AdminSidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <AdminTopbar adminEmail={adminEmail} />
-        <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
+    <AdminReauthProvider>
+      <div className="flex min-h-screen bg-background text-foreground">
+        <AdminSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <AdminTopbar adminEmail={adminEmail} />
+          <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
+        </div>
       </div>
-    </div>
+      <AdminIdleGuard />
+    </AdminReauthProvider>
   )
 }
 
@@ -154,6 +162,13 @@ function AdminSidebar() {
 }
 
 function AdminTopbar({ adminEmail }: { adminEmail?: string | null }) {
+  const router = useRouter()
+
+  const signOut = async () => {
+    await adminLogout().catch(() => undefined)
+    router.replace('/admin/login')
+  }
+
   return (
     <header className="sticky top-0 z-20 border-b border-border/70 bg-background/95 px-4 py-3 backdrop-blur md:px-6">
       <div className="flex items-center gap-3">
@@ -173,6 +188,15 @@ function AdminTopbar({ adminEmail }: { adminEmail?: string | null }) {
           <p className="truncate text-sm font-semibold">{adminEmail ?? 'Super Admin'}</p>
           <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Super admin</p>
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={signOut}
+          aria-label="Sign out"
+          title="Sign out"
+        >
+          <LogOut className="h-4 w-4" />
+        </Button>
       </div>
     </header>
   )

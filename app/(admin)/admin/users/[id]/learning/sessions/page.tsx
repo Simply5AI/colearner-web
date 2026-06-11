@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getAuthHeaders } from '@/lib/api/auth-headers'
+import { getAdminHeaders } from '@/lib/api/admin-session'
 import { getAdminLearningOverview, getAdminLearningSessions } from '@/lib/api/admin'
 import { AdminLearningSessions } from '@/components/admin/admin-learning/sessions'
 
@@ -14,7 +14,7 @@ type PageProps = {
 }
 
 export default async function AdminLearningSessionsPage({ params, searchParams }: PageProps) {
-  const [{ id }, query, headers] = await Promise.all([params, searchParams, getAuthHeaders()])
+  const [{ id }, query, headers] = await Promise.all([params, searchParams, getAdminHeaders()])
 
   try {
     const [overview, data] = await Promise.all([

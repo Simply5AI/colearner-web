@@ -146,8 +146,9 @@ export function AdminRolesView({ data, permissions, selectedRoleId }: AdminRoles
     try {
       const orgs = await getAdminOrgs(authHeaders, { limit: 100, sort: 'created_desc' })
       setOrgOptions(orgs.items)
-      if (orgs.items[0]) {
-        setCreateForm((current) => ({ ...current, orgId: orgs.items[0].id }))
+      const firstOrg = orgs.items[0]
+      if (firstOrg) {
+        setCreateForm((current) => ({ ...current, orgId: firstOrg.id }))
       }
     } catch (error) {
       toast.error('Failed to load organizations', {
@@ -477,7 +478,7 @@ export function AdminRolesView({ data, permissions, selectedRoleId }: AdminRoles
               <Select
                 value={createForm.orgId}
                 onValueChange={(value) => {
-                  setCreateForm((current) => ({ ...current, orgId: value }))
+                  setCreateForm((current) => ({ ...current, orgId: value ?? '' }))
                   setCreateErrors((current) => ({ ...current, orgId: undefined, form: undefined }))
                 }}
                 disabled={orgsLoading}

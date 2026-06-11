@@ -12,7 +12,7 @@ import {
   UserRound,
 } from 'lucide-react'
 
-import { getAuthHeaders } from '@/lib/api/auth-headers'
+import { getAdminHeaders } from '@/lib/api/admin-session'
 import {
   getAdminUsers,
   type AdminUserListRow,
@@ -31,7 +31,7 @@ type AdminLearningPageProps = {
 const PAGE_SIZES = [25, 50, 100]
 
 export default async function AdminLearningPage({ searchParams }: AdminLearningPageProps) {
-  const [params, headers] = await Promise.all([searchParams, getAuthHeaders()])
+  const [params, headers] = await Promise.all([searchParams, getAdminHeaders()])
   const query = normalizeQuery(params)
   const data = await getAdminUsers(headers, query)
   const limit = query.limit ?? 25

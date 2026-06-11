@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getAuthHeaders } from '@/lib/api/auth-headers'
+import { getAdminHeaders } from '@/lib/api/admin-session'
 import { getAdminPermissions, getAdminRoles } from '@/lib/api/admin'
 import { AdminRolesView } from '@/components/admin/admin-roles-view'
 
@@ -12,7 +12,7 @@ type AdminRolesPageProps = {
 }
 
 export default async function AdminRolesPage({ searchParams }: AdminRolesPageProps) {
-  const [params, headers] = await Promise.all([searchParams, getAuthHeaders()])
+  const [params, headers] = await Promise.all([searchParams, getAdminHeaders()])
   const selectedRoleId = first(params.role)
 
   const [data, permissions] = await Promise.all([

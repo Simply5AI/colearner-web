@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getAuthHeaders } from '@/lib/api/auth-headers'
+import { getAdminHeaders } from '@/lib/api/admin-session'
 import {
   getAdminOrgs,
   type AdminOrgSort,
@@ -31,7 +31,7 @@ const ORG_SORTS = new Set<AdminOrgSort>([
 ])
 
 export default async function AdminOrgsPage({ searchParams }: AdminOrgsPageProps) {
-  const [params, headers] = await Promise.all([searchParams, getAuthHeaders()])
+  const [params, headers] = await Promise.all([searchParams, getAdminHeaders()])
   const query = normalizeQuery(params)
   const data = await getAdminOrgs(headers, query)
 

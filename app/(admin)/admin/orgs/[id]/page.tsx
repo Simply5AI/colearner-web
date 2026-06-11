@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getAuthHeaders } from '@/lib/api/auth-headers'
+import { getAdminHeaders } from '@/lib/api/admin-session'
 import { getAdminOrg, getAdminOrgMembers } from '@/lib/api/admin'
 import { AdminOrgDetailView } from '@/components/admin/admin-org-detail-view'
 
@@ -13,7 +13,7 @@ type AdminOrgDetailPageProps = {
 }
 
 export default async function AdminOrgDetailPage({ params }: AdminOrgDetailPageProps) {
-  const [{ id }, headers] = await Promise.all([params, getAuthHeaders()])
+  const [{ id }, headers] = await Promise.all([params, getAdminHeaders()])
 
   let detail
   let members
