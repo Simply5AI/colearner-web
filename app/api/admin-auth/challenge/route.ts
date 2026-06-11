@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { callBackend } from '@/lib/api/admin-bff'
-import { ADMIN_PREAUTH_COOKIE, ADMIN_SESSION_COOKIE } from '@/lib/admin/session-cookie'
+import { getApiUrl } from '@/lib/api/client'
+import {
+  ADMIN_PREAUTH_COOKIE,
+  ADMIN_SESSION_COOKIE,
+  ADMIN_SESSION_TTL_SECONDS,
+} from '@/lib/admin/session-cookie'
 
-interface ChallengeResult {
-  status: 'authenticated'
-  sessionId: string
-  ttl: number
+/** Parse the admin session id + max-age out of the backend Set-Cookie header. */
+function parseSessionCookie(setCookies: string[]): { sessionId: string; ttl: number } | null {
+  const target = setCookies.find((c) => c.startsWith(`${ADMIN_SESSION_COOKIE}=`))
+  if (!target) return null
+  const pair = target.split(';')[0] ?? ''
+  const sessionId = pair.slice(ADMIN_SESSION_COOKIE.length + 1)
+  if (!sessionId) return null
+  const maxAge = /max-age=(\d+)/i.exec(target)
+  return { sessionId, ttl: maxAge ? Number(maxAge[1]) : ADMIN_SESSION_TTL_SECONDS }
 }
 
 export async function POST(req: NextRequest) {
@@ -23,27 +32,45 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Authentication code is required' }, { status: 400 })
   }
 
-  const result = await callBackend<ChallengeResult>('/api/admin/auth/totp/challenge', {
+  // Call the backend directly (not callBackend) so we can read its Set-Cookie
+  // header server-to-server — the session id is never returned in the body.
+  const backendRes = await fetch(`${getApiUrl()}/api/admin/auth/totp/challenge`, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ preAuthToken, code }),
+    cache: 'no-store',
   })
+  const json = await backendRes.json().catch(() => null)
 
-  if (!result.ok || !result.data) {
+  if (!backendRes.ok) {
     return NextResponse.json(
-      { message: result.message ?? 'Invalid code' },
-      { status: result.status || 401 }
+      { message: (json?.message as string) ?? 'Invalid code' },
+      { status: backendRes.status || 401 }
+    )
+  }
+
+  const setCookies =
+    typeof backendRes.headers.getSetCookie === 'function'
+      ? backendRes.headers.getSetCookie()
+      : ([backendRes.headers.get('set-cookie')].filter(Boolean) as string[])
+  const parsed = parseSessionCookie(setCookies)
+
+  if (!parsed) {
+    return NextResponse.json(
+      { message: 'Authentication failed. Please try again.' },
+      { status: 502 }
     )
   }
 
   // Re-issue the admin session as an httpOnly cookie on the web origin and clear
   // the spent pre-auth token.
   const res = NextResponse.json({ status: 'authenticated' })
-  res.cookies.set(ADMIN_SESSION_COOKIE, result.data.sessionId, {
+  res.cookies.set(ADMIN_SESSION_COOKIE, parsed.sessionId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: result.data.ttl,
+    maxAge: parsed.ttl,
   })
   res.cookies.set(ADMIN_PREAUTH_COOKIE, '', { path: '/', maxAge: 0 })
   return res
