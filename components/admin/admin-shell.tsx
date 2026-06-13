@@ -65,6 +65,7 @@ const navGroups: Array<{ title: string; items: AdminNavItem[] }> = [
     title: 'Content',
     items: [
       { href: '/admin/content/extractions', label: 'Extractions', icon: Library },
+      { href: '/admin/content/library', label: 'Library', icon: BookOpen },
       { href: '/admin/content/pods', label: 'Pods', icon: Activity },
     ],
   },

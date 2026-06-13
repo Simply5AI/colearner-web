@@ -1350,3 +1350,394 @@ export async function deleteAdminRole(
     headers,
   })
 }
+
+// ─── Content moderation (extractions, library, pods) ─────────────────────────
+
+export type AdminExtractionStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'COMPLETED_PASS1'
+  | 'COMPLETED'
+  | 'FAILED'
+
+export type AdminExtractionSort = 'created_desc' | 'created_asc' | 'duration_desc' | 'duration_asc'
+export type AdminLibrarySort = 'created_desc' | 'created_asc' | 'title_asc' | 'title_desc'
+export type AdminPodSort = 'created_desc' | 'created_asc' | 'members_desc' | 'members_asc'
+export type AdminPodVisibility = 'PUBLIC' | 'INVITE_ONLY'
+export type AdminQuestionType = 'MULTIPLE_CHOICE' | 'FREE_TEXT' | 'TRUE_FALSE' | 'CLOZE'
+
+export interface AdminContentOrgRef {
+  id: string
+  name: string
+  slug?: string
+}
+
+export interface AdminContentUserRef {
+  id: string
+  email: string
+  name?: string
+  avatarUrl?: string | null
+}
+
+export interface AdminContentSourceRef {
+  id: string
+  title: string | null
+  url?: string
+}
+
+export interface AdminPaginated<T> {
+  items: T[]
+  nextCursor: string | null
+  total: number
+}
+
+export interface AdminExtractionsQuery {
+  search?: string
+  status?: AdminExtractionStatus
+  orgId?: string
+  from?: string
+  to?: string
+  sort?: AdminExtractionSort
+  cursor?: string
+  limit?: number
+}
+
+export interface AdminExtractionListRow {
+  id: string
+  sourceUrl: string
+  title: string | null
+  status: AdminExtractionStatus
+  sourceType: string
+  owner: AdminContentUserRef
+  org: AdminContentOrgRef
+  processingTimeMs: number | null
+  conceptCount: number
+  questionCount: number
+  isStuck: boolean
+  createdAt: string
+  updatedAt: string
+  completedAt: string | null
+}
+
+export interface AdminExtractionDetail {
+  id: string
+  org: AdminContentOrgRef
+  owner: AdminContentUserRef
+  sourceUrl: string
+  title: string | null
+  description: string | null
+  summary: string | null
+  status: AdminExtractionStatus
+  sourceType: string
+  transcriptText: string | null
+  transcriptHash: string | null
+  processedModel: string | null
+  processingTimeMs: number | null
+  conceptCount: number
+  questionCount: number
+  createdAt: string
+  updatedAt: string
+  completedAt: string | null
+  metadata: unknown
+  errorMessage: string | null
+  concepts: Array<{
+    id: string
+    title: string
+    description: string | null
+    order: number
+    questions: AdminQuestionDetail[]
+  }>
+  questions: AdminQuestionDetail[]
+  logs: {
+    id: string
+    name: string
+    attemptsMade: number
+    failedReason: string | null
+    processedOn: string | null
+    finishedOn: string | null
+    logs: string[]
+  } | null
+}
+
+export interface AdminLibraryQuery {
+  search?: string
+  sourceId?: string
+  orgId?: string
+  flagged?: 'true' | 'false'
+  sort?: AdminLibrarySort
+  cursor?: string
+  limit?: number
+}
+
+export interface AdminConceptListRow {
+  id: string
+  title: string
+  description: string | null
+  org: AdminContentOrgRef
+  source: AdminContentSourceRef
+  isFlagged: boolean
+  flaggedReason: string | null
+  usageCount: number
+  createdAt: string
+}
+
+export interface AdminConceptDetail {
+  id: string
+  title: string
+  description: string | null
+  org: AdminContentOrgRef
+  source: AdminContentSourceRef | null
+  isFlagged: boolean
+  flaggedReason: string | null
+  createdAt: string
+  questions: AdminQuestionDetail[]
+}
+
+export interface AdminQuestionListRow {
+  id: string
+  text: string
+  type: AdminQuestionType
+  concept: { id: string; title: string }
+  org: AdminContentOrgRef
+  source: AdminContentSourceRef
+  isFlagged: boolean
+  flaggedReason: string | null
+  usageCount: number
+  createdAt: string
+}
+
+export interface AdminQuestionDetail {
+  id: string
+  text: string
+  type: AdminQuestionType
+  options: unknown
+  correctIndex: number | null
+  explanation: string | null
+  concept: { id: string; title: string } | null
+  source: AdminContentSourceRef | null
+  isFlagged: boolean
+  flaggedReason: string | null
+  createdAt: string
+}
+
+export interface AdminDuplicateCandidate {
+  id: string
+  title?: string
+  text?: string
+  description?: string | null
+  type?: AdminQuestionType
+  conceptId?: string
+  extractionId?: string
+  similarity: number
+}
+
+export interface AdminPodsQuery {
+  search?: string
+  visibility?: AdminPodVisibility
+  orgId?: string
+  sort?: AdminPodSort
+  cursor?: string
+  limit?: number
+}
+
+export interface AdminPodListRow {
+  id: string
+  name: string
+  visibility: AdminPodVisibility
+  owner: AdminContentUserRef
+  org: AdminContentOrgRef
+  memberCount: number
+  captureCount: number
+  createdAt: string
+}
+
+export interface AdminPodDetail {
+  id: string
+  name: string
+  description: string | null
+  visibility: AdminPodVisibility
+  org: AdminContentOrgRef
+  ownerId: string
+  createdAt: string
+  members: Array<{
+    id: string
+    role: string
+    joinedAt: string
+    user: AdminContentUserRef
+  }>
+  captures: Array<{
+    id: string
+    note: string | null
+    sharedBy: string
+    createdAt: string
+    extraction: {
+      id: string
+      title: string | null
+      videoUrl: string
+      status: string
+      createdAt: string
+    }
+  }>
+}
+
+function buildAdminContentQuery(
+  params: AdminExtractionsQuery | AdminLibraryQuery | AdminPodsQuery = {},
+) {
+  const qs = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== '') qs.set(key, String(value))
+  }
+  const str = qs.toString()
+  return str ? `?${str}` : ''
+}
+
+export async function getAdminExtractions(
+  headers: Record<string, string>,
+  query: AdminExtractionsQuery = {},
+): Promise<AdminPaginated<AdminExtractionListRow>> {
+  return adminApiClient(`/api/admin/extractions${buildAdminContentQuery(query)}`, { headers })
+}
+
+export async function getAdminExtraction(
+  headers: Record<string, string>,
+  id: string,
+): Promise<AdminExtractionDetail> {
+  return adminApiClient(`/api/admin/extractions/${id}`, { headers })
+}
+
+export async function reprocessAdminExtraction(id: string): Promise<{ jobId: string }> {
+  return adminApiClient(`/api/admin/extractions/${id}/reprocess`, { method: 'POST' })
+}
+
+export async function deleteAdminExtraction(id: string): Promise<{ success: true }> {
+  return adminApiClient(`/api/admin/extractions/${id}`, { method: 'DELETE' })
+}
+
+export async function getAdminConcepts(
+  headers: Record<string, string>,
+  query: AdminLibraryQuery = {},
+): Promise<AdminPaginated<AdminConceptListRow>> {
+  return adminApiClient(`/api/admin/concepts${buildAdminContentQuery(query)}`, { headers })
+}
+
+export async function getAdminConcept(
+  headers: Record<string, string>,
+  id: string,
+): Promise<AdminConceptDetail> {
+  return adminApiClient(`/api/admin/concepts/${id}`, { headers })
+}
+
+export async function updateAdminConcept(
+  id: string,
+  body: { title?: string; description?: string },
+): Promise<unknown> {
+  return adminApiClient(`/api/admin/concepts/${id}`, { method: 'PATCH', body })
+}
+
+export async function flagAdminConcept(id: string, reason: string): Promise<unknown> {
+  return adminApiClient(`/api/admin/concepts/${id}/flag`, { method: 'POST', body: { reason } })
+}
+
+export async function unflagAdminConcept(id: string): Promise<unknown> {
+  return adminApiClient(`/api/admin/concepts/${id}/unflag`, { method: 'POST' })
+}
+
+export async function deleteAdminConcept(id: string): Promise<{
+  success: true
+  affectedReviewSchedules: number
+  affectedQuestions: number
+}> {
+  return adminApiClient(`/api/admin/concepts/${id}`, { method: 'DELETE' })
+}
+
+export async function getAdminConceptDuplicates(
+  headers: Record<string, string>,
+  id: string,
+  threshold = 0.85,
+): Promise<{ items: AdminDuplicateCandidate[] }> {
+  return adminApiClient(`/api/admin/concepts/${id}/duplicates?threshold=${threshold}`, { headers })
+}
+
+export async function mergeAdminConcept(
+  id: string,
+  targetConceptId: string,
+): Promise<{ success: true; targetConceptId: string }> {
+  return adminApiClient(`/api/admin/concepts/${id}/merge`, {
+    method: 'POST',
+    body: { targetConceptId },
+  })
+}
+
+export async function getAdminQuestions(
+  headers: Record<string, string>,
+  query: AdminLibraryQuery = {},
+): Promise<AdminPaginated<AdminQuestionListRow>> {
+  return adminApiClient(`/api/admin/questions${buildAdminContentQuery(query)}`, { headers })
+}
+
+export async function getAdminQuestion(
+  headers: Record<string, string>,
+  id: string,
+): Promise<AdminQuestionDetail> {
+  return adminApiClient(`/api/admin/questions/${id}`, { headers })
+}
+
+export async function updateAdminQuestion(
+  id: string,
+  body: {
+    text?: string
+    type?: AdminQuestionType
+    options?: unknown
+    correctIndex?: number
+    explanation?: string
+  },
+): Promise<unknown> {
+  return adminApiClient(`/api/admin/questions/${id}`, { method: 'PATCH', body })
+}
+
+export async function flagAdminQuestion(id: string, reason: string): Promise<unknown> {
+  return adminApiClient(`/api/admin/questions/${id}/flag`, { method: 'POST', body: { reason } })
+}
+
+export async function unflagAdminQuestion(id: string): Promise<unknown> {
+  return adminApiClient(`/api/admin/questions/${id}/unflag`, { method: 'POST' })
+}
+
+export async function deleteAdminQuestion(id: string): Promise<{
+  success: true
+  affectedReviewSchedules: number
+}> {
+  return adminApiClient(`/api/admin/questions/${id}`, { method: 'DELETE' })
+}
+
+export async function getAdminPods(
+  headers: Record<string, string>,
+  query: AdminPodsQuery = {},
+): Promise<AdminPaginated<AdminPodListRow>> {
+  return adminApiClient(`/api/admin/pods${buildAdminContentQuery(query)}`, { headers })
+}
+
+export async function getAdminPod(
+  headers: Record<string, string>,
+  id: string,
+): Promise<AdminPodDetail> {
+  return adminApiClient(`/api/admin/pods/${id}`, { headers })
+}
+
+export async function updateAdminPod(
+  id: string,
+  body: { name?: string; visibility?: AdminPodVisibility },
+): Promise<unknown> {
+  return adminApiClient(`/api/admin/pods/${id}`, { method: 'PATCH', body })
+}
+
+export async function deleteAdminPod(id: string): Promise<{ success: true }> {
+  return adminApiClient(`/api/admin/pods/${id}`, { method: 'DELETE' })
+}
+
+export async function removeAdminPodMember(
+  podId: string,
+  userId: string,
+): Promise<{ success: true }> {
+  return adminApiClient(`/api/admin/pods/${podId}/members/${userId}`, { method: 'DELETE' })
+}
