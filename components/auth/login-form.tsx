@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
 import { getSession, signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react'
 
@@ -16,9 +16,12 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { SocialButtons } from '@/components/auth/social-buttons'
 import { AuthDivider } from '@/components/auth/auth-divider'
+import { resolvePostLoginPath } from '@/lib/auth/post-login'
 
 export function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [attempts, setAttempts] = useState(0)
@@ -61,8 +64,9 @@ export function LoginForm() {
           setError(`The email or password you entered is incorrect. ${5 - newAttempts} attempt${5 - newAttempts === 1 ? '' : 's'} remaining.`)
         }
       } else {
+        router.refresh()
         const session = await getSession()
-        router.push(session?.user.systemRole === 'SUPER_ADMIN' ? '/admin' : '/dashboard')
+        window.location.assign(resolvePostLoginPath(session, callbackUrl))
       }
     } catch {
       setError('Something went wrong. Please try again.')

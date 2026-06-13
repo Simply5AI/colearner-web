@@ -14,6 +14,7 @@ declare module 'next-auth' {
       image?: string
       onboardingCompleted?: boolean
       systemRole?: string
+      roles?: string[]
     }
   }
 
@@ -31,6 +32,7 @@ interface ExtendedJWT {
   accessTokenExpires?: number
   onboardingCompleted?: boolean
   systemRole?: string
+  roles?: string[]
   error?: string
 }
 
@@ -165,9 +167,9 @@ const authConfig: NextAuthConfig = {
 
       // Check onboarding status on initial sign-in or when session is updated
       if (
-        (user || trigger === 'update' || !t.systemRole) &&
+        (user || trigger === 'update' || !t.systemRole || !t.roles) &&
         t.accessToken &&
-        (!session?.onboardingCompleted || !t.systemRole)
+        (!session?.onboardingCompleted || !t.systemRole || !t.roles)
       ) {
         try {
           const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -184,9 +186,14 @@ const authConfig: NextAuthConfig = {
             console.log('[auth:jwt] profile.goals:', profile.goals)
             console.log('[auth:jwt] profile.onboardingCompletedAt:', profile.onboardingCompletedAt)
             t.onboardingCompleted = !!(
-              profile.goals?.length > 0 || profile.onboardingCompletedAt
+              profile.onboardingCompleted ||
+              profile.onboardingCompletedAt ||
+              profile.goals?.length > 0
             )
             if (profile.systemRole === 'SUPER_ADMIN') {
+              t.onboardingCompleted = true
+            }
+            if (profile.roles?.includes('TEACHER')) {
               t.onboardingCompleted = true
             }
             if (profile.displayName || profile.name) {
@@ -194,6 +201,9 @@ const authConfig: NextAuthConfig = {
             }
             if (profile.systemRole) {
               t.systemRole = profile.systemRole
+            }
+            if (Array.isArray(profile.roles)) {
+              t.roles = profile.roles
             }
             console.log('[auth:jwt] resolved onboardingCompleted:', t.onboardingCompleted)
           } else {
@@ -227,6 +237,9 @@ const authConfig: NextAuthConfig = {
         if (t.systemRole) {
           session.user.systemRole = t.systemRole
         }
+        if (t.roles) {
+          session.user.roles = t.roles
+        }
       }
       return session
     },
@@ -240,7 +253,9 @@ const authConfig: NextAuthConfig = {
         ?.onboardingCompleted ?? false
       const isSuperAdmin = (auth as { user?: { systemRole?: string } })?.user
         ?.systemRole === 'SUPER_ADMIN'
+      const isTeacher = (auth as { user?: { roles?: string[] } })?.user?.roles?.includes('TEACHER')
       const isOnboardingPage = nextUrl.pathname.startsWith('/onboarding')
+      const isTeacherPage = nextUrl.pathname.startsWith('/teacher')
       const isProtectedApp =
         nextUrl.pathname.startsWith('/dashboard') ||
         nextUrl.pathname.startsWith('/recall') ||
@@ -250,36 +265,37 @@ const authConfig: NextAuthConfig = {
         nextUrl.pathname.startsWith('/progress') ||
         nextUrl.pathname.startsWith('/settings')
       const isAdminPage = nextUrl.pathname.startsWith('/admin')
+      const isAdminLoginPage = nextUrl.pathname === '/admin/login'
 
-      // Require auth for onboarding and app routes
-      if ((isProtectedApp || isOnboardingPage || isAdminPage) && !isLoggedIn) {
-        return Response.redirect(new URL('/login', nextUrl))
+      // Require auth for onboarding, teacher, and app routes
+      if (
+        (isProtectedApp || isOnboardingPage || isTeacherPage || (isAdminPage && !isAdminLoginPage)) &&
+        !isLoggedIn
+      ) {
+        const loginUrl = new URL('/login', nextUrl)
+        loginUrl.searchParams.set('callbackUrl', nextUrl.pathname)
+        return Response.redirect(loginUrl)
       }
 
       // Redirect from root based on auth/onboarding status
       if (nextUrl.pathname === '/') {
         if (!isLoggedIn) return Response.redirect(new URL('/login', nextUrl))
-        if (isSuperAdmin) return Response.redirect(new URL('/admin', nextUrl))
-        const target = isOnboarded ? '/dashboard' : '/onboarding/profile'
-        return Response.redirect(new URL(target, nextUrl))
-      }
-
-      // Redirect logged-in users away from auth pages
-      const isAuthPage =
-        nextUrl.pathname.startsWith('/login') ||
-        nextUrl.pathname.startsWith('/signup')
-      if (isAuthPage && isLoggedIn) {
-        if (isSuperAdmin) return Response.redirect(new URL('/admin', nextUrl))
+        if (isSuperAdmin) return Response.redirect(new URL('/admin/login', nextUrl))
+        if (isTeacher) return Response.redirect(new URL('/teacher/dashboard', nextUrl))
         const target = isOnboarded ? '/dashboard' : '/onboarding/profile'
         return Response.redirect(new URL(target, nextUrl))
       }
 
       if ((isProtectedApp || isOnboardingPage) && isLoggedIn && isSuperAdmin) {
-        return Response.redirect(new URL('/admin', nextUrl))
+        return Response.redirect(new URL('/admin/login', nextUrl))
       }
 
-      // Redirect to onboarding if not completed (when accessing app routes)
-      if (isProtectedApp && isLoggedIn && !isOnboarded) {
+      if (isProtectedApp && isLoggedIn && isTeacher) {
+        return Response.redirect(new URL('/teacher/dashboard', nextUrl))
+      }
+
+      // Redirect to onboarding if not completed (when accessing student app routes)
+      if (isProtectedApp && isLoggedIn && !isOnboarded && !isTeacher) {
         return Response.redirect(new URL('/onboarding/profile', nextUrl))
       }
 

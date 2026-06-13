@@ -9,7 +9,11 @@ export default async function RootPage() {
   }
 
   if (session.user.systemRole === 'SUPER_ADMIN') {
-    redirect('/admin')
+    redirect('/admin/login')
+  }
+
+  if (session.user.roles?.includes('TEACHER')) {
+    redirect('/teacher/dashboard')
   }
 
   if (session.user.onboardingCompleted) {
