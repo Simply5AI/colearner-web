@@ -4,9 +4,20 @@ import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { format, formatDistanceToNow } from 'date-fns'
-import { ArrowLeft } from 'lucide-react'
+import {
+  ArrowLeft,
+  BookOpen,
+  Clock,
+  ListChecks,
+  Map,
+  type LucideIcon,
+} from 'lucide-react'
 
-import type { AdminLearningUser, AdminLearningUserStatus } from '@/lib/api/admin'
+import type {
+  AdminLearningActivityRow,
+  AdminLearningUser,
+  AdminLearningUserStatus,
+} from '@/lib/api/admin'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -19,6 +30,13 @@ export interface LearningViewProps<T> {
   user: AdminLearningUser
   authHeaders: Record<string, string>
 }
+
+const LEARNING_TABS = [
+  { key: 'overview', label: 'Overview', icon: BookOpen },
+  { key: 'mastery', label: 'Mastery', icon: ListChecks },
+  { key: 'sessions', label: 'Sessions', icon: Clock },
+  { key: 'roadmaps', label: 'Roadmaps', icon: Map },
+] as const
 
 export function initials(name: string) {
   return name
@@ -61,8 +79,97 @@ export function formatDuration(seconds: number | null | undefined) {
   return `${minutes}m ${remaining}s`
 }
 
-export function EmptyState({ children = 'No data yet' }: { children?: string }) {
-  return <div className="px-4 py-8 text-center text-sm text-muted-foreground">{children}</div>
+export function activityMetadata(metadata: unknown): Record<string, unknown> {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return {}
+  return metadata as Record<string, unknown>
+}
+
+export function formatLearningActivity(item: AdminLearningActivityRow): {
+  title: string
+  detail?: string
+} {
+  const metadata = activityMetadata(item.metadata)
+
+  if (item.subject === 'RecallSession' && item.action === 'completed') {
+    const parts: string[] = []
+    if (typeof metadata.accuracy === 'number') {
+      parts.push(`${Math.round(metadata.accuracy * 100)}% accuracy`)
+    }
+    if (typeof metadata.durationSeconds === 'number') {
+      parts.push(formatDuration(metadata.durationSeconds))
+    }
+    return {
+      title: 'Completed a recall session',
+      detail: parts.join(' · ') || undefined,
+    }
+  }
+
+  if (item.subject === 'RecallAttempt' && item.action === 'scored') {
+    const parts: string[] = []
+    if (typeof metadata.isCorrect === 'boolean') {
+      parts.push(metadata.isCorrect ? 'Correct answer' : 'Incorrect answer')
+    }
+    if (typeof metadata.score === 'number') {
+      parts.push(`Score ${Math.round(metadata.score * 100)}%`)
+    }
+    return {
+      title: 'Answered a recall question',
+      detail: parts.join(' · ') || undefined,
+    }
+  }
+
+  if (item.subject === 'RecallAttempt' && item.action === 'tutoring_requested') {
+    return { title: 'Requested tutoring help on a question' }
+  }
+
+  if (item.subject === 'Extraction' && item.action === 'captured') {
+    const sourceType = typeof metadata.sourceType === 'string' ? metadata.sourceType.toLowerCase() : 'content'
+    const source = typeof metadata.source === 'string' ? metadata.source : null
+    return {
+      title: `Captured new ${sourceType}`,
+      detail: source ? truncateText(source, 72) : undefined,
+    }
+  }
+
+  if (item.subject === 'Concept') {
+    return { title: `${humanizeAction(item.action)} concept mastery` }
+  }
+
+  if (item.subject === 'Roadmap') {
+    return { title: `${humanizeAction(item.action)} roadmap` }
+  }
+
+  return {
+    title: `${humanizeAction(item.action)} ${humanizeSubject(item.subject)}`,
+  }
+}
+
+function humanizeAction(action: string) {
+  return action.replace(/[._]/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+}
+
+function humanizeSubject(subject: string) {
+  return subject.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()
+}
+
+function truncateText(value: string, max: number) {
+  if (value.length <= max) return value
+  return `${value.slice(0, max - 1)}…`
+}
+
+export function EmptyState({
+  children = 'No data yet',
+  hint,
+}: {
+  children?: string
+  hint?: string
+}) {
+  return (
+    <div className="px-4 py-10 text-center">
+      <p className="text-sm font-medium text-foreground">{children}</p>
+      {hint && <p className="mt-1 text-sm text-muted-foreground">{hint}</p>}
+    </div>
+  )
 }
 
 export function AdminLearningLayout({
@@ -74,54 +181,65 @@ export function AdminLearningLayout({
   active: 'overview' | 'mastery' | 'sessions' | 'roadmaps'
   children: React.ReactNode
 }) {
-  const tabs = [
-    { key: 'overview', label: 'Overview', href: `/admin/users/${user.id}/learning` },
-    { key: 'mastery', label: 'Mastery', href: `/admin/users/${user.id}/learning/mastery` },
-    { key: 'sessions', label: 'Sessions', href: `/admin/users/${user.id}/learning/sessions` },
-    { key: 'roadmaps', label: 'Roadmaps', href: `/admin/users/${user.id}/learning/roadmaps` },
-  ] as const
+  const learningBase = `/admin/users/${user.id}/learning`
 
   return (
     <div className="px-4 py-5 md:px-6 lg:px-8">
-      <div className="mb-4">
-        <Link href={`/admin/users/${user.id}`} className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }))}>
+      <div className="mb-5">
+        <Link href={`/admin/users/${user.id}`} className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), '-ml-2')}>
           <ArrowLeft className="h-4 w-4" />
           Back to user
         </Link>
       </div>
 
-      <div className="sticky top-0 z-10 -mx-4 mb-5 border-b bg-background/95 px-4 py-4 backdrop-blur md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
-        <div className="flex flex-wrap items-start gap-4">
-          <Avatar className="h-14 w-14">
-            <AvatarImage src={user.avatarUrl ?? undefined} alt={user.name} />
-            <AvatarFallback>{initials(user.name)}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold">{user.name}</h1>
-              {statusBadge(user.status)}
-              <Badge variant="outline">{user.systemRole}</Badge>
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              {user.email} - <span className="text-foreground/80">{user.org.name}</span>
+      <div className="sticky top-0 z-10 -mx-4 mb-6 border-b border-border/70 bg-background/95 px-4 py-4 backdrop-blur md:-mx-6 md:px-6 lg:-mx-8 lg:px-8">
+        <div className="rounded-xl border border-border/70 bg-card p-5 shadow-sm">
+          <div className="flex flex-wrap items-start gap-4">
+            <Avatar className="h-14 w-14 ring-2 ring-background">
+              <AvatarImage src={user.avatarUrl ?? undefined} alt={user.name} />
+              <AvatarFallback>{initials(user.name)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-bold tracking-tight">{user.name}</h1>
+                {statusBadge(user.status)}
+                <Badge variant="outline">{user.systemRole}</Badge>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                <Link
+                  href={`/admin/orgs/${user.org.id}`}
+                  className="font-medium text-primary hover:underline"
+                >
+                  {user.org.name}
+                </Link>
+                <span className="text-muted-foreground">·</span>
+                <span className="text-muted-foreground">Read-only learning profile</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {tabs.map((tab) => (
-            <Link
-              key={tab.key}
-              href={tab.href}
-              className={cn(
-                'inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium transition-colors',
-                active === tab.key
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-background hover:bg-muted'
-              )}
-            >
-              {tab.label}
-            </Link>
-          ))}
+
+          <nav className="mt-5 inline-flex flex-wrap gap-1 rounded-lg border border-border/70 bg-muted/40 p-1">
+            {LEARNING_TABS.map((tab) => {
+              const href = tab.key === 'overview' ? learningBase : `${learningBase}/${tab.key}`
+              const Icon = tab.icon
+              return (
+                <Link
+                  key={tab.key}
+                  href={href}
+                  className={cn(
+                    'inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors',
+                    active === tab.key
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-background/70 hover:text-foreground',
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.label}
+                </Link>
+              )
+            })}
+          </nav>
         </div>
       </div>
 
@@ -239,3 +357,5 @@ export function CursorPager({
     </div>
   )
 }
+
+export type LearningTabIcon = LucideIcon

@@ -75,7 +75,14 @@ function overviewFixture(): AdminLearningOverviewResponse {
       generation: { model: 'gpt-test', promptVersion: null, durationMs: null, generatedAt: '2026-05-20T00:00:00.000Z' },
       isGenerationSlow: false,
     }],
-    recentActivity: [{ id: 'a1', action: 'completed', subject: 'RecallSession', subjectId: 's1', metadata: { score: 92 }, createdAt: '2026-05-21T00:00:00.000Z' }],
+    recentActivity: [{
+      id: 'a1',
+      action: 'completed',
+      subject: 'RecallSession',
+      subjectId: 's1',
+      metadata: { accuracy: 0.92, durationSeconds: 252 },
+      createdAt: '2026-05-21T00:00:00.000Z',
+    }],
   }
 }
 
@@ -157,12 +164,14 @@ describe('Admin learning views', () => {
 
     expect(screen.getByText('Learner One')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /mastery/i })).toHaveAttribute('href', '/admin/users/user-1/learning/mastery')
+    expect(screen.getByText('Learning overview')).toBeInTheDocument()
     expect(screen.getByText('Concepts mastered')).toBeInTheDocument()
     expect(screen.getAllByText('12').length).toBeGreaterThan(0)
     expect(screen.getByTestId('pie-chart')).toBeInTheDocument()
     expect(screen.getByText('Pass finals')).toBeInTheDocument()
     expect(screen.getByText('Algebra')).toBeInTheDocument()
-    expect(screen.getByText(/RecallSession/)).toBeInTheDocument()
+    expect(screen.getByText('Completed a recall session')).toBeInTheDocument()
+    expect(screen.getByText('Explore learning data')).toBeInTheDocument()
   })
 
   it('updates mastery filters and opens question history', async () => {

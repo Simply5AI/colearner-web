@@ -5,7 +5,8 @@ import { getAdminLearningOverview } from '@/lib/api/admin'
 import { AdminLearningOverview } from '@/components/admin/admin-learning/overview'
 
 export const metadata: Metadata = {
-  title: 'Admin User Learning',
+  title: 'Learning Overview',
+  description: 'Read-only snapshot of learner progress, mastery, goals, and roadmaps.',
 }
 
 type PageProps = {
