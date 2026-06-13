@@ -56,3 +56,26 @@ export async function adminBrowserClient<T>(
 
   return json as T
 }
+
+/** Download binary/text admin exports through the BFF (CSV, etc.). */
+export async function adminBrowserDownload(path: string, filename: string): Promise<void> {
+  const res = await fetch(`/api/admin${toAdminBffPath(path)}`)
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}))
+    throw new AdminBrowserError(
+      res.status,
+      (json?.message as string) ?? res.statusText,
+      json?.code as string | undefined
+    )
+  }
+
+  const blob = await res.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = objectUrl
+  anchor.download = filename
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  URL.revokeObjectURL(objectUrl)
+}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { callBackend } from '@/lib/api/admin-bff'
+import { getApiUrl } from '@/lib/api/client'
 import { ADMIN_SESSION_COOKIE } from '@/lib/admin/session-cookie'
 
 type RouteContext = { params: Promise<{ path: string[] }> }
@@ -12,6 +13,33 @@ function normalizeAdminPathSegments(segments: string[]): string[] {
   return segments
 }
 
+function isBinaryExport(resource: string): boolean {
+  return resource.endsWith('export.csv')
+}
+
+async function proxyBinaryExport(req: NextRequest, path: string, cookie: string) {
+  const res = await fetch(`${getApiUrl()}${path}`, {
+    method: req.method,
+    headers: { Cookie: cookie },
+  })
+
+  if (!res.ok) {
+    const json = await res.json().catch(() => null)
+    return NextResponse.json(
+      { message: (json?.message as string) ?? res.statusText, code: json?.code },
+      { status: res.status }
+    )
+  }
+
+  const body = await res.text()
+  const headers = new Headers()
+  const contentType = res.headers.get('Content-Type')
+  const disposition = res.headers.get('Content-Disposition')
+  if (contentType) headers.set('Content-Type', contentType)
+  if (disposition) headers.set('Content-Disposition', disposition)
+  return new NextResponse(body, { status: res.status, headers })
+}
+
 async function proxyAdmin(req: NextRequest, pathSegments: string[]) {
   const sid = req.cookies.get(ADMIN_SESSION_COOKIE)?.value
   if (!sid) {
@@ -20,6 +48,12 @@ async function proxyAdmin(req: NextRequest, pathSegments: string[]) {
 
   const resource = normalizeAdminPathSegments(pathSegments).join('/')
   const path = `/api/admin/${resource}${req.nextUrl.search}`
+  const cookie = `${ADMIN_SESSION_COOKIE}=${sid}`
+
+  if (isBinaryExport(resource)) {
+    return proxyBinaryExport(req, path, cookie)
+  }
+
   const method = req.method
   const hasBody = method !== 'GET' && method !== 'HEAD'
   const body = hasBody ? await req.text() : undefined
@@ -28,7 +62,7 @@ async function proxyAdmin(req: NextRequest, pathSegments: string[]) {
     method,
     body: body || undefined,
     headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    cookie: `${ADMIN_SESSION_COOKIE}=${sid}`,
+    cookie,
   })
 
   if (!result.ok) {

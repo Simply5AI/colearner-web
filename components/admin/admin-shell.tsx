@@ -75,7 +75,7 @@ const navGroups: Array<{ title: string; items: AdminNavItem[] }> = [
   {
     title: 'AI & Costs',
     items: [
-      { href: '/admin/ai-consumption', label: 'Consumption', icon: Sparkles },
+      { href: '/admin/ai-usage', label: 'AI Usage', icon: Sparkles },
     ],
   },
 ]

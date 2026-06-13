@@ -19,4 +19,10 @@ describe('toAdminBffPath', () => {
       '/users/u1/activity?limit=50'
     )
   })
+
+  it('strips prefix for ai-usage export paths', () => {
+    expect(toAdminBffPath('/api/admin/ai-usage/export.csv?range=30d')).toBe(
+      '/ai-usage/export.csv?range=30d'
+    )
+  })
 })

@@ -652,8 +652,21 @@ export async function revokeAdminUserSession(
 
 // ─── LLM Consumption (Super Admin) ────────────────────────────────────────
 
-export type ConsumptionRange = '7d' | '30d' | '90d' | 'all'
-export type ConsumptionGroupBy = 'agent' | 'model' | 'provider' | 'org'
+export type ConsumptionRange = '24h' | '7d' | '30d' | '90d' | 'all' | 'custom'
+export type ConsumptionGranularity = 'hour' | 'day' | 'week' | 'month'
+export type ConsumptionGroupBy = 'agent' | 'model' | 'provider' | 'org' | 'user'
+
+export interface ConsumptionQuery {
+  range?: ConsumptionRange
+  from?: string
+  to?: string
+  granularity?: ConsumptionGranularity
+  orgId?: string
+  agent?: string
+  userId?: string
+  provider?: string
+  model?: string
+}
 
 export interface ConsumptionTotals {
   costUsd: number
@@ -662,6 +675,8 @@ export interface ConsumptionTotals {
   cachedTokens: number
   calls: number
   avgCostPerCallUsd: number
+  avgLatencyMs: number
+  errorRate: number
 }
 
 export interface ConsumptionSeriesPoint {
@@ -682,6 +697,9 @@ export interface ConsumptionBreakdownRow {
   cachedTokens: number
   calls: number
   pctOfTotal: number
+  avgLatencyMs?: number
+  provider?: string
+  model?: string
 }
 
 export interface ConsumptionReport {
@@ -689,9 +707,82 @@ export interface ConsumptionReport {
   groupBy: ConsumptionGroupBy
   startDate: string | null
   endDate: string
+  granularity: ConsumptionGranularity
   totals: ConsumptionTotals
   series: ConsumptionSeriesPoint[]
   breakdown: ConsumptionBreakdownRow[]
+}
+
+export interface ConsumptionSummary {
+  totalTokens: number
+  totalCostUsd: number
+  requestCount: number
+  avgLatencyMs: number
+  errorRate: number
+}
+
+export interface ConsumptionTimeseriesPoint {
+  bucket: string
+  tokens: number
+  costUsd: number
+  requests: number
+}
+
+export interface ConsumptionByUserRow {
+  userId: string
+  email: string
+  tokens: number
+  costUsd: number
+  requests: number
+  avgLatencyMs: number
+}
+
+export interface ConsumptionByModelRow {
+  provider: string
+  model: string
+  tokens: number
+  costUsd: number
+  requests: number
+  avgLatencyMs: number
+}
+
+export interface ConsumptionEventRow {
+  id: string
+  createdAt: string
+  orgId: string
+  orgName: string
+  userId: string | null
+  userEmail: string | null
+  agent: string
+  feature: string
+  provider: string
+  model: string
+  inputTokens: number
+  outputTokens: number
+  promptTokens: number
+  completionTokens: number
+  cachedTokens: number
+  costUsd: number
+  latencyMs: number
+  success: boolean
+  errorCode: string | null
+  requestId: string | null
+}
+
+export interface ConsumptionEventsPage {
+  items: ConsumptionEventRow[]
+  total: number
+  page: number
+  pageSize: number
+  hasMore: boolean
+}
+
+export interface LlmPricingMeta {
+  version: string
+  updatedAt: string
+  ageDays: number
+  isStale: boolean
+  staleAfterDays: number
 }
 
 export interface OrgConsumptionReport {
@@ -704,48 +795,129 @@ export interface OrgConsumptionReport {
   series: ConsumptionSeriesPoint[]
 }
 
+export type ConsumptionQueryParams = ConsumptionQuery & {
+  groupBy?: ConsumptionGroupBy
+  limit?: number
+  page?: number
+  pageSize?: number
+  sort?: 'created_desc' | 'created_asc' | 'cost_desc'
+}
+
+function buildConsumptionQuery(params: ConsumptionQueryParams = {}) {
+  const qs = new URLSearchParams()
+  if (params.range) qs.set('range', params.range)
+  if (params.from) qs.set('from', params.from)
+  if (params.to) qs.set('to', params.to)
+  if (params.granularity) qs.set('granularity', params.granularity)
+  if (params.orgId) qs.set('orgId', params.orgId)
+  if (params.agent) qs.set('agent', params.agent)
+  if (params.userId) qs.set('userId', params.userId)
+  if (params.provider) qs.set('provider', params.provider)
+  if (params.model) qs.set('model', params.model)
+  if (params.groupBy) qs.set('groupBy', params.groupBy)
+  if (params.limit !== undefined) qs.set('limit', String(params.limit))
+  if (params.page !== undefined) qs.set('page', String(params.page))
+  if (params.pageSize !== undefined) qs.set('pageSize', String(params.pageSize))
+  if (params.sort) qs.set('sort', params.sort)
+  return qs.toString()
+}
+
 export async function getLlmConsumption(
   headers: Record<string, string>,
-  range: ConsumptionRange = '30d',
+  query: ConsumptionQuery = { range: '30d' },
   groupBy: ConsumptionGroupBy = 'agent',
 ): Promise<ConsumptionReport> {
-  return adminApiClient<ConsumptionReport>(
-    `/api/admin/ai-usage?range=${range}&groupBy=${groupBy}`,
-    { headers },
-  )
+  const qs = buildConsumptionQuery({ ...query, groupBy })
+  return adminApiClient<ConsumptionReport>(`/api/admin/ai-usage?${qs}`, { headers })
+}
+
+export async function getLlmConsumptionSummary(
+  headers: Record<string, string>,
+  query: ConsumptionQuery = { range: '30d' },
+): Promise<ConsumptionSummary> {
+  const qs = buildConsumptionQuery(query)
+  return adminApiClient<ConsumptionSummary>(`/api/admin/ai-usage/summary?${qs}`, { headers })
+}
+
+export async function getLlmConsumptionTimeseries(
+  headers: Record<string, string>,
+  query: ConsumptionQuery = { range: '30d' },
+  groupBy: ConsumptionGroupBy = 'agent',
+): Promise<ConsumptionTimeseriesPoint[]> {
+  const qs = buildConsumptionQuery({ ...query, groupBy })
+  return adminApiClient<ConsumptionTimeseriesPoint[]>(`/api/admin/ai-usage/timeseries?${qs}`, { headers })
+}
+
+export async function getLlmConsumptionByUser(
+  headers: Record<string, string>,
+  query: ConsumptionQuery = { range: '30d' },
+  limit = 50,
+): Promise<ConsumptionByUserRow[]> {
+  const qs = buildConsumptionQuery({ ...query, limit })
+  return adminApiClient<ConsumptionByUserRow[]>(`/api/admin/ai-usage/by-user?${qs}`, { headers })
+}
+
+export async function getLlmConsumptionByOrgBreakdown(
+  headers: Record<string, string>,
+  query: ConsumptionQuery = { range: '30d' },
+  limit = 50,
+): Promise<ConsumptionBreakdownRow[]> {
+  const qs = buildConsumptionQuery({ ...query, limit })
+  return adminApiClient<ConsumptionBreakdownRow[]>(`/api/admin/ai-usage/by-org?${qs}`, { headers })
+}
+
+export async function getLlmConsumptionByModel(
+  headers: Record<string, string>,
+  query: ConsumptionQuery = { range: '30d' },
+): Promise<ConsumptionByModelRow[]> {
+  const qs = buildConsumptionQuery(query)
+  return adminApiClient<ConsumptionByModelRow[]>(`/api/admin/ai-usage/by-model?${qs}`, { headers })
+}
+
+export async function getLlmConsumptionByFeature(
+  headers: Record<string, string>,
+  query: ConsumptionQuery = { range: '30d' },
+): Promise<ConsumptionBreakdownRow[]> {
+  const qs = buildConsumptionQuery(query)
+  return adminApiClient<ConsumptionBreakdownRow[]>(`/api/admin/ai-usage/by-feature?${qs}`, { headers })
+}
+
+export async function getLlmConsumptionEvents(
+  headers: Record<string, string>,
+  query: ConsumptionQueryParams = { range: '30d' },
+): Promise<ConsumptionEventsPage> {
+  const qs = buildConsumptionQuery(query)
+  return adminApiClient<ConsumptionEventsPage>(`/api/admin/ai-usage/events?${qs}`, { headers })
+}
+
+export async function getLlmConsumptionEvent(
+  headers: Record<string, string>,
+  id: string,
+): Promise<ConsumptionEventRow> {
+  return adminApiClient<ConsumptionEventRow>(`/api/admin/ai-usage/events/${id}`, { headers })
+}
+
+export async function getLlmPricingMeta(
+  headers: Record<string, string>,
+): Promise<LlmPricingMeta> {
+  return adminApiClient<LlmPricingMeta>(`/api/admin/ai-usage/pricing`, { headers })
 }
 
 export async function getLlmConsumptionByOrg(
   headers: Record<string, string>,
   orgId: string,
-  range: ConsumptionRange = '30d',
+  query: ConsumptionQuery = { range: '30d' },
 ): Promise<OrgConsumptionReport> {
-  return adminApiClient<OrgConsumptionReport>(
-    `/api/admin/ai-usage/by-org/${orgId}?range=${range}`,
-    { headers },
-  )
+  const qs = buildConsumptionQuery({ ...query, orgId })
+  return adminApiClient<OrgConsumptionReport>(`/api/admin/ai-usage/by-org/${orgId}?${qs}`, { headers })
 }
 
-export function buildLlmConsumptionCsvUrl(params: {
-  range: ConsumptionRange
-  orgId?: string
-  agent?: string
-}): string {
-  const qs = new URLSearchParams({ range: params.range })
-  if (params.orgId) qs.set('orgId', params.orgId)
-  if (params.agent) qs.set('agent', params.agent)
-  return `/api/admin/ai-usage/export.csv?${qs.toString()}`
+export function buildLlmConsumptionCsvUrl(params: ConsumptionQuery & { orgId?: string; agent?: string }): string {
+  return `/api/admin/ai-usage/export.csv?${buildConsumptionQuery(params)}`
 }
 
-export function buildLlmConsumptionJsonUrl(params: {
-  range: ConsumptionRange
-  orgId?: string
-  agent?: string
-}): string {
-  const qs = new URLSearchParams({ range: params.range })
-  if (params.orgId) qs.set('orgId', params.orgId)
-  if (params.agent) qs.set('agent', params.agent)
-  return `/api/admin/ai-usage/export.json?${qs.toString()}`
+export function buildLlmConsumptionJsonUrl(params: ConsumptionQuery & { orgId?: string; agent?: string }): string {
+  return `/api/admin/ai-usage/export.json?${buildConsumptionQuery(params)}`
 }
 
 export interface LlmRateLimitsReport {
@@ -754,6 +926,27 @@ export interface LlmRateLimitsReport {
     totalCostUsd: number
     providers: string[]
   }
+  queue: {
+    available: boolean
+    pending: number
+    active: number
+    failed: number
+    message?: string
+  }
+  providerErrorRates: Array<{
+    provider: string
+    last15m: number
+    last1h: number
+    last24h: number
+  }>
+  recentRetries: Array<{
+    requestId: string | null
+    provider: string
+    model: string
+    attempts: number
+    finalStatus: 'success' | 'error'
+    createdAt: string
+  }>
   byProvider: Array<{
     provider: string
     calls: number
@@ -767,10 +960,7 @@ export interface LlmRateLimitsReport {
 export async function getLlmRateLimits(
   headers: Record<string, string>,
 ): Promise<LlmRateLimitsReport> {
-  return adminApiClient<LlmRateLimitsReport>(
-    `/api/admin/ai-usage/rate-limits`,
-    { headers },
-  )
+  return adminApiClient<LlmRateLimitsReport>(`/api/admin/ai-usage/rate-limits`, { headers })
 }
 
 export async function getAdminUserActivity(

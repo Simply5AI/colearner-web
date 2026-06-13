@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import {
   Dialog,
@@ -12,32 +11,26 @@ import {
 } from '@/components/ui/dialog'
 import {
   getLlmConsumptionByOrg,
-  type ConsumptionRange,
+  type ConsumptionQuery,
   type OrgConsumptionReport,
 } from '@/lib/api/admin'
 
 interface Props {
   orgId: string
-  range: ConsumptionRange
+  query: ConsumptionQuery
   onClose: () => void
 }
 
-export function AiConsumptionOrgDrilldown({ orgId, range, onClose }: Props) {
-  const { data: session } = useSession()
+export function AiConsumptionOrgDrilldown({ orgId, query, onClose }: Props) {
   const [report, setReport] = useState<OrgConsumptionReport | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!session?.accessToken) return
     let cancelled = false
     setLoading(true)
     setError(null)
-    getLlmConsumptionByOrg(
-      { Authorization: `Bearer ${session.accessToken}` },
-      orgId,
-      range,
-    )
+    getLlmConsumptionByOrg({}, orgId, query)
       .then((r) => {
         if (!cancelled) setReport(r)
       })
@@ -50,16 +43,14 @@ export function AiConsumptionOrgDrilldown({ orgId, range, onClose }: Props) {
     return () => {
       cancelled = true
     }
-  }, [orgId, range, session?.accessToken])
+  }, [orgId, query])
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{report?.orgName ?? 'Organization consumption'}</DialogTitle>
-          <DialogDescription>
-            LLM spend breakdown · {range === 'all' ? 'All time' : `Last ${range}`}
-          </DialogDescription>
+          <DialogDescription>LLM spend breakdown for the selected range.</DialogDescription>
         </DialogHeader>
 
         {loading && (
@@ -78,10 +69,10 @@ export function AiConsumptionOrgDrilldown({ orgId, range, onClose }: Props) {
         {report && !loading && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Stat label="Cost" value={formatCurrency(report.totals.costUsd)} />
+              <Stat label="Cost" value={formatCurrency(report.totals.costUsd, 4)} />
               <Stat label="Calls" value={formatNumber(report.totals.calls)} />
               <Stat label="Input tok" value={formatTokens(report.totals.inputTokens)} />
-              <Stat label="Output tok" value={formatTokens(report.totals.outputTokens)} />
+              <Stat label="Error rate" value={`${report.totals.errorRate.toFixed(2)}%`} />
             </div>
 
             <Section title="By feature">
@@ -110,9 +101,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-        {title}
-      </p>
+      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{title}</p>
       {children}
     </div>
   )
@@ -129,13 +118,11 @@ function MiniTable({ rows }: { rows: OrgConsumptionReport['byAgent'] }) {
           {rows.map((row) => (
             <tr key={row.key} className="border-b border-border/50 last:border-0">
               <td className="px-3 py-2 font-medium">{row.label}</td>
-              <td className="px-3 py-2 text-right text-xs text-muted-foreground tabular-nums">
+              <td className="px-3 py-2 text-right text-xs tabular-nums text-muted-foreground">
                 {formatNumber(row.calls)} calls
               </td>
-              <td className="px-3 py-2 text-right font-semibold tabular-nums">
-                {formatCurrency(row.costUsd, 4)}
-              </td>
-              <td className="px-3 py-2 text-right text-xs text-muted-foreground tabular-nums">
+              <td className="px-3 py-2 text-right font-semibold tabular-nums">{formatCurrency(row.costUsd, 4)}</td>
+              <td className="px-3 py-2 text-right text-xs tabular-nums text-muted-foreground">
                 {row.pctOfTotal.toFixed(1)}%
               </td>
             </tr>

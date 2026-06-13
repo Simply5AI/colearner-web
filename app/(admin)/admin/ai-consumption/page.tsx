@@ -1,14 +1,5 @@
-import type { Metadata } from 'next'
-import { getAdminHeaders } from '@/lib/api/admin-session'
-import { getLlmConsumption } from '@/lib/api/admin'
-import { AiConsumptionView } from '@/components/admin/ai-consumption-view'
+import { redirect } from 'next/navigation'
 
-export const metadata: Metadata = {
-  title: 'AI Usage — Admin',
-}
-
-export default async function AdminAiUsagePage() {
-  const headers = await getAdminHeaders()
-  const initial = await getLlmConsumption(headers, '30d', 'agent')
-  return <AiConsumptionView initial={initial} />
+export default function AdminAiConsumptionRedirect() {
+  redirect('/admin/ai-usage')
 }
