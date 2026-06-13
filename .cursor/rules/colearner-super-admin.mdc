@@ -1,0 +1,28 @@
+---
+description: CoLearner super-admin (TASK-13) context for agent sessions. Read tasks/AGENT-HANDOFF.md before implementing admin features.
+globs:
+  - colearner-web/app/(admin)/**
+  - colearner-web/components/admin/**
+  - colearner-web/lib/api/admin*.ts
+  - colearner-platform/apps/api/src/modules/admin/**
+  - tasks/**
+---
+
+# CoLearner Super Admin
+
+Before TASK-13 admin work, read **`tasks/AGENT-HANDOFF.md`** (status, copy-paste assignments, architecture).
+
+## Status (2026-06-13)
+- **Done:** SA1–SA4, SW1–SW4, content screens (extractions/library/pods) on `feature/goalbasedlearning`
+- **Next:** Billing (`/admin/billing`) OR SA5+SW5 system health (blocked until health API exists)
+
+## Patterns
+- Web admin mutations → BFF `/api/admin/*` + httpOnly admin session cookie (not Auth.js bearer)
+- Browser: `adminApiClient` / `adminBrowserClient`; server: `getAdminHeaders()`
+- Sensitive ops: `useAdminMutation().runSensitive()`
+- Every admin route: `loading.tsx` + `error.tsx`
+- Verify: `pnpm type-check` in `colearner-web` and `colearner-platform/apps/api`
+- Push both repos when milestone complete; update `tasks/TASK-STATUS-TRACKER.md`
+
+## Task docs
+`tasks/TASK-13-*.md` · Screen specs: `docs/super-admin/`
