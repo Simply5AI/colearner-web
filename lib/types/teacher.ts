@@ -111,6 +111,25 @@ export interface TeacherMaterial {
   mimeType?: string
 }
 
+export type PlanStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+
+export interface TeacherStudyPlanSummary {
+  id: string
+  title: string
+  description: string
+  status: PlanStatus
+  enrollmentCount: number
+  topicCount: number
+  questionCount: number
+  subjectTags: string[]
+  updatedAt: string
+  publishedAt: string | null
+}
+
+export interface TeacherStudyPlan extends TeacherStudyPlanSummary {
+  tree: TreeNode[]
+}
+
 export type TreeNodeKind = 'module' | 'topic' | 'subtopic'
 
 export interface TreeNode {
@@ -118,6 +137,7 @@ export interface TreeNode {
   kind: TreeNodeKind
   title: string
   description?: string
+  prerequisiteTopicIds?: string[]
   children?: TreeNode[]
 }
 

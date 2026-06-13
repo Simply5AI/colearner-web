@@ -2,7 +2,7 @@ import type { TeacherMaterial, TeacherQuestion, TreeNode } from '@/lib/types/tea
 
 export const mockMcqQuestion: TeacherQuestion = {
   id: 'q-mcq-1',
-  planId: 'plan-1',
+  planId: 'plan-algorithms-101',
   topicId: 'topic-1',
   type: 'MCQ',
   status: 'PUBLISHED',
@@ -20,7 +20,7 @@ export const mockMcqQuestion: TeacherQuestion = {
 
 export const mockMultiSelectQuestion: TeacherQuestion = {
   id: 'q-ms-1',
-  planId: 'plan-1',
+  planId: 'plan-algorithms-101',
   topicId: 'topic-1',
   type: 'MULTI_SELECT',
   status: 'PUBLISHED',
@@ -37,7 +37,7 @@ export const mockMultiSelectQuestion: TeacherQuestion = {
 
 export const mockTrueFalseQuestion: TeacherQuestion = {
   id: 'q-tf-1',
-  planId: 'plan-1',
+  planId: 'plan-algorithms-101',
   topicId: 'topic-1',
   type: 'TRUE_FALSE',
   status: 'PUBLISHED',
@@ -48,7 +48,7 @@ export const mockTrueFalseQuestion: TeacherQuestion = {
 
 export const mockShortAnswerQuestion: TeacherQuestion = {
   id: 'q-sa-1',
-  planId: 'plan-1',
+  planId: 'plan-algorithms-101',
   topicId: 'topic-1',
   type: 'SHORT_ANSWER',
   status: 'PUBLISHED',
@@ -59,7 +59,7 @@ export const mockShortAnswerQuestion: TeacherQuestion = {
 
 export const mockLongAnswerQuestion: TeacherQuestion = {
   id: 'q-la-1',
-  planId: 'plan-1',
+  planId: 'plan-algorithms-101',
   topicId: 'topic-1',
   type: 'LONG_ANSWER',
   status: 'PUBLISHED',
@@ -74,7 +74,7 @@ export const mockLongAnswerQuestion: TeacherQuestion = {
 
 export const mockFillBlankQuestion: TeacherQuestion = {
   id: 'q-fb-1',
-  planId: 'plan-1',
+  planId: 'plan-algorithms-101',
   topicId: 'topic-1',
   type: 'FILL_BLANK',
   status: 'PUBLISHED',
@@ -85,7 +85,7 @@ export const mockFillBlankQuestion: TeacherQuestion = {
 
 export const mockCodeQuestion: TeacherQuestion = {
   id: 'q-code-1',
-  planId: 'plan-1',
+  planId: 'plan-algorithms-101',
   topicId: 'topic-1',
   type: 'CODE',
   status: 'PUBLISHED',
@@ -145,7 +145,7 @@ export const mockRichTextContent = {
 export const mockMaterials: TeacherMaterial[] = [
   {
     id: 'mat-pdf-1',
-    planId: 'plan-1',
+    planId: 'plan-algorithms-101',
     title: 'Algorithms Cheat Sheet',
     type: 'PDF',
     visibility: 'SUBSCRIBER',
@@ -154,7 +154,7 @@ export const mockMaterials: TeacherMaterial[] = [
   },
   {
     id: 'mat-video-1',
-    planId: 'plan-1',
+    planId: 'plan-algorithms-101',
     title: 'Merge Sort Walkthrough',
     type: 'VIDEO_LINK',
     visibility: 'PREVIEW',
@@ -164,7 +164,7 @@ export const mockMaterials: TeacherMaterial[] = [
   },
   {
     id: 'mat-link-1',
-    planId: 'plan-1',
+    planId: 'plan-algorithms-101',
     title: 'Big-O Cheat Sheet',
     type: 'EXTERNAL_LINK',
     visibility: 'PREVIEW',
@@ -176,7 +176,7 @@ export const mockMaterials: TeacherMaterial[] = [
   },
   {
     id: 'mat-rich-1',
-    planId: 'plan-1',
+    planId: 'plan-algorithms-101',
     title: 'Recursion Notes',
     type: 'RICH_TEXT',
     visibility: 'SUBSCRIBER',
@@ -185,7 +185,7 @@ export const mockMaterials: TeacherMaterial[] = [
   },
   {
     id: 'mat-ext-1',
-    planId: 'plan-1',
+    planId: 'plan-algorithms-101',
     title: 'Captured Article',
     type: 'EXTENSION_CAPTURE',
     visibility: 'SUBSCRIBER',

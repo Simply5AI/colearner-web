@@ -33,6 +33,8 @@ interface TreeEditorProps {
   nodes: TreeNode[]
   onReorder: (nodes: TreeNode[]) => void
   onRename: (nodeId: string, title: string) => void
+  selectedNodeId?: string | null
+  onSelectNode?: (nodeId: string) => void
   renderNode?: (node: TreeNode) => React.ReactNode
 }
 
@@ -72,6 +74,8 @@ function SortableTreeRow({
   setEditingId,
   draftTitle,
   setDraftTitle,
+  selectedNodeId,
+  onSelectNode,
 }: {
   node: FlatTreeNode
   expanded: boolean
@@ -82,6 +86,8 @@ function SortableTreeRow({
   setEditingId: (id: string | null) => void
   draftTitle: string
   setDraftTitle: (value: string) => void
+  selectedNodeId?: string | null
+  onSelectNode?: (nodeId: string) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: node.id,
@@ -102,9 +108,20 @@ function SortableTreeRow({
   return (
     <div
       ref={setNodeRef}
+      role={onSelectNode ? 'button' : undefined}
+      tabIndex={onSelectNode ? 0 : undefined}
+      onClick={() => onSelectNode?.(node.id)}
+      onKeyDown={(event) => {
+        if (onSelectNode && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault()
+          onSelectNode(node.id)
+        }
+      }}
       className={cn(
         'flex items-center gap-2 rounded-lg border bg-background px-2 py-2',
         isDragging && 'opacity-70 shadow-md',
+        selectedNodeId === node.id && 'border-primary/50 bg-primary/5',
+        onSelectNode && 'cursor-pointer',
       )}
       style={{
         ...style,
@@ -114,6 +131,7 @@ function SortableTreeRow({
       <button
         type="button"
         className="cursor-grab text-muted-foreground"
+        onClick={(event) => event.stopPropagation()}
         {...attributes}
         {...listeners}
         aria-label="Drag to reorder"
@@ -124,7 +142,10 @@ function SortableTreeRow({
       <button
         type="button"
         className="text-muted-foreground"
-        onClick={onToggle}
+        onClick={(event) => {
+          event.stopPropagation()
+          onToggle()
+        }}
         aria-label={expanded ? 'Collapse' : 'Expand'}
       >
         {hasChildren ? (
@@ -166,7 +187,8 @@ function SortableTreeRow({
             type="button"
             size="sm"
             variant="ghost"
-            onClick={() => {
+            onClick={(event) => {
+              event.stopPropagation()
               setEditingId(node.id)
               setDraftTitle(node.title)
             }}
@@ -179,7 +201,14 @@ function SortableTreeRow({
   )
 }
 
-export function TreeEditor({ nodes, onReorder, onRename, renderNode }: TreeEditorProps) {
+export function TreeEditor({
+  nodes,
+  onReorder,
+  onRename,
+  selectedNodeId,
+  onSelectNode,
+  renderNode,
+}: TreeEditorProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draftTitle, setDraftTitle] = useState('')
@@ -237,6 +266,8 @@ export function TreeEditor({ nodes, onReorder, onRename, renderNode }: TreeEdito
               setEditingId={setEditingId}
               draftTitle={draftTitle}
               setDraftTitle={setDraftTitle}
+              selectedNodeId={selectedNodeId}
+              onSelectNode={onSelectNode}
             />
           ))}
         </div>
