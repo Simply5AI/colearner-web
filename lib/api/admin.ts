@@ -1939,3 +1939,173 @@ export async function getHealthLlmProvider(
     { headers, signal },
   )
 }
+
+// ─── Billing (admin) ───────────────────────────────────────────────────────
+
+export type AdminSubscriptionStatus =
+  | 'ACTIVE'
+  | 'PAST_DUE'
+  | 'CANCELED'
+  | 'INCOMPLETE'
+  | 'TRIALING'
+
+export interface BillingMetric {
+  value: number
+  deltaPct: number | null
+}
+
+export interface BillingOverview {
+  mrr: BillingMetric
+  arr: BillingMetric
+  payingOrgs: BillingMetric
+  churnRatePct: { value: number; prevValue: number }
+  planDistribution: Array<{
+    plan: AdminSubscriptionPlan
+    orgs: number
+    revenue: number
+    sharePct: number
+  }>
+  trend: {
+    series: Array<{ date: string; newCount: number; churnedCount: number }>
+  }
+  dataFreshness: {
+    stale: boolean
+    message?: string
+    lastWebhookAt: string | null
+  }
+}
+
+export interface BillingTransactionRow {
+  id: string
+  orgId: string
+  orgName: string
+  plan: AdminSubscriptionPlan
+  amountUsd: number
+  status: string
+  method: string
+  createdAt: string
+  refundable: boolean
+  refundedAmountUsd: number
+}
+
+export interface AdminSubscriptionListRow {
+  id: string
+  orgId: string
+  orgName: string
+  orgSlug: string
+  plan: AdminSubscriptionPlan
+  billingCycle: AdminBillingCycle | null
+  status: AdminSubscriptionStatus
+  startedAt: string
+  renewsAt: string | null
+  mrr: number
+  updatedAt: string
+}
+
+export interface AdminSubscriptionsResponse {
+  items: AdminSubscriptionListRow[]
+  nextCursor: string | null
+  total: number
+}
+
+export interface AdminSubscriptionsQuery {
+  search?: string
+  plan?: AdminSubscriptionPlan
+  status?: AdminSubscriptionStatus
+  cycle?: AdminBillingCycle
+  cursor?: string
+  limit?: number
+}
+
+export interface AdminSubscriptionDetail extends AdminSubscriptionListRow {
+  cancelAtPeriodEnd: boolean
+  canceledAt: string | null
+  owner: { id: string; name: string; email: string } | null
+  billingEmail: string | null
+  paymentMethodLast4: string | null
+  paymentMethodBrand: string | null
+  nextInvoiceEstimateUsd: number | null
+  transactions: BillingTransactionRow[]
+}
+
+export async function getBillingOverview(
+  headers: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<BillingOverview> {
+  return adminApiClient<BillingOverview>('/api/admin/billing/overview', { headers, signal })
+}
+
+export async function getBillingRecentTransactions(
+  headers: Record<string, string>,
+  limit = 20,
+  signal?: AbortSignal,
+): Promise<BillingTransactionRow[]> {
+  return adminApiClient<BillingTransactionRow[]>(
+    `/api/admin/billing/transactions/recent?limit=${limit}`,
+    { headers, signal },
+  )
+}
+
+export async function getAdminSubscriptions(
+  headers: Record<string, string>,
+  query: AdminSubscriptionsQuery = {},
+  signal?: AbortSignal,
+): Promise<AdminSubscriptionsResponse> {
+  const qs = new URLSearchParams()
+  if (query.search) qs.set('search', query.search)
+  if (query.plan) qs.set('plan', query.plan)
+  if (query.status) qs.set('status', query.status)
+  if (query.cycle) qs.set('cycle', query.cycle)
+  if (query.cursor) qs.set('cursor', query.cursor)
+  if (query.limit) qs.set('limit', String(query.limit))
+  const suffix = qs.toString() ? `?${qs}` : ''
+  return adminApiClient<AdminSubscriptionsResponse>(`/api/admin/subscriptions${suffix}`, {
+    headers,
+    signal,
+  })
+}
+
+export async function getAdminSubscription(
+  headers: Record<string, string>,
+  id: string,
+  signal?: AbortSignal,
+): Promise<AdminSubscriptionDetail> {
+  return adminApiClient<AdminSubscriptionDetail>(`/api/admin/subscriptions/${id}`, {
+    headers,
+    signal,
+  })
+}
+
+export async function changeAdminSubscriptionPlan(
+  id: string,
+  body: {
+    plan: AdminSubscriptionPlan
+    cycle: AdminBillingCycle
+    effective?: 'immediate' | 'end_of_cycle'
+    updatedAt?: string
+  },
+): Promise<AdminSubscriptionDetail> {
+  return adminApiClient(`/api/admin/subscriptions/${id}/change-plan`, { method: 'POST', body })
+}
+
+export async function cancelAdminSubscription(
+  id: string,
+  body: { reason: string; immediate?: boolean; updatedAt?: string },
+): Promise<AdminSubscriptionDetail> {
+  return adminApiClient(`/api/admin/subscriptions/${id}/cancel`, { method: 'POST', body })
+}
+
+export async function reactivateAdminSubscription(id: string): Promise<AdminSubscriptionDetail> {
+  return adminApiClient(`/api/admin/subscriptions/${id}/reactivate`, { method: 'POST' })
+}
+
+export async function refundAdminSubscriptionTransaction(
+  subscriptionId: string,
+  transactionId: string,
+  body: { amount: number; reason: string },
+): Promise<{ transactionId: string; amount: number; status: string; reason: string }> {
+  return adminApiClient(
+    `/api/admin/subscriptions/${subscriptionId}/transactions/${encodeURIComponent(transactionId)}/refund`,
+    { method: 'POST', body },
+  )
+}

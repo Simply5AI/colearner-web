@@ -74,7 +74,20 @@ const navGroups: Array<{ title: string; items: AdminNavItem[] }> = [
   },
   {
     title: 'Billing',
-    items: [{ href: '/admin/billing', label: 'Billing', icon: CreditCard }],
+    items: [
+      {
+        href: '/admin/billing',
+        label: 'Billing',
+        icon: CreditCard,
+        match: (pathname) => pathname === '/admin/billing',
+      },
+      {
+        href: '/admin/billing/subscriptions',
+        label: 'Subscriptions',
+        icon: CreditCard,
+        match: (pathname) => pathname.startsWith('/admin/billing/subscriptions'),
+      },
+    ],
   },
   {
     title: 'AI & Costs',
