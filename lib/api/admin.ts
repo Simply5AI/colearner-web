@@ -1408,6 +1408,8 @@ export interface AdminExtractionListRow {
   title: string | null
   status: AdminExtractionStatus
   sourceType: string
+  hasUploadedFile: boolean
+  uploadedFileName: string | null
   owner: AdminContentUserRef
   org: AdminContentOrgRef
   processingTimeMs: number | null
@@ -1440,6 +1442,11 @@ export interface AdminExtractionDetail {
   completedAt: string | null
   metadata: unknown
   errorMessage: string | null
+  uploadedFile: {
+    fileName: string
+    mimeType: string | null
+    fileSize: number | null
+  } | null
   concepts: Array<{
     id: string
     title: string
@@ -1603,6 +1610,21 @@ export async function getAdminExtraction(
   id: string,
 ): Promise<AdminExtractionDetail> {
   return adminApiClient(`/api/admin/extractions/${id}`, { headers })
+}
+
+export interface AdminExtractionFileDownload {
+  url: string
+  fileName: string
+  mimeType: string
+  fileSize: number | null
+  sourceType: string
+}
+
+export async function getAdminExtractionDownload(
+  headers: Record<string, string>,
+  id: string,
+): Promise<AdminExtractionFileDownload> {
+  return adminApiClient(`/api/admin/extractions/${id}/download`, { headers })
 }
 
 export async function reprocessAdminExtraction(id: string): Promise<{ jobId: string }> {

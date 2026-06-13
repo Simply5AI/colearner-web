@@ -6,6 +6,7 @@ import { format, formatDistanceToNow } from 'date-fns'
 import {
   AlertTriangle,
   Copy,
+  Download,
   MoreHorizontal,
   RefreshCw,
   RotateCcw,
@@ -17,6 +18,7 @@ import { toast } from 'sonner'
 import {
   deleteAdminExtraction,
   getAdminExtraction,
+  getAdminExtractionDownload,
   reprocessAdminExtraction,
   type AdminExtractionDetail,
   type AdminExtractionListRow,
@@ -83,6 +85,7 @@ export function AdminContentExtractionsView({ data, query }: Props) {
   const [detailLoading, setDetailLoading] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<AdminExtractionListRow | null>(null)
   const [isMutating, setIsMutating] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
   const didMountSearch = useRef(false)
 
   const offset = Number.parseInt(query.cursor ?? '0', 10) || 0
@@ -149,6 +152,19 @@ export function AdminContentExtractionsView({ data, query }: Props) {
       toast.error(err instanceof Error ? err.message : 'Reprocess failed')
     } finally {
       setIsMutating(false)
+    }
+  }
+
+  async function handleDownload(extractionId: string) {
+    setIsDownloading(true)
+    try {
+      const download = await getAdminExtractionDownload({}, extractionId)
+      window.open(download.url, '_blank', 'noopener,noreferrer')
+      toast.success('Download started', { description: download.fileName })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Download failed')
+    } finally {
+      setIsDownloading(false)
     }
   }
 
@@ -269,6 +285,14 @@ export function AdminContentExtractionsView({ data, query }: Props) {
                           <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}><MoreHorizontal className="h-4 w-4" /></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setDetailId(row.id)}>View</DropdownMenuItem>
+                            {row.hasUploadedFile && (
+                              <DropdownMenuItem
+                                disabled={isDownloading}
+                                onClick={() => handleDownload(row.id)}
+                              >
+                                <Download className="h-4 w-4" /> Download file
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               disabled={!['FAILED', 'COMPLETED', 'COMPLETED_PASS1'].includes(row.status)}
                               onClick={() => handleReprocess(row)}
@@ -326,6 +350,33 @@ export function AdminContentExtractionsView({ data, query }: Props) {
                     <MetaRow label="Processing" value={detail.processingTimeMs ? `${detail.processingTimeMs} ms` : '—'} />
                     <MetaRow label="Created" value={format(new Date(detail.createdAt), 'PPpp')} />
                   </div>
+                  {detail.uploadedFile && (
+                    <div className="rounded-xl border border-border/70 bg-card p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium">Uploaded file</p>
+                          <p className="mt-1 truncate text-sm text-muted-foreground">
+                            {detail.uploadedFile.fileName}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {[detail.uploadedFile.mimeType, formatFileSize(detail.uploadedFile.fileSize)]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0"
+                          disabled={isDownloading}
+                          onClick={() => handleDownload(detail.id)}
+                        >
+                          <Download className="h-4 w-4" />
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   {detail.errorMessage && (
                     <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
                       {detail.errorMessage}
@@ -503,6 +554,13 @@ function Pagination({
       <Button variant="outline" disabled={!hasNext} onClick={onNext}>Next</Button>
     </div>
   )
+}
+
+function formatFileSize(bytes: number | null) {
+  if (bytes == null) return null
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 function copyText(text: string) {

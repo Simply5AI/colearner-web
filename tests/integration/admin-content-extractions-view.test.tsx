@@ -16,6 +16,8 @@ describe('AdminContentExtractionsView', () => {
               title: 'Intro to biology',
               status: 'COMPLETED',
               sourceType: 'YOUTUBE',
+              hasUploadedFile: false,
+              uploadedFileName: null,
               owner: { id: 'u1', email: 'teacher@example.com' },
               org: { id: 'org-1', name: 'Acme School' },
               processingTimeMs: 4200,
