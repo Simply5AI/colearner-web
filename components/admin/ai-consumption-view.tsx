@@ -115,6 +115,50 @@ export function AiConsumptionView({ initial }: AiConsumptionViewProps) {
     return { range, granularity }
   }, [range, from, to, granularity])
 
+  const matchesInitialQuery =
+    query.range === initial.range &&
+    !from &&
+    groupBy === initial.groupBy &&
+    granularity === (initial.granularity ?? 'day')
+
+  const loadPanels = useCallback(async () => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    setPanelLoading({ user: true, org: true, model: true, feature: true, rate: true })
+    setError(null)
+
+    const headers = {}
+    const signal = controller.signal
+
+    try {
+      const [users, orgs, models, features, rates, pricingMeta] = await Promise.all([
+        getLlmConsumptionByUser(headers, query),
+        getLlmConsumptionByOrgBreakdown(headers, query),
+        getLlmConsumptionByModel(headers, query),
+        getLlmConsumptionByFeature(headers, query),
+        getLlmRateLimits(headers),
+        getLlmPricingMeta(headers),
+      ])
+
+      if (signal.aborted) return
+      setByUser(users)
+      setByOrg(orgs)
+      setByModel(models)
+      setByFeature(features)
+      setRateLimits(rates)
+      setPricing(pricingMeta)
+    } catch (err) {
+      if (signal.aborted) return
+      setError(err instanceof Error ? err.message : 'Failed to load consumption')
+    } finally {
+      if (!signal.aborted) {
+        setPanelLoading({ user: false, org: false, model: false, feature: false, rate: false })
+      }
+    }
+  }, [query])
+
   const loadAll = useCallback(async () => {
     abortRef.current?.abort()
     const controller = new AbortController()
@@ -157,13 +201,19 @@ export function AiConsumptionView({ initial }: AiConsumptionViewProps) {
     }
   }, [query, groupBy])
 
+  const skipInitialReportRef = useRef(true)
+
   useEffect(() => {
-    if (query.range === initial.range && !from && groupBy === initial.groupBy && granularity === (initial.granularity ?? 'day')) {
-      return
+    if (skipInitialReportRef.current && matchesInitialQuery) {
+      skipInitialReportRef.current = false
+      loadPanels()
+      return () => abortRef.current?.abort()
     }
+
+    skipInitialReportRef.current = false
     loadAll()
     return () => abortRef.current?.abort()
-  }, [loadAll, query, from, groupBy, granularity, initial.range, initial.groupBy, initial.granularity])
+  }, [loadAll, loadPanels, matchesInitialQuery, query, from, groupBy, granularity])
 
   function applyCustomRange() {
     if (!from) {

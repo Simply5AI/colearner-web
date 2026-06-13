@@ -1,6 +1,12 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { AdminContentExtractionsView } from '@/components/admin/admin-content-extractions-view'
+
+vi.mock('@/lib/hooks/use-admin-mutation', () => ({
+  useAdminMutation: () => ({
+    runSensitive: <T,>(fn: () => Promise<T>) => fn(),
+  }),
+}))
 
 describe('AdminContentExtractionsView', () => {
   it('renders extraction rows and total count', () => {

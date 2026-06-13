@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AdminLearningOverview } from '@/components/admin/admin-learning/overview'
@@ -163,7 +163,10 @@ describe('Admin learning views', () => {
     render(<AdminLearningOverview data={overviewFixture()} />)
 
     expect(screen.getByText('Learner One')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /mastery/i })).toHaveAttribute('href', '/admin/users/user-1/learning/mastery')
+    expect(within(screen.getByRole('navigation')).getByRole('link', { name: 'Mastery' })).toHaveAttribute(
+      'href',
+      '/admin/users/user-1/learning/mastery',
+    )
     expect(screen.getByText('Learning overview')).toBeInTheDocument()
     expect(screen.getByText('Concepts mastered')).toBeInTheDocument()
     expect(screen.getAllByText('12').length).toBeGreaterThan(0)
@@ -297,8 +300,18 @@ describe('Admin learning views', () => {
 
     await user.click(screen.getByRole('button', { name: 'View roadmap detail' }))
 
-    expect(await screen.findByText('Forces')).toBeInTheDocument()
-    expect(screen.getByText('Foundations')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(roadmapDetailMock).toHaveBeenCalledWith(
+        { Authorization: 'Bearer token' },
+        'user-1',
+        'roadmap-1',
+      )
+    })
+
+    expect(await screen.findByText('Foundations')).toBeInTheDocument()
     expect(screen.getByText('Forces intro')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('tab', { name: /concepts/i }))
+    expect(await screen.findByText('Forces')).toBeInTheDocument()
   })
 })

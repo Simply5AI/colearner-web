@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AdminUserActionMenu } from '@/components/admin/admin-user-detail/action-menu'
@@ -70,6 +70,12 @@ function makeDetail(overrides: Partial<AdminUserDetail> = {}): AdminUserDetail {
   }
 }
 
+async function openActionsMenu(user: ReturnType<typeof userEvent.setup>) {
+  const trigger = screen.getByRole('button', { name: /actions/i })
+  fireEvent.pointerDown(trigger)
+  await user.click(trigger)
+}
+
 describe('AdminUserActionMenu', () => {
   beforeEach(() => {
     refreshMock.mockReset()
@@ -93,8 +99,8 @@ describe('AdminUserActionMenu', () => {
       />
     )
 
-    await user.click(screen.getByRole('button', { name: /actions/i }))
-    await user.click(screen.getByRole('menuitem', { name: /suspend/i }))
+    await openActionsMenu(user)
+    await user.click(await screen.findByRole('menuitem', { name: /suspend/i }))
     await user.type(screen.getByLabelText(/reason/i), 'Policy review')
     await user.click(screen.getByRole('button', { name: /^suspend$/i }))
 
@@ -117,8 +123,8 @@ describe('AdminUserActionMenu', () => {
       />
     )
 
-    await user.click(screen.getByRole('button', { name: /actions/i }))
-    await user.click(screen.getByRole('menuitem', { name: /reactivate/i }))
+    await openActionsMenu(user)
+    await user.click(await screen.findByRole('menuitem', { name: /reactivate/i }))
     await user.click(screen.getByRole('button', { name: /^reactivate$/i }))
 
     await waitFor(() => {

@@ -215,7 +215,8 @@ export function RolesTab({ detail, currentAdminId, authHeaders }: RolesTabProps)
 function formatRoleLabel(name: string, isSystem: boolean) {
   const readable = name
     .toLowerCase()
-    .split('_')
+    .split(/[_\s]+/)
+    .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
   return `${readable} (${isSystem ? 'system' : 'org'})`

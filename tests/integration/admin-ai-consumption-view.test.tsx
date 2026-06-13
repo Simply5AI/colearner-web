@@ -86,6 +86,7 @@ function makeReport(overrides: Partial<ConsumptionReport> = {}): ConsumptionRepo
 describe('AiConsumptionView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    getLlmConsumption.mockResolvedValue(makeReport())
     getLlmConsumptionByUser.mockResolvedValue([
       { userId: 'u1', email: 'ada@example.com', tokens: 900, costUsd: 5, requests: 10, avgLatencyMs: 300 },
     ])
@@ -121,9 +122,9 @@ describe('AiConsumptionView', () => {
     expect(screen.getByText('4.00%')).toBeInTheDocument()
   })
 
-  it('renders by-user drill-down links', () => {
+  it('renders by-user drill-down links', async () => {
     render(<AiConsumptionView initial={makeReport()} />)
-    expect(screen.getByRole('link', { name: 'ada@example.com' })).toHaveAttribute('href', '/admin/users/u1')
+    expect(await screen.findByRole('link', { name: 'ada@example.com' })).toHaveAttribute('href', '/admin/users/u1')
   })
 
   it('refetches when range changes', async () => {

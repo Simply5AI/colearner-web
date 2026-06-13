@@ -7,6 +7,12 @@ const pathnameMock = vi.hoisted(() => vi.fn(() => '/admin'))
 
 vi.mock('next/navigation', () => ({
   usePathname: pathnameMock,
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    back: vi.fn(),
+  }),
 }))
 
 function renderShell() {

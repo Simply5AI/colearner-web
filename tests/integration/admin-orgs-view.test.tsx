@@ -34,6 +34,12 @@ vi.mock('sonner', () => ({
   },
 }))
 
+vi.mock('@/lib/hooks/use-admin-mutation', () => ({
+  useAdminMutation: () => ({
+    runSensitive: <T,>(fn: () => Promise<T>) => fn(),
+  }),
+}))
+
 vi.mock('@/lib/api/admin', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api/admin')>()
   return {

@@ -1,20 +1,34 @@
+'use client'
+
 import { Badge } from '@/components/ui/badge'
-import type { MasteryState } from '@/lib/types'
+import { cn } from '@/lib/utils'
+import type { MasteryLevel } from '@/lib/types/teacher'
+
+const masteryConfig: Record<
+  MasteryLevel,
+  { label: string; className: string }
+> = {
+  new: { label: 'New', className: 'bg-slate-100 text-slate-700 border-slate-200' },
+  learning: { label: 'Learning', className: 'bg-amber-50 text-amber-800 border-amber-200' },
+  review: { label: 'Review', className: 'bg-sky-50 text-sky-800 border-sky-200' },
+  mastered: { label: 'Mastered', className: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
+  excel: { label: 'Excel', className: 'bg-violet-50 text-violet-800 border-violet-200' },
+}
 
 interface MasteryBadgeProps {
-  state: MasteryState
+  level: MasteryLevel
+  className?: string
 }
 
-const stateConfig: Record<MasteryState, { label: string; className: string }> = {
-  new: { label: 'New', className: 'bg-mastery-new text-white' },
-  learning: { label: 'Learning', className: 'bg-mastery-learning text-white' },
-  review: { label: 'Review', className: 'bg-mastery-review text-white' },
-  mastered: { label: 'Mastered', className: 'bg-mastery-mastered text-white' },
-  excel: { label: 'Excel', className: 'bg-mastery-excel text-white' },
-}
+export function MasteryBadge({ level, className }: MasteryBadgeProps) {
+  const config = masteryConfig[level]
 
-/** Displays mastery state as a colored badge */
-export function MasteryBadge({ state }: MasteryBadgeProps) {
-  const config = stateConfig[state]
-  return <Badge className={config.className}>{config.label}</Badge>
+  return (
+    <Badge
+      variant="outline"
+      className={cn('font-medium', config.className, className)}
+    >
+      {config.label}
+    </Badge>
+  )
 }
