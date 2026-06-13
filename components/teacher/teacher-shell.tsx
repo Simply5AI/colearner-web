@@ -17,7 +17,7 @@ type TeacherNavItem = {
   icon: typeof LayoutDashboard
 }
 
-const navItems: TeacherNavItem[] = [
+const teachNavItems: TeacherNavItem[] = [
   { href: '/teacher/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/teacher/plans', label: 'Study Plans', icon: BookOpen },
   { href: '/teacher/students', label: 'Students', icon: Users },
@@ -32,50 +32,77 @@ interface TeacherShellProps {
 export function TeacherShell({ children, teacherName }: TeacherShellProps) {
   const pathname = usePathname()
 
+  function isActive(href: string): boolean {
+    return pathname === href || pathname.startsWith(`${href}/`)
+  }
+
   return (
     <div className="flex min-h-screen">
       <aside className="flex w-60 flex-col border-r border-sidebar-border bg-sidebar">
         <div className="border-b border-sidebar-border/70 px-5 py-5">
-          <Link href="/teacher/dashboard" className="flex items-center gap-2 text-[17px] font-extrabold tracking-tight text-foreground">
-            <GraduationCap className="h-5 w-5 text-brand-teal" />
-            Teacher
+          <Link href="/teacher/dashboard" className="text-[17px] font-extrabold tracking-tight text-foreground">
+            Co<span className="text-primary">Learner</span>
           </Link>
+          <p className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+            <GraduationCap className="h-3.5 w-3.5 text-primary" />
+            Teacher workspace
+          </p>
           {teacherName && (
-            <p className="mt-1 truncate text-xs text-muted-foreground">{teacherName}</p>
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground/80">{teacherName}</p>
           )}
         </div>
 
-        <nav className="flex-1 space-y-1 p-3">
-          {navItems.map((item) => {
-            const active =
-              pathname === item.href || pathname.startsWith(`${item.href}/`)
-            const Icon = item.icon
-            return (
+        <nav className="flex-1 space-y-4 px-2.5 pt-3">
+          <div>
+            <p className="px-3 pb-1.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">
+              Teach
+            </p>
+            <div className="space-y-1">
+              {teachNavItems.map((item) => {
+                const active = isActive(item.href)
+                const Icon = item.icon
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors',
+                      active
+                        ? 'bg-primary/10 font-bold text-primary shadow-[inset_3px_0_0_var(--primary)]'
+                        : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground',
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        'h-[18px] w-[18px] shrink-0 transition-colors',
+                        active ? 'text-primary' : 'text-muted-foreground/70 group-hover:text-foreground',
+                      )}
+                    />
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+
+          <div>
+            <p className="px-3 pb-1.5 pt-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">
+              Account
+            </p>
+            <div className="space-y-1">
               <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  active
-                    ? 'bg-brand-teal/10 text-brand-teal'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                )}
+                href="/dashboard"
+                className="group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
               >
-                <Icon className="h-4 w-4" />
-                {item.label}
+                <span className="text-muted-foreground/70 group-hover:text-foreground">←</span>
+                <span>Back to learning</span>
               </Link>
-            )
-          })}
+            </div>
+          </div>
         </nav>
 
-        <div className="border-t border-sidebar-border/70 p-3">
-          <Link
-            href="/dashboard"
-            className="block rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            ← Back to student view
-          </Link>
-        </div>
+        <div className="border-t border-sidebar-border/70 p-2.5" />
       </aside>
 
       <main className="flex-1 overflow-y-auto bg-background">{children}</main>

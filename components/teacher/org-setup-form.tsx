@@ -92,7 +92,7 @@ export function OrgSetupForm({ defaultDisplayName }: OrgSetupFormProps) {
       <Button
         type="submit"
         disabled={isSubmitting || !displayName.trim()}
-        className="w-full bg-brand-teal hover:bg-brand-teal/90"
+        className="w-full"
       >
         {isSubmitting ? 'Creating...' : 'Create teacher organization'}
       </Button>

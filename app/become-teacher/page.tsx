@@ -12,10 +12,13 @@ export default async function BecomeTeacherPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-6 p-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">Become a teacher</h1>
-        <p className="text-muted-foreground">
+    <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10">
+      <div className="space-y-2">
+        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-brand-orange">
+          Teacher onboarding
+        </p>
+        <h1 className="text-[28px] font-black leading-tight tracking-tight">Become a teacher</h1>
+        <p className="text-[13px] text-muted-foreground">
           Create study plans, share materials, and track student progress on CoLearner.
         </p>
       </div>
@@ -23,8 +26,8 @@ export default async function BecomeTeacherPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-brand-teal" />
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Building2 className="h-5 w-5 text-primary" />
               Institution
             </CardTitle>
             <CardDescription>
@@ -41,10 +44,10 @@ export default async function BecomeTeacherPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-brand-teal/30">
+        <Card className="border-primary/20 shadow-[0_0_0_1px_rgba(196,98,26,0.08)]">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-brand-teal" />
+            <CardTitle className="flex items-center gap-2 text-base">
+              <GraduationCap className="h-5 w-5 text-primary" />
               Freelance teacher
             </CardTitle>
             <CardDescription>
@@ -52,7 +55,7 @@ export default async function BecomeTeacherPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full bg-brand-teal hover:bg-brand-teal/90">
+            <Button asChild className="w-full">
               <Link href="/teacher/org-setup">Get started</Link>
             </Button>
           </CardContent>
