@@ -195,6 +195,8 @@ describe('Admin learning views', () => {
     })
     render(<AdminLearningMastery data={masteryFixture()} user={overviewFixture().user} authHeaders={{ Authorization: 'Bearer token' }} />)
 
+    expect(screen.getByText('Mastery ledger')).toBeInTheDocument()
+
     await user.type(screen.getByPlaceholderText(/search concepts/i), 'calc')
     await waitFor(() => {
       expect(replaceMock).toHaveBeenCalledWith(expect.stringContaining('search=calc'), { scroll: false })
@@ -206,7 +208,7 @@ describe('Admin learning views', () => {
       expect(replaceMock).toHaveBeenCalledWith(expect.stringContaining('levels=REVIEW'), { scroll: false })
     })
 
-    await user.click(screen.getByRole('button', { name: /view question history/i }))
+    await user.click(screen.getByRole('button', { name: 'View question history' }))
     await waitFor(() => {
       expect(conceptAttemptsMock).toHaveBeenCalledWith(
         { Authorization: 'Bearer token' },
@@ -239,13 +241,15 @@ describe('Admin learning views', () => {
     })
     render(<AdminLearningSessions data={sessionsFixture()} user={overviewFixture().user} authHeaders={{ Authorization: 'Bearer token' }} />)
 
+    expect(screen.getByText('Recall sessions')).toBeInTheDocument()
+
     await user.click(screen.getByLabelText('Session source'))
     await user.click(await screen.findByRole('option', { name: 'Algebra Notes' }))
     await waitFor(() => {
       expect(replaceMock).toHaveBeenCalledWith(expect.stringContaining('sourceId=extraction-1'), { scroll: false })
     })
 
-    await user.click(screen.getByRole('button', { name: /view session detail/i }))
+    await user.click(screen.getByRole('button', { name: 'View session detail' }))
 
     expect(await screen.findByText(/very long free-text answer/i)).toBeInTheDocument()
     expect(screen.getByText('Variables name values that can change.')).toBeInTheDocument()
@@ -255,6 +259,8 @@ describe('Admin learning views', () => {
   it('polls while roadmaps are generating', () => {
     vi.useFakeTimers()
     render(<AdminLearningRoadmaps data={roadmapsFixture()} user={overviewFixture().user} authHeaders={{ Authorization: 'Bearer token' }} />)
+
+    expect(screen.getByText('Study roadmaps')).toBeInTheDocument()
 
     act(() => {
       vi.advanceTimersByTime(5000)
@@ -286,10 +292,10 @@ describe('Admin learning views', () => {
     })
     render(<AdminLearningRoadmaps data={roadmapsFixture()} user={overviewFixture().user} authHeaders={{ Authorization: 'Bearer token' }} />)
 
-    expect(screen.getByText('Generation slow')).toBeInTheDocument()
+    expect(screen.getByText('Slow generation')).toBeInTheDocument()
     expect(screen.getByText('40%')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /view roadmap detail/i }))
+    await user.click(screen.getByRole('button', { name: 'View roadmap detail' }))
 
     expect(await screen.findByText('Forces')).toBeInTheDocument()
     expect(screen.getByText('Foundations')).toBeInTheDocument()

@@ -5,7 +5,8 @@ import { getAdminLearningMastery, getAdminLearningOverview } from '@/lib/api/adm
 import { AdminLearningMastery } from '@/components/admin/admin-learning/mastery'
 
 export const metadata: Metadata = {
-  title: 'Admin User Learning Mastery',
+  title: 'Learning Mastery',
+  description: 'Concept-by-concept mastery ledger for a learner.',
 }
 
 type PageProps = {

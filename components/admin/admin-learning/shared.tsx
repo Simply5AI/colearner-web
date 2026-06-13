@@ -21,6 +21,7 @@ import type {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
@@ -359,3 +360,57 @@ export function CursorPager({
 }
 
 export type LearningTabIcon = LucideIcon
+
+export const MASTERY_LEVEL_STYLES: Record<string, { label: string; color: string; bg: string }> = {
+  NEW: { label: 'New', color: '#64748b', bg: 'bg-slate-500/10' },
+  LEARNING: { label: 'Learning', color: '#D97706', bg: 'bg-amber-500/10' },
+  REVIEW: { label: 'Review', color: '#2563EB', bg: 'bg-blue-500/10' },
+  WEAK: { label: 'Weak', color: '#DC2626', bg: 'bg-red-500/10' },
+  MASTERED: { label: 'Mastered', color: '#16A34A', bg: 'bg-emerald-500/10' },
+}
+
+export function LearningPageIntro({
+  title,
+  description,
+}: {
+  title: string
+  description: string
+}) {
+  return (
+    <div className="mb-6 max-w-3xl">
+      <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+    </div>
+  )
+}
+
+export function LearningFiltersCard({ children }: { children: React.ReactNode }) {
+  return (
+    <Card className="mb-5 py-0">
+      <CardContent className="flex flex-wrap items-end gap-3 p-4">{children}</CardContent>
+    </Card>
+  )
+}
+
+export function LearningDataSection({
+  title,
+  description,
+  children,
+  footer,
+}: {
+  title: string
+  description?: string
+  children: React.ReactNode
+  footer?: React.ReactNode
+}) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
+      <div className="border-b border-border/70 px-4 py-3">
+        <h3 className="text-sm font-semibold">{title}</h3>
+        {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+      </div>
+      {children}
+      {footer}
+    </section>
+  )
+}

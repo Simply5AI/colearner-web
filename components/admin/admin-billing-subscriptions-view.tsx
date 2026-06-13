@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -33,8 +34,10 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
@@ -374,7 +377,7 @@ export function AdminBillingSubscriptionsView({ data: initial, query: initialQue
       </Card>
 
       <Sheet open={!!detail} onOpenChange={(open) => !open && setDetail(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+        <SheetContent className="w-full sm:max-w-xl">
           {detail ? (
             <>
               <SheetHeader>
@@ -384,21 +387,8 @@ export function AdminBillingSubscriptionsView({ data: initial, query: initialQue
                 </SheetDescription>
               </SheetHeader>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button size="sm" onClick={() => setChangeOpen(true)} disabled={detail.status === 'PAST_DUE'}>
-                  Change plan
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setCancelOpen(true)}>
-                  Cancel
-                </Button>
-                {(detail.cancelAtPeriodEnd || detail.status === 'CANCELED') && (
-                  <Button size="sm" variant="secondary" onClick={() => void submitReactivate()} disabled={busy}>
-                    Reactivate
-                  </Button>
-                )}
-              </div>
-
-              <Tabs defaultValue="overview" className="mt-5">
+              <SheetBody>
+              <Tabs defaultValue="overview" className="space-y-4">
                 <TabsList>
                   <TabsTrigger value="overview">Overview</TabsTrigger>
                   <TabsTrigger value="transactions">Transactions</TabsTrigger>
@@ -453,9 +443,26 @@ export function AdminBillingSubscriptionsView({ data: initial, query: initialQue
                   </div>
                 </TabsContent>
               </Tabs>
+              </SheetBody>
+
+              <SheetFooter className="flex-wrap gap-2 sm:justify-start">
+                <Button size="sm" onClick={() => setChangeOpen(true)} disabled={detail.status === 'PAST_DUE'}>
+                  Change plan
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setCancelOpen(true)}>
+                  Cancel
+                </Button>
+                {(detail.cancelAtPeriodEnd || detail.status === 'CANCELED') && (
+                  <Button size="sm" variant="secondary" onClick={() => void submitReactivate()} disabled={busy}>
+                    Reactivate
+                  </Button>
+                )}
+              </SheetFooter>
             </>
           ) : detailLoading ? (
-            <p className="p-4 text-sm text-muted-foreground">Loading subscription…</p>
+            <SheetBody>
+              <p className="text-sm text-muted-foreground">Loading subscription…</p>
+            </SheetBody>
           ) : null}
         </SheetContent>
       </Sheet>
@@ -466,7 +473,7 @@ export function AdminBillingSubscriptionsView({ data: initial, query: initialQue
             <DialogTitle>Change plan</DialogTitle>
             <DialogDescription>Updates Stripe when configured. Requires re-auth.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
+          <DialogBody className="space-y-3">
             <div>
               <Label>Plan</Label>
               <Select value={changePlan} onValueChange={(v) => setChangePlan(v as AdminSubscriptionPlan)}>
@@ -499,7 +506,7 @@ export function AdminBillingSubscriptionsView({ data: initial, query: initialQue
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setChangeOpen(false)}>Cancel</Button>
             <Button onClick={() => void submitChangePlan()} disabled={busy}>Save</Button>
@@ -513,7 +520,7 @@ export function AdminBillingSubscriptionsView({ data: initial, query: initialQue
             <DialogTitle>Cancel subscription</DialogTitle>
             <DialogDescription>Provide a reason. Immediate cancel revokes access now.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
+          <DialogBody className="space-y-3">
             <div>
               <Label htmlFor="cancel-reason">Reason</Label>
               <Textarea id="cancel-reason" className="mt-1.5" value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} />
@@ -522,7 +529,7 @@ export function AdminBillingSubscriptionsView({ data: initial, query: initialQue
               <input type="checkbox" checked={cancelImmediate} onChange={(e) => setCancelImmediate(e.target.checked)} />
               Cancel immediately
             </label>
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCancelOpen(false)}>Back</Button>
             <Button variant="destructive" onClick={() => void submitCancel()} disabled={busy}>Cancel subscription</Button>
@@ -536,7 +543,7 @@ export function AdminBillingSubscriptionsView({ data: initial, query: initialQue
             <DialogTitle>Refund transaction</DialogTitle>
             <DialogDescription>Partial refunds are supported when Stripe is configured.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
+          <DialogBody className="space-y-3">
             <div>
               <Label htmlFor="refund-amount">Amount (USD)</Label>
               <Input id="refund-amount" className="mt-1.5" value={refundAmount} onChange={(e) => setRefundAmount(e.target.value)} />
@@ -545,7 +552,7 @@ export function AdminBillingSubscriptionsView({ data: initial, query: initialQue
               <Label htmlFor="refund-reason">Reason</Label>
               <Textarea id="refund-reason" className="mt-1.5" value={refundReason} onChange={(e) => setRefundReason(e.target.value)} />
             </div>
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRefundTx(null)}>Cancel</Button>
             <Button onClick={() => void submitRefund()} disabled={busy}>Refund</Button>

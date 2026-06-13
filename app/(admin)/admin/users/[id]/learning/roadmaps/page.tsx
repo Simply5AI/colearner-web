@@ -5,7 +5,8 @@ import { getAdminLearningOverview, getAdminLearningRoadmaps } from '@/lib/api/ad
 import { AdminLearningRoadmaps } from '@/components/admin/admin-learning/roadmaps'
 
 export const metadata: Metadata = {
-  title: 'Admin User Learning Roadmaps',
+  title: 'Learning Roadmaps',
+  description: 'Study roadmaps, phases, and concept progress for a learner.',
 }
 
 type PageProps = {

@@ -5,7 +5,8 @@ import { getAdminLearningOverview, getAdminLearningSessions } from '@/lib/api/ad
 import { AdminLearningSessions } from '@/components/admin/admin-learning/sessions'
 
 export const metadata: Metadata = {
-  title: 'Admin User Learning Sessions',
+  title: 'Learning Sessions',
+  description: 'Recall session history and per-question attempts for a learner.',
 }
 
 type PageProps = {
