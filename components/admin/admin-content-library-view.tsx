@@ -29,6 +29,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -43,8 +44,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import {
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
@@ -310,79 +320,175 @@ export function AdminContentLibraryView({ tab, concepts, questions, query }: Pro
       </div>
 
       <Sheet open={!!editConcept} onOpenChange={(open) => !open && setEditConcept(null)}>
-        <SheetContent>
-          <SheetHeader><SheetTitle>Edit concept</SheetTitle></SheetHeader>
+        <SheetContent className="sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Edit concept</SheetTitle>
+            <SheetDescription>Update the title and description shown to learners.</SheetDescription>
+          </SheetHeader>
           {editConcept && (
-            <div className="mt-4 space-y-3">
-              <Input value={editConcept.title} onChange={(e) => setEditConcept({ ...editConcept, title: e.target.value })} />
-              <Textarea value={editConcept.description ?? ''} onChange={(e) => setEditConcept({ ...editConcept, description: e.target.value })} />
-              <Button onClick={saveConcept} disabled={isMutating}>Save</Button>
-            </div>
+            <>
+              <SheetBody className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="concept-title">Title</Label>
+                  <Input
+                    id="concept-title"
+                    value={editConcept.title}
+                    onChange={(e) => setEditConcept({ ...editConcept, title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="concept-description">Description</Label>
+                  <Textarea
+                    id="concept-description"
+                    value={editConcept.description ?? ''}
+                    onChange={(e) => setEditConcept({ ...editConcept, description: e.target.value })}
+                    rows={6}
+                    className="min-h-32 resize-y"
+                  />
+                </div>
+              </SheetBody>
+              <SheetFooter>
+                <Button variant="outline" onClick={() => setEditConcept(null)}>Cancel</Button>
+                <Button onClick={saveConcept} disabled={isMutating}>Save changes</Button>
+              </SheetFooter>
+            </>
           )}
         </SheetContent>
       </Sheet>
 
       <Sheet open={!!editQuestion} onOpenChange={(open) => !open && setEditQuestion(null)}>
-        <SheetContent>
-          <SheetHeader><SheetTitle>Edit question</SheetTitle></SheetHeader>
+        <SheetContent className="sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Edit question</SheetTitle>
+            <SheetDescription>Revise the question text shown in recall sessions.</SheetDescription>
+          </SheetHeader>
           {editQuestion && (
-            <div className="mt-4 space-y-3">
-              <Textarea value={editQuestion.text} onChange={(e) => setEditQuestion({ ...editQuestion, text: e.target.value })} rows={6} />
-              <Button onClick={saveQuestion} disabled={isMutating}>Save</Button>
-            </div>
+            <>
+              <SheetBody className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="question-text">Question text</Label>
+                  <Textarea
+                    id="question-text"
+                    value={editQuestion.text}
+                    onChange={(e) => setEditQuestion({ ...editQuestion, text: e.target.value })}
+                    rows={8}
+                    className="min-h-40 resize-y"
+                  />
+                </div>
+              </SheetBody>
+              <SheetFooter>
+                <Button variant="outline" onClick={() => setEditQuestion(null)}>Cancel</Button>
+                <Button onClick={saveQuestion} disabled={isMutating}>Save changes</Button>
+              </SheetFooter>
+            </>
           )}
         </SheetContent>
       </Sheet>
 
       <Dialog open={!!flagTarget} onOpenChange={(open) => !open && setFlagTarget(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Flag content</DialogTitle><DialogDescription>Provide a moderation reason.</DialogDescription></DialogHeader>
-          <Textarea value={flagReason} onChange={(e) => setFlagReason(e.target.value)} placeholder="Reason" />
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Flag className="h-5 w-5 text-amber-600" />
+              Flag content
+            </DialogTitle>
+            <DialogDescription>Provide a moderation reason. Flagged items are hidden from learners.</DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            <div className="space-y-2">
+              <Label htmlFor="flag-reason">Reason</Label>
+              <Textarea
+                id="flag-reason"
+                value={flagReason}
+                onChange={(e) => setFlagReason(e.target.value)}
+                placeholder="Describe why this content should be reviewed…"
+                rows={4}
+                className="min-h-28 resize-y"
+              />
+            </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFlagTarget(null)}>Cancel</Button>
-            <Button onClick={submitFlag} disabled={isMutating}>Flag</Button>
+            <Button onClick={submitFlag} disabled={isMutating || !flagReason.trim()}>Flag content</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!deleteConcept} onOpenChange={(open) => !open && setDeleteConcept(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Delete concept?</DialogTitle><DialogDescription>Cascades related questions and review schedules.</DialogDescription></DialogHeader>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Delete concept?</DialogTitle>
+            <DialogDescription>This cascades to related questions and review schedules.</DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            {deleteConcept && (
+              <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm">
+                <p className="font-medium">{deleteConcept.title}</p>
+              </div>
+            )}
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteConcept(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={confirmDeleteConcept} disabled={isMutating}>Delete</Button>
+            <Button variant="destructive" onClick={confirmDeleteConcept} disabled={isMutating}>Delete concept</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!deleteQuestion} onOpenChange={(open) => !open && setDeleteQuestion(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Delete question?</DialogTitle><DialogDescription>Removes related review schedules.</DialogDescription></DialogHeader>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Delete question?</DialogTitle>
+            <DialogDescription>Removes related review schedules for this question.</DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            {deleteQuestion && (
+              <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm">
+                <p className="line-clamp-3">{deleteQuestion.text}</p>
+              </div>
+            )}
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteQuestion(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={confirmDeleteQuestion} disabled={isMutating}>Delete</Button>
+            <Button variant="destructive" onClick={confirmDeleteQuestion} disabled={isMutating}>Delete question</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!duplicateSource} onOpenChange={(open) => !open && setDuplicateSource(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Duplicate candidates</DialogTitle>
-            <DialogDescription>Similar concepts in the same org for &ldquo;{duplicateSource?.title}&rdquo;.</DialogDescription>
+            <DialogDescription>
+              Similar concepts in the same org for &ldquo;{duplicateSource?.title}&rdquo;.
+            </DialogDescription>
           </DialogHeader>
-          <ul className="max-h-64 space-y-2 overflow-auto text-sm">
-            {duplicates.length === 0 ? (
-              <li className="text-muted-foreground">No duplicates above threshold.</li>
-            ) : (
-              duplicates.map((d) => (
-                <li key={d.id} className="flex items-center justify-between rounded border p-2">
-                  <span>{d.title} <span className="text-muted-foreground">({(d.similarity * 100).toFixed(0)}%)</span></span>
-                  <Button size="sm" variant="outline" disabled={isMutating} onClick={() => mergeInto(d.id)}>Merge into</Button>
+          <DialogBody className="space-y-0 pb-2">
+            <ul className="max-h-72 space-y-2 overflow-auto">
+              {duplicates.length === 0 ? (
+                <li className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  No duplicates above threshold.
                 </li>
-              ))
-            )}
-          </ul>
+              ) : (
+                duplicates.map((d) => (
+                  <li
+                    key={d.id}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-card p-3 text-sm"
+                  >
+                    <span>
+                      {d.title}{' '}
+                      <span className="text-muted-foreground">({(d.similarity * 100).toFixed(0)}% match)</span>
+                    </span>
+                    <Button size="sm" variant="outline" disabled={isMutating} onClick={() => mergeInto(d.id)}>
+                      Merge into
+                    </Button>
+                  </li>
+                ))
+              )}
+            </ul>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDuplicateSource(null)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

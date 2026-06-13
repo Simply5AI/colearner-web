@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -38,8 +39,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import {
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import { useAdminMutation } from '@/lib/hooks/use-admin-mutation'
@@ -246,72 +255,130 @@ export function AdminContentPodsView({ data, query }: Props) {
       </div>
 
       <Sheet open={!!detailId} onOpenChange={(open) => !open && setDetailId(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+        <SheetContent className="w-full sm:max-w-xl">
           <SheetHeader>
             <SheetTitle>{detail?.name ?? 'Pod detail'}</SheetTitle>
             <SheetDescription>{detail?.org.name}</SheetDescription>
           </SheetHeader>
-          {detailLoading && <p className="py-6 text-sm text-muted-foreground">Loading…</p>}
-          {detail && !detailLoading && (
-            <Tabs defaultValue="members" className="mt-4">
-              <TabsList><TabsTrigger value="members">Members</TabsTrigger><TabsTrigger value="captures">Captures</TabsTrigger></TabsList>
-              <TabsContent value="members">
-                <table className="w-full text-sm">
-                  <tbody>
-                    {detail.members.map((member) => (
-                      <tr key={member.id} className="border-b border-border/50">
-                        <td className="py-2">
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-7 w-7">
-                              <AvatarImage src={member.user.avatarUrl ?? undefined} />
-                              <AvatarFallback>{member.user.email?.[0]?.toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <span>{member.user.email}</span>
-                          </div>
-                        </td>
-                        <td className="py-2 text-xs text-muted-foreground">{member.role}</td>
-                        <td className="py-2 text-right">
-                          {member.role !== 'OWNER' && member.user.id !== detail.ownerId && (
-                            <Button size="sm" variant="ghost" disabled={isMutating} onClick={() => handleRemoveMember(member.user.id)}>
-                              <UserMinus className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
+          <SheetBody>
+            {detailLoading && (
+              <p className="py-8 text-center text-sm text-muted-foreground">Loading pod…</p>
+            )}
+            {detail && !detailLoading && (
+              <Tabs defaultValue="members" className="space-y-4">
+                <TabsList className="w-full justify-start">
+                  <TabsTrigger value="members">Members</TabsTrigger>
+                  <TabsTrigger value="captures">Captures</TabsTrigger>
+                </TabsList>
+                <TabsContent value="members" className="mt-0">
+                  <div className="overflow-hidden rounded-xl border border-border/70">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                        <tr>
+                          <th className="px-4 py-3">Member</th>
+                          <th className="px-4 py-3">Role</th>
+                          <th className="px-4 py-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/70">
+                        {detail.members.map((member) => (
+                          <tr key={member.id}>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2.5">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={member.user.avatarUrl ?? undefined} />
+                                  <AvatarFallback>{member.user.email?.[0]?.toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                <span className="font-medium">{member.user.email}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">{member.role}</td>
+                            <td className="px-4 py-3 text-right">
+                              {member.role !== 'OWNER' && member.user.id !== detail.ownerId && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  disabled={isMutating}
+                                  onClick={() => handleRemoveMember(member.user.id)}
+                                  aria-label={`Remove ${member.user.email}`}
+                                >
+                                  <UserMinus className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </TabsContent>
+                <TabsContent value="captures" className="mt-0">
+                  <ul className="space-y-3 text-sm">
+                    {detail.captures.map((capture) => (
+                      <li key={capture.id} className="rounded-xl border border-border/70 bg-card p-4">
+                        <Link href="/admin/content/extractions" className="font-medium text-primary hover:underline">
+                          {capture.extraction.title || capture.extraction.videoUrl}
+                        </Link>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(capture.createdAt), { addSuffix: true })}
+                        </div>
+                      </li>
                     ))}
-                  </tbody>
-                </table>
-              </TabsContent>
-              <TabsContent value="captures">
-                <ul className="space-y-2 text-sm">
-                  {detail.captures.map((capture) => (
-                    <li key={capture.id} className="rounded-lg border p-3">
-                      <Link href="/admin/content/extractions" className="font-medium text-primary hover:underline">
-                        {capture.extraction.title || capture.extraction.videoUrl}
-                      </Link>
-                      <div className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(capture.createdAt), { addSuffix: true })}</div>
-                    </li>
-                  ))}
-                  {detail.captures.length === 0 && <li className="text-muted-foreground">No shared captures.</li>}
-                </ul>
-              </TabsContent>
-            </Tabs>
-          )}
+                    {detail.captures.length === 0 && (
+                      <li className="rounded-xl border border-dashed p-6 text-center text-muted-foreground">
+                        No shared captures.
+                      </li>
+                    )}
+                  </ul>
+                </TabsContent>
+              </Tabs>
+            )}
+          </SheetBody>
         </SheetContent>
       </Sheet>
 
-      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent>
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null)
+            setDeleteConfirmName('')
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Delete pod?</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Delete pod?
+            </DialogTitle>
             <DialogDescription>
-              Type the pod name to confirm. Shared captures will be detached; extractions remain with owners.
+              Shared captures will be detached. Extractions remain with their owners.
             </DialogDescription>
           </DialogHeader>
-          <Input value={deleteConfirmName} onChange={(e) => setDeleteConfirmName(e.target.value)} placeholder={deleteTarget?.name} />
+          <DialogBody>
+            <div className="space-y-2">
+              <Label htmlFor="pod-delete-confirm">
+                Type <span className="font-semibold">{deleteTarget?.name}</span> to confirm
+              </Label>
+              <Input
+                id="pod-delete-confirm"
+                value={deleteConfirmName}
+                onChange={(e) => setDeleteConfirmName(e.target.value)}
+                placeholder={deleteTarget?.name}
+                autoComplete="off"
+              />
+            </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-            <Button variant="destructive" disabled={isMutating || deleteConfirmName !== deleteTarget?.name} onClick={handleDelete}>Delete</Button>
+            <Button
+              variant="destructive"
+              disabled={isMutating || deleteConfirmName !== deleteTarget?.name}
+              onClick={handleDelete}
+            >
+              Delete pod
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

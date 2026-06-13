@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -45,7 +46,14 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import {
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import { useAdminMutation } from '@/lib/hooks/use-admin-mutation'
@@ -291,102 +299,136 @@ export function AdminContentExtractionsView({ data, query }: Props) {
       />
 
       <Sheet open={!!detailId} onOpenChange={(open) => !open && setDetailId(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
+        <SheetContent className="w-full sm:max-w-2xl">
           <SheetHeader>
             <SheetTitle>{detail?.title || 'Extraction detail'}</SheetTitle>
-            <SheetDescription>{detail?.sourceUrl}</SheetDescription>
+            <SheetDescription className="break-all">{detail?.sourceUrl}</SheetDescription>
           </SheetHeader>
-          {detailLoading && <p className="py-6 text-sm text-muted-foreground">Loading…</p>}
-          {detail && !detailLoading && (
-            <Tabs defaultValue="overview" className="mt-4">
-              <TabsList>
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="transcript">Transcript</TabsTrigger>
-                <TabsTrigger value="concepts">Concepts</TabsTrigger>
-                <TabsTrigger value="questions">Questions</TabsTrigger>
-                <TabsTrigger value="logs">Logs</TabsTrigger>
-              </TabsList>
-              <TabsContent value="overview" className="space-y-3 text-sm">
-                <MetaRow label="Status" value={<ExtractionStatusBadge status={detail.status} />} />
-                <MetaRow label="Owner" value={detail.owner.email} />
-                <MetaRow label="Org" value={detail.org.name} />
-                <MetaRow label="Model" value={detail.processedModel ?? '—'} />
-                <MetaRow label="Processing" value={detail.processingTimeMs ? `${detail.processingTimeMs} ms` : '—'} />
-                <MetaRow label="Created" value={format(new Date(detail.createdAt), 'PPpp')} />
-                {detail.errorMessage && (
-                  <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-destructive">
-                    {detail.errorMessage}
+          <SheetBody>
+            {detailLoading && (
+              <p className="py-8 text-center text-sm text-muted-foreground">Loading extraction…</p>
+            )}
+            {detail && !detailLoading && (
+              <Tabs defaultValue="overview" className="space-y-4">
+                <TabsList className="w-full justify-start">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="transcript">Transcript</TabsTrigger>
+                  <TabsTrigger value="concepts">Concepts</TabsTrigger>
+                  <TabsTrigger value="questions">Questions</TabsTrigger>
+                  <TabsTrigger value="logs">Logs</TabsTrigger>
+                </TabsList>
+                <TabsContent value="overview" className="mt-0 space-y-3 text-sm">
+                  <div className="rounded-xl border border-border/70 bg-card p-4">
+                    <MetaRow label="Status" value={<ExtractionStatusBadge status={detail.status} />} />
+                    <MetaRow label="Owner" value={detail.owner.email} />
+                    <MetaRow label="Org" value={detail.org.name} />
+                    <MetaRow label="Model" value={detail.processedModel ?? '—'} />
+                    <MetaRow label="Processing" value={detail.processingTimeMs ? `${detail.processingTimeMs} ms` : '—'} />
+                    <MetaRow label="Created" value={format(new Date(detail.createdAt), 'PPpp')} />
                   </div>
-                )}
-              </TabsContent>
-              <TabsContent value="transcript">
-                {detail.transcriptText ? (
-                  <div className="space-y-2">
-                    <Button size="sm" variant="outline" onClick={() => copyText(detail.transcriptText!)}>
-                      <Copy className="h-4 w-4" /> Copy transcript
-                    </Button>
-                    <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap rounded-lg border p-3 text-xs">
-                      {detail.transcriptText}
-                    </pre>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No transcript stored.</p>
-                )}
-              </TabsContent>
-              <TabsContent value="concepts">
-                <ul className="space-y-2 text-sm">
-                  {detail.concepts.map((c) => (
-                    <li key={c.id} className="rounded-lg border p-3">
-                      <div className="font-medium">{c.title}</div>
-                      {c.description && <p className="mt-1 text-muted-foreground">{c.description}</p>}
-                    </li>
-                  ))}
-                </ul>
-              </TabsContent>
-              <TabsContent value="questions">
-                <ul className="space-y-2 text-sm">
-                  {detail.questions.map((q) => (
-                    <li key={q.id} className="rounded-lg border p-3">
-                      <Badge variant="outline" className="mb-2">{q.type}</Badge>
-                      <div>{q.text}</div>
-                    </li>
-                  ))}
-                </ul>
-              </TabsContent>
-              <TabsContent value="logs">
-                {detail.logs ? (
-                  <div className="space-y-2 text-sm">
-                    <div>Job {detail.logs.id} · {detail.logs.name}</div>
-                    {detail.logs.failedReason && <div className="text-destructive">{detail.logs.failedReason}</div>}
-                    <pre className="max-h-64 overflow-auto rounded-lg border p-3 text-xs">
-                      {(detail.logs.logs ?? []).join('\n') || 'No log lines.'}
-                    </pre>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No job logs available.</p>
-                )}
-              </TabsContent>
-            </Tabs>
-          )}
+                  {detail.errorMessage && (
+                    <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+                      {detail.errorMessage}
+                    </div>
+                  )}
+                </TabsContent>
+                <TabsContent value="transcript" className="mt-0">
+                  {detail.transcriptText ? (
+                    <div className="space-y-3">
+                      <Button size="sm" variant="outline" onClick={() => copyText(detail.transcriptText!)}>
+                        <Copy className="h-4 w-4" /> Copy transcript
+                      </Button>
+                      <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap rounded-xl border border-border/70 bg-muted/30 p-4 text-xs leading-relaxed">
+                        {detail.transcriptText}
+                      </pre>
+                    </div>
+                  ) : (
+                    <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+                      No transcript stored.
+                    </p>
+                  )}
+                </TabsContent>
+                <TabsContent value="concepts" className="mt-0">
+                  <ul className="space-y-3 text-sm">
+                    {detail.concepts.map((c) => (
+                      <li key={c.id} className="rounded-xl border border-border/70 bg-card p-4">
+                        <div className="font-medium">{c.title}</div>
+                        {c.description && <p className="mt-1.5 text-muted-foreground">{c.description}</p>}
+                      </li>
+                    ))}
+                    {detail.concepts.length === 0 && (
+                      <li className="rounded-xl border border-dashed p-6 text-center text-muted-foreground">
+                        No concepts extracted.
+                      </li>
+                    )}
+                  </ul>
+                </TabsContent>
+                <TabsContent value="questions" className="mt-0">
+                  <ul className="space-y-3 text-sm">
+                    {detail.questions.map((q) => (
+                      <li key={q.id} className="rounded-xl border border-border/70 bg-card p-4">
+                        <Badge variant="outline" className="mb-2">{q.type}</Badge>
+                        <div>{q.text}</div>
+                      </li>
+                    ))}
+                    {detail.questions.length === 0 && (
+                      <li className="rounded-xl border border-dashed p-6 text-center text-muted-foreground">
+                        No questions generated.
+                      </li>
+                    )}
+                  </ul>
+                </TabsContent>
+                <TabsContent value="logs" className="mt-0">
+                  {detail.logs ? (
+                    <div className="space-y-3 text-sm">
+                      <div className="rounded-xl border border-border/70 bg-card p-4">
+                        Job {detail.logs.id} · {detail.logs.name}
+                      </div>
+                      {detail.logs.failedReason && (
+                        <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-destructive">
+                          {detail.logs.failedReason}
+                        </div>
+                      )}
+                      <pre className="max-h-64 overflow-auto rounded-xl border border-border/70 bg-muted/30 p-4 text-xs leading-relaxed">
+                        {(detail.logs.logs ?? []).join('\n') || 'No log lines.'}
+                      </pre>
+                    </div>
+                  ) : (
+                    <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+                      No job logs available.
+                    </p>
+                  )}
+                </TabsContent>
+              </Tabs>
+            )}
+          </SheetBody>
         </SheetContent>
       </Sheet>
 
       <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Delete extraction?</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Delete extraction?
+            </DialogTitle>
             <DialogDescription>
-              Soft-deletes this extraction and cascades concepts/questions per platform rules.
-              {deleteTarget && (
-                <span className="mt-2 block">
-                  {deleteTarget.conceptCount} concepts · {deleteTarget.questionCount} questions
-                </span>
-              )}
+              Soft-deletes this extraction and cascades concepts and questions per platform rules.
             </DialogDescription>
           </DialogHeader>
+          <DialogBody>
+            {deleteTarget && (
+              <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm">
+                <p className="font-medium">{deleteTarget.title || deleteTarget.sourceUrl}</p>
+                <p className="mt-2 text-muted-foreground">
+                  {deleteTarget.conceptCount} concepts · {deleteTarget.questionCount} questions will be affected.
+                </p>
+              </div>
+            )}
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-            <Button variant="destructive" disabled={isMutating} onClick={handleDelete}>Delete</Button>
+            <Button variant="destructive" disabled={isMutating} onClick={handleDelete}>Delete extraction</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
