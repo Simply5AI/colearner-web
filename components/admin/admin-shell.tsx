@@ -42,7 +42,10 @@ function defaultMatchesPath(pathname: string, href: string) {
 const navGroups: Array<{ title: string; items: AdminNavItem[] }> = [
   {
     title: 'Overview',
-    items: [{ href: '/admin', label: 'Dashboard', icon: Gauge }],
+    items: [
+      { href: '/admin', label: 'Dashboard', icon: Gauge },
+      { href: '/admin/health', label: 'System Health', icon: Activity },
+    ],
   },
   {
     title: 'Users & Orgs',

@@ -1741,3 +1741,201 @@ export async function removeAdminPodMember(
 ): Promise<{ success: true }> {
   return adminApiClient(`/api/admin/pods/${podId}/members/${userId}`, { method: 'DELETE' })
 }
+
+// ─── System health (SA5 / SW5) ─────────────────────────────────────────────
+
+export type HealthStatus = 'green' | 'yellow' | 'red'
+export type WorkerHeartbeatStatus = 'healthy' | 'stale' | 'down'
+
+export interface HealthTimedComponent {
+  status: HealthStatus
+  latencyMs: number | null
+  message?: string
+}
+
+export interface HealthQueueOverviewRow {
+  name: string
+  waiting: number
+  active: number
+  delayed: number
+  failed: number
+  completedLastHour: number
+  status: HealthStatus
+}
+
+export interface HealthWorkerRow {
+  name: string
+  lastHeartbeatAt: string | null
+  status: WorkerHeartbeatStatus
+  pid: number | null
+  startedAt: string | null
+  lastJobAt: string | null
+  jobsProcessed: number
+}
+
+export interface HealthLlmProviderRow {
+  provider: string
+  status: HealthStatus
+  p50LatencyMs: number | null
+  p95LatencyMs: number | null
+  errorRateLast15m: number
+}
+
+export interface HealthOverview {
+  db: HealthTimedComponent
+  redis: HealthTimedComponent
+  queues: HealthQueueOverviewRow[]
+  workers: HealthWorkerRow[]
+  llmProviders: HealthLlmProviderRow[]
+}
+
+export interface HealthQueueDetail {
+  name: string
+  waiting: number
+  active: number
+  delayed: number
+  failed: number
+  completedLastHour: number
+  avgJobDurationMs: number | null
+  throughputSeries: Array<{ minute: string; completed: number }>
+  recentFailed: Array<{
+    id: string
+    name: string
+    failedReason: string
+    attemptsMade: number
+    timestamp: string
+  }>
+}
+
+export interface HealthFailedJobRow {
+  id: string
+  name: string
+  failedReason: string
+  stacktrace: string[]
+  attemptsMade: number
+  timestamp: string
+  payload: unknown
+}
+
+export interface HealthFailedJobsPage {
+  items: HealthFailedJobRow[]
+  page: number
+  pageSize: number
+  total: number
+  hasMore: boolean
+}
+
+export interface HealthProviderWindowStats {
+  calls: number
+  errors: number
+  errorRate: number
+  p50LatencyMs: number | null
+  p95LatencyMs: number | null
+}
+
+export interface HealthLlmLastError {
+  provider: string
+  code: string
+  message: string
+  requestId: string | null
+  at: string
+}
+
+export interface HealthProviderSummary {
+  provider: string
+  status: HealthStatus
+  p50LatencyMs: number | null
+  p95LatencyMs: number | null
+  errorRateLast15m: number
+  windows: {
+    last15m: HealthProviderWindowStats
+    last1h: HealthProviderWindowStats
+    last24h: HealthProviderWindowStats
+  }
+  lastError: HealthLlmLastError | null
+}
+
+export interface HealthProviderDetail extends HealthProviderSummary {
+  latencyHistogram: Array<{ bucketMs: number; label: string; count: number }>
+  errorsByCode: Array<{ code: string; count: number }>
+  recentErrors: HealthLlmLastError[]
+}
+
+export async function getHealthOverview(
+  headers: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<HealthOverview> {
+  return adminApiClient<HealthOverview>('/api/admin/health/overview', { headers, signal })
+}
+
+export async function getHealthQueues(
+  headers: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<HealthQueueDetail[]> {
+  return adminApiClient<HealthQueueDetail[]>('/api/admin/health/queues', { headers, signal })
+}
+
+export async function getHealthQueue(
+  headers: Record<string, string>,
+  name: string,
+  signal?: AbortSignal,
+): Promise<HealthQueueDetail> {
+  return adminApiClient<HealthQueueDetail>(`/api/admin/health/queues/${encodeURIComponent(name)}`, {
+    headers,
+    signal,
+  })
+}
+
+export async function getHealthQueueFailedJobs(
+  headers: Record<string, string>,
+  name: string,
+  page = 1,
+  pageSize = 20,
+  signal?: AbortSignal,
+): Promise<HealthFailedJobsPage> {
+  const qs = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  })
+  return adminApiClient<HealthFailedJobsPage>(
+    `/api/admin/health/queues/${encodeURIComponent(name)}/failed?${qs}`,
+    { headers, signal },
+  )
+}
+
+export async function retryHealthQueueJob(queueName: string, jobId: string): Promise<{ retried: boolean; jobId: string }> {
+  return adminApiClient(`/api/admin/health/queues/${encodeURIComponent(queueName)}/jobs/${encodeURIComponent(jobId)}/retry`, {
+    method: 'POST',
+  })
+}
+
+export async function retryAllHealthQueueFailed(queueName: string): Promise<{ retried: number; queue: string }> {
+  return adminApiClient(`/api/admin/health/queues/${encodeURIComponent(queueName)}/retry`, {
+    method: 'POST',
+  })
+}
+
+export async function getHealthWorkers(
+  headers: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<HealthWorkerRow[]> {
+  return adminApiClient<HealthWorkerRow[]>('/api/admin/health/workers', { headers, signal })
+}
+
+export async function getHealthLlmProviders(
+  headers: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<HealthProviderSummary[]> {
+  return adminApiClient<HealthProviderSummary[]>('/api/admin/health/llm-providers', { headers, signal })
+}
+
+export async function getHealthLlmProvider(
+  headers: Record<string, string>,
+  provider: string,
+  signal?: AbortSignal,
+): Promise<HealthProviderDetail> {
+  return adminApiClient<HealthProviderDetail>(
+    `/api/admin/health/llm-providers/${encodeURIComponent(provider)}`,
+    { headers, signal },
+  )
+}
