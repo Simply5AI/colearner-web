@@ -39,6 +39,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -53,6 +54,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
@@ -545,18 +547,15 @@ export function AdminUsersView({ data, query, currentAdminId }: AdminUsersViewPr
               </DialogDescription>
             </DialogHeader>
             {confirmAction === 'suspend' && (
-              <div>
-                <label className="text-xs font-semibold" htmlFor="suspension-reason">
-                  Suspension reason
-                </label>
+              <DialogBody className="space-y-2 pt-0">
+                <Label htmlFor="suspension-reason">Suspension reason</Label>
                 <Input
                   id="suspension-reason"
-                  className="mt-1"
                   value={suspendReason}
                   onChange={(event) => setSuspendReason(event.target.value)}
                   placeholder="Policy review"
                 />
-              </div>
+              </DialogBody>
             )}
             <DialogFooter>
               <Button variant="outline" onClick={() => setConfirmAction(null)} disabled={isMutating}>

@@ -548,7 +548,7 @@ export async function getAdminUser(
 export async function patchAdminUser(
   headers: Record<string, string>,
   id: string,
-  body: { name?: string }
+  body: { name?: string; email?: string }
 ): Promise<AdminUserDetail> {
   return adminApiClient<AdminUserDetail>(`/api/admin/users/${id}`, {
     method: 'PATCH',

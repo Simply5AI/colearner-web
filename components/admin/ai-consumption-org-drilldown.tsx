@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -53,37 +54,39 @@ export function AiConsumptionOrgDrilldown({ orgId, query, onClose }: Props) {
           <DialogDescription>LLM spend breakdown for the selected range.</DialogDescription>
         </DialogHeader>
 
-        {loading && (
-          <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
-          </div>
-        )}
-
-        {error && (
-          <div className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {report && !loading && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Stat label="Cost" value={formatCurrency(report.totals.costUsd, 4)} />
-              <Stat label="Calls" value={formatNumber(report.totals.calls)} />
-              <Stat label="Input tok" value={formatTokens(report.totals.inputTokens)} />
-              <Stat label="Error rate" value={`${report.totals.errorRate.toFixed(2)}%`} />
+        <DialogBody>
+          {loading && (
+            <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading…
             </div>
+          )}
 
-            <Section title="By feature">
-              <MiniTable rows={report.byAgent} />
-            </Section>
+          {error && (
+            <div className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
 
-            <Section title="By model">
-              <MiniTable rows={report.byModel} />
-            </Section>
-          </div>
-        )}
+          {report && !loading && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <Stat label="Cost" value={formatCurrency(report.totals.costUsd, 4)} />
+                <Stat label="Calls" value={formatNumber(report.totals.calls)} />
+                <Stat label="Input tok" value={formatTokens(report.totals.inputTokens)} />
+                <Stat label="Error rate" value={`${report.totals.errorRate.toFixed(2)}%`} />
+              </div>
+
+              <Section title="By feature">
+                <MiniTable rows={report.byAgent} />
+              </Section>
+
+              <Section title="By model">
+                <MiniTable rows={report.byModel} />
+              </Section>
+            </div>
+          )}
+        </DialogBody>
       </DialogContent>
     </Dialog>
   )

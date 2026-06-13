@@ -12,7 +12,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -20,10 +22,14 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 interface ProfileTabProps {
   detail: AdminUserDetail
   authHeaders: Record<string, string>
 }
+
+type EditField = 'name' | 'email' | null
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -47,31 +53,76 @@ export function ProfileTab({ detail, authHeaders }: ProfileTabProps) {
   const router = useRouter()
   const { runSensitive } = useAdminMutation()
   const [isPending, startTransition] = useTransition()
-  const [editing, setEditing] = useState(false)
+  const [editingField, setEditingField] = useState<EditField>(null)
   const [name, setName] = useState(detail.name)
+  const [email, setEmail] = useState(detail.email)
   const [busy, setBusy] = useState(false)
 
+  const closeEditor = () => {
+    setEditingField(null)
+    setName(detail.name)
+    setEmail(detail.email)
+  }
+
+  const openEditor = (field: EditField) => {
+    setName(detail.name)
+    setEmail(detail.email)
+    setEditingField(field)
+  }
+
   const save = async () => {
-    if (!name.trim() || name.trim() === detail.name) {
-      setEditing(false)
+    if (editingField === 'name') {
+      if (!name.trim() || name.trim() === detail.name) {
+        closeEditor()
+        return
+      }
+      setBusy(true)
+      try {
+        await runSensitive(() =>
+          patchAdminUser(authHeaders, detail.id, { name: name.trim() })
+        )
+        toast.success('Name updated')
+        setEditingField(null)
+        startTransition(() => router.refresh())
+      } catch (error) {
+        toast.error('Failed to update name', {
+          description: error instanceof Error ? error.message : undefined,
+        })
+      } finally {
+        setBusy(false)
+      }
       return
     }
-    setBusy(true)
-    try {
-      await runSensitive(() =>
-        patchAdminUser(authHeaders, detail.id, { name: name.trim() })
-      )
-      toast.success('Name updated')
-      setEditing(false)
-      startTransition(() => router.refresh())
-    } catch (error) {
-      toast.error('Failed to update name', {
-        description: error instanceof Error ? error.message : undefined,
-      })
-    } finally {
-      setBusy(false)
+
+    if (editingField === 'email') {
+      const nextEmail = email.trim().toLowerCase()
+      if (!EMAIL_PATTERN.test(nextEmail)) {
+        toast.error('Enter a valid email address')
+        return
+      }
+      if (nextEmail === detail.email.toLowerCase()) {
+        closeEditor()
+        return
+      }
+      setBusy(true)
+      try {
+        await runSensitive(() =>
+          patchAdminUser(authHeaders, detail.id, { email: nextEmail })
+        )
+        toast.success('Email updated')
+        setEditingField(null)
+        startTransition(() => router.refresh())
+      } catch (error) {
+        toast.error('Failed to update email', {
+          description: error instanceof Error ? error.message : undefined,
+        })
+      } finally {
+        setBusy(false)
+      }
     }
   }
+
+  const canEdit = detail.status !== 'DELETED'
 
   return (
     <>
@@ -82,19 +133,39 @@ export function ProfileTab({ detail, authHeaders }: ProfileTabProps) {
             value={
               <span className="inline-flex items-center gap-2">
                 {detail.name}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2"
-                  disabled={detail.status === 'DELETED' || isPending}
-                  onClick={() => setEditing(true)}
-                >
-                  <Pencil className="h-3 w-3" />
-                </Button>
+                {canEdit && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2"
+                    disabled={isPending}
+                    onClick={() => openEditor('name')}
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                )}
               </span>
             }
           />
-          <Field label="Email" value={detail.email} />
+          <Field
+            label="Email"
+            value={
+              <span className="inline-flex items-center gap-2">
+                {detail.email}
+                {canEdit && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2"
+                    disabled={isPending}
+                    onClick={() => openEditor('email')}
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                )}
+              </span>
+            }
+          />
           <Field label="System role" value={detail.systemRole} />
           <Field
             label="Organization"
@@ -140,25 +211,52 @@ export function ProfileTab({ detail, authHeaders }: ProfileTabProps) {
         </CardContent>
       </Card>
 
-      <Dialog open={editing} onOpenChange={(v) => !v && setEditing(false)}>
+      <Dialog open={editingField !== null} onOpenChange={(open) => !open && closeEditor()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit name</DialogTitle>
+            <DialogTitle>{editingField === 'email' ? 'Edit email' : 'Edit name'}</DialogTitle>
+            <DialogDescription>
+              {editingField === 'email'
+                ? 'Changing the login email requires step-up authentication and is audited.'
+                : 'Update the display name for this account.'}
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="edit-name">Name</Label>
-            <Input
-              id="edit-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={120}
-            />
-          </div>
+          <DialogBody className="space-y-2">
+            {editingField === 'name' ? (
+              <>
+                <Label htmlFor="edit-name">Name</Label>
+                <Input
+                  id="edit-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={120}
+                />
+              </>
+            ) : (
+              <>
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="off"
+                />
+              </>
+            )}
+          </DialogBody>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(false)} disabled={busy}>
+            <Button variant="outline" onClick={closeEditor} disabled={busy}>
               Cancel
             </Button>
-            <Button onClick={save} disabled={busy || !name.trim()}>
+            <Button
+              onClick={save}
+              disabled={
+                busy ||
+                (editingField === 'name' && !name.trim()) ||
+                (editingField === 'email' && !email.trim())
+              }
+            >
               Save
             </Button>
           </DialogFooter>

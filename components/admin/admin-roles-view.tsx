@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -35,6 +36,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetFooter,
@@ -439,7 +441,7 @@ export function AdminRolesView({ data, permissions, selectedRoleId }: AdminRoles
       </div>
 
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-        <SheetContent className="overflow-y-auto sm:max-w-xl">
+        <SheetContent className="flex flex-col sm:max-w-xl">
           <SheetHeader>
             <SheetTitle>Create custom role</SheetTitle>
             <SheetDescription>
@@ -447,7 +449,8 @@ export function AdminRolesView({ data, permissions, selectedRoleId }: AdminRoles
             </SheetDescription>
           </SheetHeader>
 
-          <form className="mt-6 space-y-5" onSubmit={handleCreate}>
+          <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleCreate}>
+            <SheetBody className="space-y-5">
             <div className="space-y-1.5">
               <Label htmlFor="create-role-name">Name</Label>
               <Input
@@ -507,6 +510,7 @@ export function AdminRolesView({ data, permissions, selectedRoleId }: AdminRoles
             </div>
 
             {createErrors.form && <p className="text-sm text-destructive">{createErrors.form}</p>}
+            </SheetBody>
 
             <SheetFooter>
               <Button type="submit" disabled={isMutating || orgsLoading}>
@@ -527,6 +531,11 @@ export function AdminRolesView({ data, permissions, selectedRoleId }: AdminRoles
                 : 'Delete this role?'}
             </DialogDescription>
           </DialogHeader>
+          <DialogBody>
+            <p className="text-sm text-muted-foreground">
+              Users assigned to this role will need a new role before you can remove it.
+            </p>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={isMutating}>
               Cancel

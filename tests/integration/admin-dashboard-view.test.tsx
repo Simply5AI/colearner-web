@@ -20,6 +20,20 @@ vi.mock('next-auth/react', () => ({
   useSession: () => ({ data: { accessToken: 'token' } }),
 }))
 
+vi.mock('@/lib/api/admin', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/api/admin')>()
+  return {
+    ...actual,
+    getLlmConsumptionSummary: vi.fn().mockResolvedValue({
+      totalTokens: 0,
+      totalCostUsd: 0,
+      requestCount: 120,
+      avgLatencyMs: 400,
+      errorRate: 2.5,
+    }),
+  }
+})
+
 vi.mock('recharts', () => ({
   Area: () => null,
   AreaChart: ({ children }: { children?: React.ReactNode }) => <svg>{children}</svg>,
@@ -94,7 +108,7 @@ describe('AdminDashboardView', () => {
     refreshMock.mockReset()
   })
 
-  it('renders KPI cards, queue metrics, and recent signups', () => {
+  it('renders KPI cards, queue metrics, and recent signups', async () => {
     render(<AdminDashboardView data={makeData()} />)
 
     expect(screen.getByRole('heading', { name: /platform overview/i })).toBeInTheDocument()
@@ -102,6 +116,7 @@ describe('AdminDashboardView', () => {
     expect(screen.getByText('1,200')).toBeInTheDocument()
     expect(screen.getByText('$12,000')).toBeInTheDocument()
     expect(screen.getByText('Queue health')).toBeInTheDocument()
+    expect(await screen.findByText('2.50%')).toBeInTheDocument()
     expect(screen.getByText('ada@example.com')).toBeInTheDocument()
     expect(screen.getByText('Analytical Engines')).toBeInTheDocument()
   })

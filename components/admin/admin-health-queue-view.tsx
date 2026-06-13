@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -292,14 +293,14 @@ export function AdminHealthQueueView({
       </Card>
 
       <Dialog open={!!selectedJob} onOpenChange={(open) => !open && setSelectedJob(null)}>
-        <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+        <DialogContent className="max-h-[85vh] max-w-3xl">
           {selectedJob ? (
             <>
               <DialogHeader>
                 <DialogTitle>{selectedJob.name}</DialogTitle>
                 <DialogDescription className="font-mono text-xs">{selectedJob.id}</DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
+              <DialogBody className="max-h-[min(60vh,28rem)] space-y-4 overflow-y-auto">
                 <HealthMetric label="Failed reason" value={selectedJob.failedReason} />
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Payload</p>
@@ -313,7 +314,7 @@ export function AdminHealthQueueView({
                     {(selectedJob.stacktrace.length ? selectedJob.stacktrace : ['No stacktrace captured']).join('\n')}
                   </pre>
                 </div>
-              </div>
+              </DialogBody>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setSelectedJob(null)}>
                   Close

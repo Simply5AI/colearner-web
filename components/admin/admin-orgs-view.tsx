@@ -16,6 +16,8 @@ import {
   RefreshCw,
   Search,
   ShieldAlert,
+  UserCheck,
+  UserX,
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -23,6 +25,8 @@ import { toast } from 'sonner'
 import {
   archiveAdminOrg,
   createAdminOrg,
+  reactivateAdminOrg,
+  suspendAdminOrg,
   type AdminOrgListRow,
   type AdminOrgSort,
   type AdminOrgSsoFilter,
@@ -39,6 +43,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -55,6 +60,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useAdminMutation } from '@/lib/hooks/use-admin-mutation'
 import { cn } from '@/lib/utils'
 
 const ALL = 'all'
@@ -104,14 +110,22 @@ export function AdminOrgsView({ data, query }: AdminOrgsViewProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { data: session } = useSession()
+  const { runSensitive } = useAdminMutation()
   const [isPending, startTransition] = useTransition()
   const [search, setSearch] = useState(query.search ?? '')
   const [createOpen, setCreateOpen] = useState(false)
   const [createForm, setCreateForm] = useState<CreateOrgForm>(emptyCreateForm)
   const [createErrors, setCreateErrors] = useState<CreateOrgErrors>({})
   const [archiveTarget, setArchiveTarget] = useState<AdminOrgListRow | null>(null)
+  const [suspendTarget, setSuspendTarget] = useState<AdminOrgListRow | null>(null)
+  const [reactivateTarget, setReactivateTarget] = useState<AdminOrgListRow | null>(null)
+  const [suspendReason, setSuspendReason] = useState('')
   const [isMutating, setIsMutating] = useState(false)
   const didMountSearch = useRef(false)
+
+  const authHeaders = session?.accessToken
+    ? { Authorization: `Bearer ${session.accessToken}` }
+    : null
 
   const offset = Number.parseInt(query.cursor ?? '0', 10) || 0
   const limit = query.limit ?? 25
@@ -218,6 +232,53 @@ export function AdminOrgsView({ data, query }: AdminOrgsViewProps) {
       router.refresh()
     } catch (error) {
       toast.error('Archive failed', {
+        description: error instanceof Error ? error.message : 'Please try again.',
+      })
+    } finally {
+      setIsMutating(false)
+    }
+  }
+
+  const handleSuspend = async () => {
+    if (!suspendTarget || !authHeaders) return
+    if (!suspendReason.trim()) {
+      toast.error('A reason is required to suspend')
+      return
+    }
+
+    setIsMutating(true)
+    try {
+      await runSensitive(() =>
+        suspendAdminOrg(authHeaders, suspendTarget.id, { reason: suspendReason.trim() })
+      )
+      toast.success('Organization suspended', {
+        description: `${suspendTarget.name} members can no longer sign in.`,
+      })
+      setSuspendTarget(null)
+      setSuspendReason('')
+      router.refresh()
+    } catch (error) {
+      toast.error('Suspend failed', {
+        description: error instanceof Error ? error.message : 'Please try again.',
+      })
+    } finally {
+      setIsMutating(false)
+    }
+  }
+
+  const handleReactivate = async () => {
+    if (!reactivateTarget || !authHeaders) return
+
+    setIsMutating(true)
+    try {
+      await runSensitive(() => reactivateAdminOrg(authHeaders, reactivateTarget.id))
+      toast.success('Organization reactivated', {
+        description: `${reactivateTarget.name} is active again.`,
+      })
+      setReactivateTarget(null)
+      router.refresh()
+    } catch (error) {
+      toast.error('Reactivate failed', {
         description: error instanceof Error ? error.message : 'Please try again.',
       })
     } finally {
@@ -403,7 +464,12 @@ export function AdminOrgsView({ data, query }: AdminOrgsViewProps) {
                         <span className="block font-semibold text-foreground hover:text-primary">
                           {org.name}
                         </span>
-                        {org.deletedAt && <Badge variant="outline">Archived</Badge>}
+                        <span className="mt-0.5 flex flex-wrap gap-1">
+                          {org.suspendedAt && !org.deletedAt && (
+                            <Badge variant="destructive">Suspended</Badge>
+                          )}
+                          {org.deletedAt && <Badge variant="outline">Archived</Badge>}
+                        </span>
                       </span>
                     </Link>
                   </td>
@@ -435,6 +501,23 @@ export function AdminOrgsView({ data, query }: AdminOrgsViewProps) {
                           Open details
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
+                        {org.suspendedAt && !org.deletedAt ? (
+                          <DropdownMenuItem onClick={() => setReactivateTarget(org)}>
+                            <UserCheck className="h-4 w-4" />
+                            Reactivate org
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            disabled={Boolean(org.deletedAt)}
+                            onClick={() => {
+                              setSuspendReason('')
+                              setSuspendTarget(org)
+                            }}
+                          >
+                            <UserX className="h-4 w-4" />
+                            {org.deletedAt ? 'Cannot suspend archived' : 'Suspend org'}
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           disabled={Boolean(org.deletedAt)}
                           variant="destructive"
@@ -514,7 +597,7 @@ export function AdminOrgsView({ data, query }: AdminOrgsViewProps) {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <DialogBody className="grid gap-3 md:grid-cols-2">
               <Field
                 id="org-name"
                 label="Name"
@@ -587,15 +670,15 @@ export function AdminOrgsView({ data, query }: AdminOrgsViewProps) {
                   </SelectContent>
                 </Select>
               </Field>
-            </div>
 
-            {createErrors.form && (
-              <p className="mt-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {createErrors.form}
-              </p>
-            )}
+              {createErrors.form && (
+                <p className="md:col-span-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {createErrors.form}
+                </p>
+              )}
+            </DialogBody>
 
-            <DialogFooter className="mt-4">
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
@@ -609,6 +692,68 @@ export function AdminOrgsView({ data, query }: AdminOrgsViewProps) {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!suspendTarget} onOpenChange={(open) => !open && setSuspendTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Suspend organization</DialogTitle>
+            <DialogDescription>
+              {suspendTarget
+                ? `Members of ${suspendTarget.name} will be blocked from signing in until the org is reactivated.`
+                : 'This organization will be suspended.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody className="space-y-2">
+            <Label htmlFor="org-suspend-reason">Suspension reason</Label>
+            <Input
+              id="org-suspend-reason"
+              value={suspendReason}
+              onChange={(event) => setSuspendReason(event.target.value)}
+              placeholder="Billing dispute, policy review…"
+            />
+          </DialogBody>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSuspendTarget(null)
+                setSuspendReason('')
+              }}
+              disabled={isMutating}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleSuspend}
+              disabled={isMutating || !suspendTarget || !suspendReason.trim()}
+            >
+              {isMutating ? 'Suspending…' : 'Suspend org'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!reactivateTarget} onOpenChange={(open) => !open && setReactivateTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reactivate organization</DialogTitle>
+            <DialogDescription>
+              {reactivateTarget
+                ? `Restore access for ${reactivateTarget.name} (${reactivateTarget.slug}).`
+                : 'Restore access for this organization.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReactivateTarget(null)} disabled={isMutating}>
+              Cancel
+            </Button>
+            <Button onClick={handleReactivate} disabled={isMutating || !reactivateTarget}>
+              {isMutating ? 'Reactivating…' : 'Reactivate org'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

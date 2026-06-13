@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
@@ -38,14 +38,15 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import { apiClient } from '@/lib/api/client'
-import type {
-  AdminActiveUsers,
-  AdminDashboardData,
-  AdminMetric,
-  AdminPanel,
-  AdminQueueMetrics,
-  AdminRecentUser,
-  AdminSeriesPoint,
+import {
+  getLlmConsumptionSummary,
+  type AdminActiveUsers,
+  type AdminDashboardData,
+  type AdminMetric,
+  type AdminPanel,
+  type AdminQueueMetrics,
+  type AdminRecentUser,
+  type AdminSeriesPoint,
 } from '@/lib/api/admin'
 
 const activeWindows = ['24h', '7d', '30d'] as const
@@ -263,24 +264,87 @@ function QueueHealthCard({ panel }: { panel: AdminPanel<AdminQueueMetrics> }) {
 }
 
 function ErrorRateCard() {
+  const { data: session } = useSession()
+  const [errorRate, setErrorRate] = useState<number | null>(null)
+  const [requestCount, setRequestCount] = useState<number | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!session?.accessToken) {
+      setLoading(false)
+      return
+    }
+
+    let cancelled = false
+    setLoading(true)
+
+    getLlmConsumptionSummary({ Authorization: `Bearer ${session.accessToken}` }, { range: '24h' })
+      .then((summary) => {
+        if (cancelled) return
+        setErrorRate(summary.errorRate)
+        setRequestCount(summary.requestCount)
+        setLoadError(null)
+      })
+      .catch((error) => {
+        if (cancelled) return
+        setLoadError(error instanceof Error ? error.message : 'Unable to load error rate')
+        setErrorRate(null)
+        setRequestCount(null)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [session?.accessToken])
+
+  const tone =
+    errorRate === null ? 'default' : errorRate >= 5 ? 'danger' : errorRate >= 1 ? 'warning' : 'success'
+
   return (
-    <Card className="my-0">
-      <CardHeader>
-        <CardTitle>Error rate</CardTitle>
-        <CardDescription>API 5xx monitoring placeholder</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-success/10 text-success">
-            <Activity className="h-5 w-5" />
-          </div>
+    <Link href="/admin/ai-usage" className="group block h-full">
+      <Card className="my-0 h-full transition-colors group-hover:bg-card/80">
+        <CardHeader className="flex flex-row items-start justify-between gap-2">
           <div>
-            <p className="text-3xl font-bold">0%</p>
-            <p className="text-xs text-muted-foreground">No monitoring feed wired yet</p>
+            <CardTitle>LLM error rate</CardTitle>
+            <CardDescription>Failed AI calls in the last 24 hours</CardDescription>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+          <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : loadError ? (
+            <UnavailableState message={loadError} />
+          ) : (
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  'flex h-11 w-11 items-center justify-center rounded-lg',
+                  tone === 'danger' && 'bg-destructive/10 text-destructive',
+                  tone === 'warning' && 'bg-warning/10 text-warning',
+                  tone === 'success' && 'bg-success/10 text-success',
+                  tone === 'default' && 'bg-muted text-muted-foreground'
+                )}
+              >
+                {tone === 'danger' ? <AlertTriangle className="h-5 w-5" /> : <Activity className="h-5 w-5" />}
+              </div>
+              <div>
+                <p className="text-3xl font-bold">{errorRate?.toFixed(2)}%</p>
+                <p className="text-xs text-muted-foreground">
+                  {requestCount !== null
+                    ? `${formatNumber(requestCount)} requests · open AI usage`
+                    : 'No requests in window'}
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </Link>
   )
 }
 

@@ -7,11 +7,15 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import {
@@ -125,27 +129,29 @@ export function AiConsumptionEventsView({ initial }: Props) {
       <Card className="mb-4">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Filters</CardTitle>
+          <CardDescription>Narrow the ledger by time, tenant, model, or feature.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-2 md:grid-cols-4">
-          <FilterInput label="From" type="date" value={from} onChange={setFrom} />
-          <FilterInput label="To" type="date" value={to} onChange={setTo} />
-          <FilterInput label="Org ID" value={orgId} onChange={setOrgId} />
-          <FilterInput label="User ID" value={userId} onChange={setUserId} />
-          <FilterInput label="Provider" value={provider} onChange={setProvider} />
-          <FilterInput label="Model" value={model} onChange={setModel} />
-          <FilterInput label="Feature (agent)" value={feature} onChange={setFeature} />
-          <label className="text-xs">
-            <span className="mb-1 block text-muted-foreground">Sort</span>
-            <select
-              className="w-full rounded border px-2 py-1.5 text-sm"
-              value={sort}
-              onChange={(e) => setSort(e.target.value as typeof sort)}
-            >
-              <option value="created_desc">Newest first</option>
-              <option value="created_asc">Oldest first</option>
-              <option value="cost_desc">Highest cost</option>
-            </select>
-          </label>
+        <CardContent className="grid gap-3 md:grid-cols-4">
+          <FilterField id="events-from" label="From" type="date" value={from} onChange={setFrom} />
+          <FilterField id="events-to" label="To" type="date" value={to} onChange={setTo} />
+          <FilterField id="events-org" label="Org ID" value={orgId} onChange={setOrgId} />
+          <FilterField id="events-user" label="User ID" value={userId} onChange={setUserId} />
+          <FilterField id="events-provider" label="Provider" value={provider} onChange={setProvider} />
+          <FilterField id="events-model" label="Model" value={model} onChange={setModel} />
+          <FilterField id="events-feature" label="Feature (agent)" value={feature} onChange={setFeature} />
+          <div className="space-y-1.5">
+            <Label htmlFor="events-sort">Sort</Label>
+            <Select value={sort} onValueChange={(value) => setSort((value ?? 'created_desc') as typeof sort)}>
+              <SelectTrigger id="events-sort" className="h-9" aria-label="Event sort order">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="created_desc">Newest first</SelectItem>
+                <SelectItem value="created_asc">Oldest first</SelectItem>
+                <SelectItem value="cost_desc">Highest cost</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 
@@ -231,55 +237,60 @@ export function AiConsumptionEventsView({ initial }: Props) {
             <DialogTitle>Event detail</DialogTitle>
             <DialogDescription>Full ledger record for this LLM call.</DialogDescription>
           </DialogHeader>
-          {detailLoading && <Skeleton className="h-40 w-full" />}
-          {selectedEvent && !detailLoading && (
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              <Detail label="ID" value={selectedEvent.id} mono />
-              <Detail label="Time" value={formatDateTime(selectedEvent.createdAt)} />
-              <Detail label="User" value={selectedEvent.userEmail ?? '—'} />
-              <Detail label="Org" value={selectedEvent.orgName} />
-              <Detail label="Feature" value={selectedEvent.agent} />
-              <Detail label="Provider" value={selectedEvent.provider} />
-              <Detail label="Model" value={selectedEvent.model} />
-              <Detail label="Prompt tokens" value={formatNumber(selectedEvent.promptTokens)} />
-              <Detail label="Completion tokens" value={formatNumber(selectedEvent.completionTokens)} />
-              <Detail label="Input tokens" value={formatNumber(selectedEvent.inputTokens)} />
-              <Detail label="Output tokens" value={formatNumber(selectedEvent.outputTokens)} />
-              <Detail label="Cached tokens" value={formatNumber(selectedEvent.cachedTokens)} />
-              <Detail label="Cost USD" value={formatCurrency(selectedEvent.costUsd, 4)} />
-              <Detail label="Latency" value={`${formatNumber(selectedEvent.latencyMs)} ms`} />
-              <Detail label="Success" value={selectedEvent.success ? 'Yes' : 'No'} />
-              <Detail label="Error" value={selectedEvent.errorCode ?? '—'} />
-              <Detail label="Request ID" value={selectedEvent.requestId ?? '—'} mono />
-            </dl>
-          )}
+          <DialogBody>
+            {detailLoading && <Skeleton className="h-40 w-full" />}
+            {selectedEvent && !detailLoading && (
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <Detail label="ID" value={selectedEvent.id} mono />
+                <Detail label="Time" value={formatDateTime(selectedEvent.createdAt)} />
+                <Detail label="User" value={selectedEvent.userEmail ?? '—'} />
+                <Detail label="Org" value={selectedEvent.orgName} />
+                <Detail label="Feature" value={selectedEvent.agent} />
+                <Detail label="Provider" value={selectedEvent.provider} />
+                <Detail label="Model" value={selectedEvent.model} />
+                <Detail label="Prompt tokens" value={formatNumber(selectedEvent.promptTokens)} />
+                <Detail label="Completion tokens" value={formatNumber(selectedEvent.completionTokens)} />
+                <Detail label="Input tokens" value={formatNumber(selectedEvent.inputTokens)} />
+                <Detail label="Output tokens" value={formatNumber(selectedEvent.outputTokens)} />
+                <Detail label="Cached tokens" value={formatNumber(selectedEvent.cachedTokens)} />
+                <Detail label="Cost USD" value={formatCurrency(selectedEvent.costUsd, 4)} />
+                <Detail label="Latency" value={`${formatNumber(selectedEvent.latencyMs)} ms`} />
+                <Detail label="Success" value={selectedEvent.success ? 'Yes' : 'No'} />
+                <Detail label="Error" value={selectedEvent.errorCode ?? '—'} />
+                <Detail label="Request ID" value={selectedEvent.requestId ?? '—'} mono />
+              </dl>
+            )}
+          </DialogBody>
         </DialogContent>
       </Dialog>
     </div>
   )
 }
 
-function FilterInput({
+function FilterField({
+  id,
   label,
   value,
   onChange,
   type = 'text',
 }: {
+  id: string
   label: string
   value: string
   onChange: (value: string) => void
   type?: string
 }) {
   return (
-    <label className="text-xs">
-      <span className="mb-1 block text-muted-foreground">{label}</span>
-      <input
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded border px-2 py-1.5 text-sm"
+        className="h-9"
       />
-    </label>
+    </div>
   )
 }
 

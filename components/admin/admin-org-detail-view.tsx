@@ -46,6 +46,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -489,7 +490,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
                 Members will be blocked from signing in to this organization until it is reactivated.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-2">
+            <DialogBody className="space-y-2">
               <Label htmlFor="org-suspend-reason">Reason (required)</Label>
               <Textarea
                 id="org-suspend-reason"
@@ -498,7 +499,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
                 placeholder="Billing dispute, policy violation…"
                 maxLength={500}
               />
-            </div>
+            </DialogBody>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDialog(null)} disabled={busy}>
                 Cancel
@@ -518,7 +519,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
                 The v1 backend applies plan changes immediately and records the audit trail.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <DialogBody className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label>Plan</Label>
                 <Select value={plan} onValueChange={(value) => setPlan(value as AdminSubscriptionPlan)}>
@@ -552,7 +553,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+            </DialogBody>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDialog(null)} disabled={busy}>
                 Cancel
@@ -572,7 +573,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
                 The new owner must already be an active member of this organization.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-1.5">
+            <DialogBody className="space-y-1.5">
               <Label>New owner</Label>
               <Select value={transferUserId} onValueChange={(value) => setTransferUserId(value ?? '')}>
                 <SelectTrigger aria-label="New owner">
@@ -586,7 +587,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </DialogBody>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDialog(null)} disabled={busy}>
                 Cancel
@@ -606,7 +607,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
                 Type <span className="font-mono text-foreground">{detail.slug}</span> to confirm. Active subscriptions are canceled by the backend.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-1.5">
+            <DialogBody className="space-y-1.5">
               <Label htmlFor="archive-confirm">Slug confirmation</Label>
               <Input
                 id="archive-confirm"
@@ -615,7 +616,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
                 placeholder={detail.slug}
                 autoComplete="off"
               />
-            </div>
+            </DialogBody>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDialog(null)} disabled={busy}>
                 Cancel
@@ -640,7 +641,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
                   The invitee receives an onboarding email for this organization.
                 </DialogDescription>
               </DialogHeader>
-              <div className="mt-4 grid gap-3">
+              <DialogBody className="grid gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="invite-email">Email</Label>
                   <Input
@@ -666,8 +667,8 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-              <DialogFooter className="mt-4">
+              </DialogBody>
+              <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setDialog(null)} disabled={busy}>
                   Cancel
                 </Button>
@@ -708,7 +709,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
                 {roleTarget ? `Update ${roleTarget.email}'s organization role.` : 'Update this member role.'}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-1.5">
+            <DialogBody className="space-y-1.5">
               <Label>Role</Label>
               <Select value={roleId} onValueChange={(value) => setRoleId(value ?? '')}>
                 <SelectTrigger aria-label="Member role">
@@ -722,7 +723,7 @@ export function AdminOrgDetailView({ detail, initialMembers }: AdminOrgDetailVie
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </DialogBody>
             <DialogFooter>
               <Button variant="outline" onClick={() => setRoleTarget(null)} disabled={busy}>
                 Cancel

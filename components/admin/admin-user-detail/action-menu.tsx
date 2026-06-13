@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -191,7 +192,7 @@ export function AdminUserActionMenu({ detail, currentAdminId, authHeaders }: Act
               The user will be immediately signed out of all devices and blocked from signing in.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
+          <DialogBody className="space-y-2">
             <Label htmlFor="suspend-reason">Reason (required)</Label>
             <Textarea
               id="suspend-reason"
@@ -200,7 +201,7 @@ export function AdminUserActionMenu({ detail, currentAdminId, authHeaders }: Act
               placeholder="Violated terms of service…"
               maxLength={500}
             />
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={close} disabled={busy}>
               Cancel
@@ -258,7 +259,7 @@ export function AdminUserActionMenu({ detail, currentAdminId, authHeaders }: Act
               Soft-deletes the account. Type the user&apos;s email to confirm.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
+          <DialogBody className="space-y-2">
             <Label htmlFor="delete-confirm">Email confirmation</Label>
             <Input
               id="delete-confirm"
@@ -267,7 +268,7 @@ export function AdminUserActionMenu({ detail, currentAdminId, authHeaders }: Act
               placeholder={detail.email}
               autoComplete="off"
             />
-          </div>
+          </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={close} disabled={busy}>
               Cancel
