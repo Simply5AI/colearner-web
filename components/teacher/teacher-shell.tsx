@@ -10,7 +10,7 @@ import {
   Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { RoleSwitcher } from '@/components/shared/role-switcher'
+
 
 type TeacherNavItem = {
   href: string
@@ -87,14 +87,6 @@ export function TeacherShell({ children, teacherName }: TeacherShellProps) {
             </div>
           </div>
 
-          <div>
-            <p className="px-3 pb-1.5 pt-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">
-              Account
-            </p>
-            <div className="space-y-1">
-              <RoleSwitcher className="mx-1 w-[calc(100%-0.5rem)] justify-center" />
-            </div>
-          </div>
         </nav>
 
         <div className="border-t border-sidebar-border/70 p-2.5" />

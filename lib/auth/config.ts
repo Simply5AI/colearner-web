@@ -322,6 +322,11 @@ const authConfig: NextAuthConfig = {
         return Response.redirect(new URL('/teacher/org-setup', nextUrl))
       }
 
+      // Teachers use the teacher workspace only — not the student learning app.
+      if (isProtectedApp && isLoggedIn && isTeacher) {
+        return Response.redirect(new URL('/teacher/dashboard', nextUrl))
+      }
+
       // Redirect to onboarding if not completed (when accessing student app routes)
       if (isProtectedApp && isLoggedIn && !isOnboarded && !isTeacher) {
         return Response.redirect(new URL('/onboarding/profile', nextUrl))

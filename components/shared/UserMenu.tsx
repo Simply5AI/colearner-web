@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
-import { ChevronDown, GraduationCap, LogOut, Settings, User } from 'lucide-react'
+import { ChevronDown, LogOut, Settings, User } from 'lucide-react'
 import {
   Avatar,
   AvatarFallback,
@@ -32,8 +32,6 @@ export function UserMenu() {
   const name = user?.name || 'User'
   const email = user?.email || ''
   const initials = getInitials(user?.name, user?.email)
-  const isTeacher = user?.roles?.includes('TEACHER') ?? false
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -68,23 +66,6 @@ export function UserMenu() {
           </div>
         </div>
         <DropdownMenuSeparator />
-        {isTeacher ? (
-          <DropdownMenuItem
-            render={<Link href="/teacher/dashboard" />}
-            className="flex items-center gap-2 px-2 py-2"
-          >
-            <GraduationCap className="h-4 w-4" />
-            Teacher dashboard
-          </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem
-            render={<Link href="/become-teacher" />}
-            className="flex items-center gap-2 px-2 py-2"
-          >
-            <GraduationCap className="h-4 w-4" />
-            Become a teacher
-          </DropdownMenuItem>
-        )}
         <DropdownMenuItem
           render={<Link href="/settings/profile" />}
           className="flex items-center gap-2 px-2 py-2"
