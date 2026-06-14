@@ -154,3 +154,50 @@ export interface CompletedUpload {
   fileName: string
   material: Pick<TeacherMaterial, 'id' | 'title' | 'type' | 'url' | 'contentUrl'>
 }
+
+export interface TeacherEnrollment {
+  id: string
+  planId: string
+  studentUserId: string
+  studentName: string
+  studentEmail: string
+  source: 'invite' | 'org'
+  enrolledAt: string
+  status: 'active' | 'revoked' | 'completed'
+  progressPercent: number
+  lastExamScore: number | null
+  lastRecallAt: string | null
+}
+
+export interface TeacherInviteCode {
+  id: string
+  planId: string
+  code: string
+  maxUses: number
+  usedCount: number
+  expiresAt: string | null
+  createdAt: string
+  createdBy: string
+  revokedAt: string | null
+}
+
+export interface PlanAggregateAnalytics {
+  planId: string
+  enrollmentCount: number
+  avgProgress: number
+  avgExamScore: number
+  hardestTopic: string
+  strongestTopic: string
+  scoreDistribution: { range: string; count: number }[]
+  engagementTrend: { date: string; sessions: number }[]
+}
+
+export interface PlanRosterEntry {
+  studentUserId: string
+  studentName: string
+  studentEmail: string
+  progressPercent: number
+  masteryLevel: MasteryLevel
+  lastActiveAt: string | null
+  lastExamScore: number | null
+}

@@ -1,7 +1,7 @@
 'use client'
 
 import { ApiError } from '@/lib/api/client'
-import type { TeacherEnrollment, TeacherInviteCode } from '@/lib/fixtures/teacher-enrollments'
+import type { TeacherEnrollment, TeacherInviteCode } from '@/lib/types/teacher'
 
 async function enrollmentsFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {

@@ -5,7 +5,7 @@ import { fetchTeacherPlan } from '@/lib/api/teacher-plans'
 import { PlanAnalyticsView } from '@/components/teacher/analytics/plan-analytics-view'
 import { TeacherPage } from '@/components/teacher/teacher-page'
 import { Button } from '@/components/ui/button'
-import { planAnalyticsFixtures, planRosterFixtures } from '@/lib/fixtures/teacher-analytics'
+import { fetchPlanAggregate, fetchPlanRoster } from '@/lib/api/teacher-analytics'
 
 export default async function TeacherPlanAnalyticsPage({
   params,
@@ -20,16 +20,10 @@ export default async function TeacherPlanAnalyticsPage({
   const plan = await fetchTeacherPlan(headers, planId)
   if (!plan) notFound()
 
-  const aggregate = planAnalyticsFixtures[planId] ?? {
-    planId,
-    enrollmentCount: 0,
-    avgProgress: 0,
-    avgExamScore: 0,
-    hardestTopic: '—',
-    strongestTopic: '—',
-    scoreDistribution: [],
-    engagementTrend: [],
-  }
+  const [aggregate, roster] = await Promise.all([
+    fetchPlanAggregate(headers, planId),
+    fetchPlanRoster(headers, planId),
+  ])
 
   return (
     <TeacherPage
@@ -44,7 +38,7 @@ export default async function TeacherPlanAnalyticsPage({
       <PlanAnalyticsView
         planId={planId}
         aggregate={aggregate}
-        roster={planRosterFixtures[planId] ?? []}
+        roster={roster}
       />
     </TeacherPage>
   )

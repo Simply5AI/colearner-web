@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { createInviteCodeClient, revokeInviteCodeClient } from '@/lib/api/teacher-enrollments-client'
-import type { TeacherEnrollment, TeacherInviteCode } from '@/lib/fixtures/teacher-enrollments'
+import type { TeacherEnrollment, TeacherInviteCode } from '@/lib/types/teacher'
 
 interface EnrollmentsViewProps {
   planId: string

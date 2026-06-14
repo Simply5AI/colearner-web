@@ -1,11 +1,12 @@
 import Link from 'next/link'
+import { auth } from '@/lib/auth/config'
+import { fetchPlanRoster } from '@/lib/api/teacher-analytics'
 import { ProgressBar } from '@/components/shared/ProgressBar'
 import { MasteryBadge } from '@/components/shared/MasteryBadge'
 import { ScoreChip } from '@/components/shared/ScoreChip'
 import { TeacherPage } from '@/components/teacher/teacher-page'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { planRosterFixtures } from '@/lib/fixtures/teacher-analytics'
 
 export default async function TeacherStudentDetailPage({
   params,
@@ -16,14 +17,19 @@ export default async function TeacherStudentDetailPage({
 }) {
   const { studentUserId } = await params
   const { planId } = await searchParams
+  const session = await auth()
+  const headers: Record<string, string> = {}
+  if (session?.accessToken) {
+    headers.Authorization = `Bearer ${session.accessToken}`
+  }
 
-  const roster = planId ? (planRosterFixtures[planId] ?? []) : Object.values(planRosterFixtures).flat()
+  const roster = planId ? await fetchPlanRoster(headers, planId) : []
   const student = roster.find((entry) => entry.studentUserId === studentUserId)
 
   return (
     <TeacherPage
       title={student?.studentName ?? 'Student'}
-      subtitle={student?.studentEmail ?? 'Per-student analytics (W6)'}
+      subtitle={student?.studentEmail ?? 'Per-student analytics'}
       actions={
         planId ? (
           <Button asChild variant="outline">
@@ -35,7 +41,7 @@ export default async function TeacherStudentDetailPage({
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Topic progress</CardTitle>
-          <CardDescription>Deep-dive view will load per-topic mastery from B7 APIs.</CardDescription>
+          <CardDescription>Loaded from platform analytics API.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {student ? (
@@ -47,7 +53,7 @@ export default async function TeacherStudentDetailPage({
               </div>
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">Student not found in roster fixtures.</p>
+            <p className="text-sm text-muted-foreground">Student not found in this plan roster.</p>
           )}
         </CardContent>
       </Card>

@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth/config'
 import { fetchTeacherPlan } from '@/lib/api/teacher-plans'
 import { QuestionForm } from '@/components/teacher/questions/question-form'
 import { TeacherPage } from '@/components/teacher/teacher-page'
-import { getTeacherQuestion } from '@/lib/teacher/questions-dev-store'
+import { fetchTeacherQuestion } from '@/lib/api/teacher-questions'
 
 export default async function TeacherQuestionEditPage({
   params,
@@ -16,7 +16,7 @@ export default async function TeacherQuestionEditPage({
 
   const headers: Record<string, string> = { Authorization: `Bearer ${session.accessToken}` }
   const plan = await fetchTeacherPlan(headers, planId)
-  const question = getTeacherQuestion(questionId)
+  const question = await fetchTeacherQuestion(headers, questionId)
   if (!plan || !question || question.planId !== planId) notFound()
 
   return (

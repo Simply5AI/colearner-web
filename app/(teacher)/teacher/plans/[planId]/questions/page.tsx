@@ -5,7 +5,7 @@ import { fetchTeacherPlan } from '@/lib/api/teacher-plans'
 import { QuestionsListView } from '@/components/teacher/questions/questions-list-view'
 import { TeacherPage } from '@/components/teacher/teacher-page'
 import { Button } from '@/components/ui/button'
-import { listTeacherQuestions } from '@/lib/teacher/questions-dev-store'
+import { fetchTeacherQuestions } from '@/lib/api/teacher-questions'
 
 export default async function TeacherPlanQuestionsPage({
   params,
@@ -20,7 +20,7 @@ export default async function TeacherPlanQuestionsPage({
   const plan = await fetchTeacherPlan(headers, planId)
   if (!plan) notFound()
 
-  const questions = listTeacherQuestions({ planId })
+  const questions = await fetchTeacherQuestions(headers, { planId })
 
   return (
     <TeacherPage

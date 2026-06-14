@@ -16,7 +16,7 @@ import { MasteryBadge } from '@/components/shared/MasteryBadge'
 import { ProgressBar } from '@/components/shared/ProgressBar'
 import { ScoreChip } from '@/components/shared/ScoreChip'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import type { PlanAggregateAnalytics, PlanRosterEntry } from '@/lib/fixtures/teacher-analytics'
+import type { PlanAggregateAnalytics, PlanRosterEntry } from '@/lib/types/teacher'
 
 interface PlanAnalyticsViewProps {
   planId: string

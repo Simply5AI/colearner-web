@@ -4,7 +4,7 @@ import { fetchTeacherPlans } from '@/lib/api/teacher-plans'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { TeacherPage } from '@/components/teacher/teacher-page'
-import { planAnalyticsFixtures } from '@/lib/fixtures/teacher-analytics'
+
 
 export default async function TeacherAnalyticsPage() {
   const session = await auth()
@@ -20,16 +20,12 @@ export default async function TeacherAnalyticsPage() {
       subtitle="Class-wide insights across your published study plans."
     >
       <div className="grid gap-4 md:grid-cols-2">
-        {plans.map((plan) => {
-          const stats = planAnalyticsFixtures[plan.id]
-          return (
+        {plans.map((plan) => (
             <Card key={plan.id}>
               <CardHeader>
                 <CardTitle className="text-base">{plan.title}</CardTitle>
                 <CardDescription>
-                  {stats
-                    ? `${stats.enrollmentCount} enrolled · ${stats.avgProgress}% avg progress`
-                    : 'No analytics data yet'}
+                  {plan.enrollmentCount} enrolled · {plan.topicCount} topics
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -38,8 +34,7 @@ export default async function TeacherAnalyticsPage() {
                 </Button>
               </CardContent>
             </Card>
-          )
-        })}
+        ))}
       </div>
 
       {plans.length === 0 && (

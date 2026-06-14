@@ -5,7 +5,7 @@ import { fetchTeacherPlan } from '@/lib/api/teacher-plans'
 import { EnrollmentsView } from '@/components/teacher/enrollments/enrollments-view'
 import { TeacherPage } from '@/components/teacher/teacher-page'
 import { Button } from '@/components/ui/button'
-import { listPlanEnrollments, listPlanInviteCodes } from '@/lib/teacher/enrollments-dev-store'
+import { fetchPlanEnrollments, fetchPlanInviteCodes } from '@/lib/api/teacher-enrollments'
 
 export default async function TeacherPlanEnrollmentsPage({
   params,
@@ -32,8 +32,8 @@ export default async function TeacherPlanEnrollmentsPage({
     >
       <EnrollmentsView
         planId={planId}
-        initialEnrollments={listPlanEnrollments(planId)}
-        initialInviteCodes={listPlanInviteCodes(planId)}
+        initialEnrollments={await fetchPlanEnrollments(headers, planId)}
+        initialInviteCodes={await fetchPlanInviteCodes(headers, planId)}
       />
     </TeacherPage>
   )

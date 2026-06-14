@@ -6,23 +6,18 @@ import { MaterialViewer } from '@/components/materials/MaterialViewer'
 import { QuestionRenderer } from '@/components/questions/QuestionRenderer'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { mockMaterials, mockQuestions } from '@/lib/fixtures/teacher-ui'
 import { findTreeNode } from '@/lib/teacher/plan-tree-utils'
-import type { TeacherStudyPlan } from '@/lib/types/teacher'
+import type { TeacherMaterial, TeacherQuestion, TeacherStudyPlan } from '@/lib/types/teacher'
 
 interface TopicDeepViewProps {
   plan: TeacherStudyPlan
   topicId: string
+  materials: TeacherMaterial[]
+  questions: TeacherQuestion[]
 }
 
-export function TopicDeepView({ plan, topicId }: TopicDeepViewProps) {
+export function TopicDeepView({ plan, topicId, materials, questions }: TopicDeepViewProps) {
   const topic = findTreeNode(plan.tree, topicId)
-  const materials = mockMaterials.filter(
-    (material) => material.topicId === topicId || (!material.topicId && topicId === 'topic-1'),
-  )
-  const questions = mockQuestions.filter(
-    (question) => question.topicId === topicId || (!question.topicId && topicId === 'topic-1'),
-  )
 
   if (!topic) {
     return (
@@ -84,7 +79,7 @@ export function TopicDeepView({ plan, topicId }: TopicDeepViewProps) {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Questions</CardTitle>
-            <CardDescription>Assessment items for this topic (W4 preview).</CardDescription>
+            <CardDescription>Assessment items for this topic.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {questions.length === 0 ? (

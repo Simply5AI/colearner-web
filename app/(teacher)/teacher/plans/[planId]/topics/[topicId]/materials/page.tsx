@@ -7,7 +7,7 @@ import { MaterialsListView } from '@/components/teacher/materials/materials-list
 import { TeacherPage } from '@/components/teacher/teacher-page'
 import { Button } from '@/components/ui/button'
 import { findTreeNode } from '@/lib/teacher/plan-tree-utils'
-import { listTeacherMaterials } from '@/lib/teacher/materials-dev-store'
+import { fetchTeacherMaterials } from '@/lib/api/teacher-materials'
 
 export default async function TeacherTopicMaterialsPage({
   params,
@@ -23,7 +23,7 @@ export default async function TeacherTopicMaterialsPage({
   const topic = plan ? findTreeNode(plan.tree, topicId) : null
   if (!plan || !topic) notFound()
 
-  const materials = listTeacherMaterials({ planId, topicId })
+  const materials = await fetchTeacherMaterials(headers, { planId, topicId })
 
   return (
     <TeacherPage title="Materials" subtitle={`${plan.title} · ${topic.title}`}>

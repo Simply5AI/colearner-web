@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation'
 import { Archive, ExternalLink, Plus, Save, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { TreeEditor } from '@/components/tree/TreeEditor'
-import { MaterialViewer } from '@/components/materials/MaterialViewer'
-import { QuestionRenderer } from '@/components/questions/QuestionRenderer'
 import { PlanStatusBadge } from '@/components/teacher/plans/plan-status-badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,7 +27,6 @@ import {
   publishTeacherPlanClient,
   updateTeacherPlanClient,
 } from '@/lib/api/teacher-plans-client'
-import { mockMaterials, mockQuestions } from '@/lib/fixtures/teacher-ui'
 import {
   addChildNode,
   collectTopicOptions,
@@ -60,12 +57,6 @@ function updateNodePrerequisites(
   return updateTreeNode(nodes, nodeId, (node) => ({ ...node, prerequisiteTopicIds }))
 }
 
-function countTopicsWithoutQuestions(tree: TreeNode[]): number {
-  const topicIds = collectTopicOptions(tree).map((topic) => topic.id)
-  return topicIds.filter((topicId) => !mockQuestions.some((question) => question.topicId === topicId))
-    .length
-}
-
 export function PlanEditor({ initialPlan }: PlanEditorProps) {
   const router = useRouter()
   const [plan, setPlan] = useState(initialPlan)
@@ -83,7 +74,10 @@ export function PlanEditor({ initialPlan }: PlanEditorProps) {
   )
 
   const topicOptions = useMemo(() => collectTopicOptions(plan.tree), [plan.tree])
-  const topicsMissingQuestions = useMemo(() => countTopicsWithoutQuestions(plan.tree), [plan.tree])
+  const topicsMissingQuestions = useMemo(
+    () => (plan.topicCount > 0 && plan.questionCount === 0 ? plan.topicCount : 0),
+    [plan.topicCount, plan.questionCount],
+  )
 
   const markDirty = useCallback(() => setIsDirty(true), [])
 
@@ -195,13 +189,6 @@ export function PlanEditor({ initialPlan }: PlanEditorProps) {
 
     updateTree(updateNodePrerequisites(plan.tree, topicId, next))
   }
-
-  const topicMaterials = selectedNode
-    ? mockMaterials.filter((material) => material.topicId === selectedNode.id || !material.topicId)
-    : []
-  const topicQuestions = selectedNode
-    ? mockQuestions.filter((question) => question.topicId === selectedNode.id)
-    : []
 
   return (
     <div className="space-y-5">
@@ -390,17 +377,9 @@ export function PlanEditor({ initialPlan }: PlanEditorProps) {
                 <p className="text-sm text-muted-foreground">
                   Attach uploads and links to the selected topic.
                 </p>
-                {selectedNode && topicMaterials.length > 0 ? (
-                  topicMaterials.slice(0, 2).map((material) => (
-                    <div key={material.id} className="rounded-lg border p-3">
-                      <MaterialViewer material={material} />
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                    No materials for this topic yet.
-                  </div>
-                )}
+                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  Open materials management to attach resources to this topic.
+                </div>
               </TabsContent>
 
               <TabsContent value="questions" className="space-y-3 pt-4">
@@ -410,17 +389,9 @@ export function PlanEditor({ initialPlan }: PlanEditorProps) {
                 <p className="text-sm text-muted-foreground">
                   Author assessments per topic in the question bank.
                 </p>
-                {selectedNode && topicQuestions.length > 0 ? (
-                  topicQuestions.slice(0, 2).map((question) => (
-                    <div key={question.id} className="rounded-lg border p-3">
-                      <QuestionRenderer question={question} mode="review" />
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                    No questions for this topic yet.
-                  </div>
-                )}
+                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  Open the question bank to author assessments for this topic.
+                </div>
               </TabsContent>
 
               <TabsContent value="enrollments" className="space-y-3 pt-4">
