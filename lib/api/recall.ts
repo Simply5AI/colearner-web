@@ -10,6 +10,7 @@ import type {
   QueueItem,
   RecallSessionHistoryItem,
   ConceptMastery,
+  RecallSessionState,
 } from '@/lib/types'
 
 export async function createRecallSession(
@@ -21,6 +22,13 @@ export async function createRecallSession(
     headers,
     body: config,
   })
+}
+
+export async function getRecallSessionState(
+  headers: Record<string, string>,
+  sessionId: string
+): Promise<RecallSessionState> {
+  return apiClient<RecallSessionState>(`/api/recall/sessions/${sessionId}/state`, { headers })
 }
 
 export async function getSessionQuestions(

@@ -30,9 +30,20 @@ import type { QuestionWithMeta } from '@/lib/types'
 interface RecallSessionProps {
   sessionId: string
   authHeaders: Record<string, string>
+  mode?: 'PRACTICE' | 'EXAM'
+  summaryPath?: string
+  backPath?: string
+  disableSkip?: boolean
 }
 
-export function RecallSession({ sessionId, authHeaders }: RecallSessionProps) {
+export function RecallSession({
+  sessionId,
+  authHeaders,
+  mode = 'PRACTICE',
+  summaryPath,
+  backPath = '/recall/start',
+  disableSkip = false,
+}: RecallSessionProps) {
   const router = useRouter()
   const store = useRecallStore()
   const [tutoringOpen, setTutoringOpen] = useState(false)
@@ -124,11 +135,11 @@ export function RecallSession({ sessionId, authHeaders }: RecallSessionProps) {
       } catch {
         // continue to summary even if complete fails
       }
-      router.push(`/recall/summary/${sessionId}`)
+      router.push(summaryPath ?? `/recall/summary/${sessionId}`)
     } else {
       store.nextQuestion()
     }
-  }, [isLastQuestion, authHeaders, sessionId, router, store])
+  }, [isLastQuestion, authHeaders, sessionId, router, store, summaryPath])
 
   const handleSkip = useCallback(async () => {
     if (!currentQuestion) return
@@ -143,17 +154,17 @@ export function RecallSession({ sessionId, authHeaders }: RecallSessionProps) {
       try {
         await completeRecallSession(authHeaders, sessionId)
       } catch { /* continue */ }
-      router.push(`/recall/summary/${sessionId}`)
+      router.push(summaryPath ?? `/recall/summary/${sessionId}`)
     } else {
       store.nextQuestion()
     }
-  }, [currentQuestion, authHeaders, sessionId, isLastQuestion, router, store])
+  }, [currentQuestion, authHeaders, sessionId, isLastQuestion, router, store, summaryPath])
 
   // Keyboard shortcuts
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        router.push('/recall/start')
+        router.push(backPath)
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
         e.preventDefault()
@@ -162,7 +173,7 @@ export function RecallSession({ sessionId, authHeaders }: RecallSessionProps) {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [router, store])
+  }, [router, store, backPath])
 
   // Loading state
   if (store.questions.length === 0) {
@@ -224,17 +235,19 @@ export function RecallSession({ sessionId, authHeaders }: RecallSessionProps) {
               onSubmit={handleSubmit}
               disabled={false}
             />
-            <div className="flex justify-end mt-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSkip}
-                className="text-muted-foreground"
-              >
-                <SkipForward className="mr-1 h-3.5 w-3.5" />
-                Skip
-              </Button>
-            </div>
+            {!disableSkip && mode !== 'EXAM' && (
+              <div className="flex justify-end mt-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSkip}
+                  className="text-muted-foreground"
+                >
+                  <SkipForward className="mr-1 h-3.5 w-3.5" />
+                  Skip
+                </Button>
+              </div>
+            )}
           </>
         )}
       </RecallQuestionShell>

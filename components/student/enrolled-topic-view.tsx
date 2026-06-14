@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, ClipboardList } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import { EnrolledRecallActions } from '@/components/student/enrolled-recall-actions'
 import { MaterialViewer } from '@/components/materials/MaterialViewer'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { findTreeNode } from '@/lib/teacher/plan-tree-utils'
@@ -75,14 +76,11 @@ export function EnrolledTopicView({ plan, topicId }: EnrolledTopicViewProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          <Button variant="outline" disabled title="Practice sessions coming in B6">
-            <BookOpen className="mr-2 h-4 w-4" />
-            Practice
-          </Button>
-          <Button variant="outline" disabled title="Exam sessions coming in B6">
-            <ClipboardList className="mr-2 h-4 w-4" />
-            Exam
-          </Button>
+          <EnrolledRecallActions
+            clonedPlanId={plan.id}
+            topicId={topicId}
+            questionCount={questionCount}
+          />
         </CardContent>
       </Card>
     </div>

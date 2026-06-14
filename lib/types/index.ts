@@ -288,6 +288,9 @@ export type QuestionIntent =
   | 'MISCONCEPTION'
   | 'EXPLAIN_WHY'
 
+export type RecallMode = 'PRACTICE' | 'EXAM'
+export type RecallSource = 'PERSONAL' | 'TEACHER_PLAN'
+
 export interface QuestionWithMeta {
   id: string
   text: string
@@ -303,6 +306,7 @@ export interface QuestionWithMeta {
   sortOrder: number
   answered: boolean
   skipped: boolean
+  planQuestionType?: string
 }
 
 export interface ReviewScheduleDelta {
@@ -390,6 +394,11 @@ export type SessionQuestionIntentFilter = 'MIXED' | QuestionIntent
 export type SessionOrder = 'due_first' | 'failed_first' | 'random' | 'newest'
 
 export interface RecallSessionConfig {
+  source?: RecallSource
+  mode?: RecallMode
+  planId?: string
+  topicScope?: string[]
+  timeLimitSec?: number
   extractionId?: string
   questionCount?: number
   questionType?: SessionQuestionTypeFilter
@@ -406,10 +415,24 @@ export interface RecallSessionResponse {
   orgId: string
   userId: string
   extractionId: string | null
+  mode?: RecallMode
+  source?: RecallSource
+  planId?: string | null
+  timeLimitSec?: number | null
   status: string
   totalQuestions: number
   startedAt: string
   createdAt: string
+}
+
+export interface RecallSessionState {
+  sessionId: string
+  mode: RecallMode
+  status: string
+  remainingSec: number | null
+  expired: boolean
+  timeLimitSec?: number
+  startedAt?: string
 }
 
 // ─── Extraction Types ───

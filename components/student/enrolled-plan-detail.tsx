@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, ClipboardList } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import { EnrolledRecallActions } from '@/components/student/enrolled-recall-actions'
 import { MaterialViewer } from '@/components/materials/MaterialViewer'
 import { TreeEditor } from '@/components/tree/TreeEditor'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -99,14 +100,12 @@ export function EnrolledPlanDetail({ plan }: EnrolledPlanDetailProps) {
                 )}
 
                 <div className="flex flex-wrap gap-2 border-t pt-4">
-                  <Button variant="outline" size="sm" disabled title="Practice sessions coming in B6">
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    Start practice
-                  </Button>
-                  <Button variant="outline" size="sm" disabled title="Exam sessions coming in B6">
-                    <ClipboardList className="mr-2 h-4 w-4" />
-                    Start exam
-                  </Button>
+                  <EnrolledRecallActions
+                    clonedPlanId={plan.id}
+                    topicId={selectedTopic.id}
+                    questionCount={questionCount}
+                    size="sm"
+                  />
                   <Link
                     href={`/learn/enrolled/${plan.id}/topic/${selectedTopic.id}`}
                     className={buttonVariants({ variant: 'ghost', size: 'sm' })}
