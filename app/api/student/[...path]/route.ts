@@ -33,6 +33,11 @@ async function proxyStudent(req: NextRequest, pathSegments: string[]) {
   return NextResponse.json(result.data, { status: result.status })
 }
 
+export async function GET(req: NextRequest, context: RouteContext) {
+  const { path } = await context.params
+  return proxyStudent(req, path)
+}
+
 export async function POST(req: NextRequest, context: RouteContext) {
   const { path } = await context.params
   return proxyStudent(req, path)

@@ -21,7 +21,7 @@ function EnrollForm() {
     try {
       const result = await redeemInviteCodeClient(code)
       toast.success('Enrolled successfully')
-      router.push(`/dashboard?enrolled=${result.planId}`)
+      router.push(result.clonedPlanId ? `/learn/enrolled/${result.clonedPlanId}` : '/learn/enrolled')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to redeem code')
     } finally {

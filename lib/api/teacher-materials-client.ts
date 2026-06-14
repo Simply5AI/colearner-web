@@ -44,6 +44,20 @@ export function deleteTeacherMaterialClient(materialId: string): Promise<void> {
   return materialsFetch(`/api/teacher/materials/${materialId}`, { method: 'DELETE' })
 }
 
+export function createMaterialUploadUrlClient(body: {
+  planId: string
+  topicId: string
+  type: string
+  filename: string
+  mimeType: string
+  sizeBytes: number
+}): Promise<{ uploadUrl: string; storageKey: string; expiresIn: number }> {
+  return materialsFetch('/api/teacher/materials/upload-url', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
 export function setMaterialVisibilityClient(
   materialId: string,
   visibility: MaterialVisibility,

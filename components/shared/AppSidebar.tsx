@@ -12,6 +12,7 @@ import {
   BookOpen,
   Users,
   History,
+  GraduationCap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLearnerTerms } from '@/lib/hooks/use-learner-terms'
@@ -36,6 +37,7 @@ function getNavSections(plansLabel: string): NavSection[] {
         { href: '/dashboard', label: 'Home', icon: Home },
         { href: '/capture', label: 'Library', icon: Download },
         { href: '/roadmaps', label: plansLabel, icon: BookOpen },
+        { href: '/learn/enrolled', label: 'Enrolled', icon: GraduationCap },
       ],
     },
     {

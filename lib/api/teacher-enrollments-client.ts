@@ -2,6 +2,7 @@
 
 import { ApiError } from '@/lib/api/client'
 import type { TeacherEnrollment, TeacherInviteCode } from '@/lib/types/teacher'
+import type { RedeemInviteResult, StudentEnrollmentSummary } from '@/lib/types/student-enrollment'
 
 async function enrollmentsFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
@@ -39,7 +40,11 @@ export function revokeInviteCodeClient(planId: string, inviteId: string): Promis
   })
 }
 
-export function redeemInviteCodeClient(code: string): Promise<{ planId: string; enrollmentId: string }> {
+export function listStudentEnrollmentsClient(): Promise<StudentEnrollmentSummary[]> {
+  return enrollmentsFetch('/api/student/enrollments')
+}
+
+export function redeemInviteCodeClient(code: string): Promise<RedeemInviteResult> {
   return enrollmentsFetch('/api/student/enrollments/redeem', {
     method: 'POST',
     body: JSON.stringify({ code }),

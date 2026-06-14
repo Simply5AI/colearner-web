@@ -36,6 +36,7 @@ interface TreeEditorProps {
   selectedNodeId?: string | null
   onSelectNode?: (nodeId: string) => void
   renderNode?: (node: TreeNode) => React.ReactNode
+  readOnly?: boolean
 }
 
 function flattenTree(nodes: TreeNode[], depth = 0, parentId: string | null = null): FlatTreeNode[] {
@@ -76,6 +77,7 @@ function SortableTreeRow({
   setDraftTitle,
   selectedNodeId,
   onSelectNode,
+  readOnly = false,
 }: {
   node: FlatTreeNode
   expanded: boolean
@@ -88,15 +90,19 @@ function SortableTreeRow({
   setDraftTitle: (value: string) => void
   selectedNodeId?: string | null
   onSelectNode?: (nodeId: string) => void
+  readOnly?: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: node.id,
+    disabled: readOnly,
   })
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  }
+  const style = readOnly
+    ? undefined
+    : {
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }
 
   const hasChildren = (node.children?.length ?? 0) > 0
   const kindLabel: Record<TreeNodeKind, string> = {
@@ -128,16 +134,18 @@ function SortableTreeRow({
         marginLeft: `${node.depth * 16}px`,
       }}
     >
-      <button
-        type="button"
-        className="cursor-grab text-muted-foreground"
-        onClick={(event) => event.stopPropagation()}
-        {...attributes}
-        {...listeners}
-        aria-label="Drag to reorder"
-      >
-        <GripVertical className="h-4 w-4" />
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          className="cursor-grab text-muted-foreground"
+          onClick={(event) => event.stopPropagation()}
+          {...attributes}
+          {...listeners}
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      )}
 
       <button
         type="button"
@@ -159,7 +167,7 @@ function SortableTreeRow({
         {kindLabel[node.kind]}
       </span>
 
-      {editingId === node.id ? (
+      {!readOnly && editingId === node.id ? (
         <Input
           autoFocus
           value={draftTitle}
@@ -183,18 +191,20 @@ function SortableTreeRow({
             <p className="text-sm font-medium">{node.title}</p>
             {renderNode?.(node)}
           </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={(event) => {
-              event.stopPropagation()
-              setEditingId(node.id)
-              setDraftTitle(node.title)
-            }}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
+          {!readOnly && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={(event) => {
+                event.stopPropagation()
+                setEditingId(node.id)
+                setDraftTitle(node.title)
+              }}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
       )}
     </div>
@@ -208,6 +218,7 @@ export function TreeEditor({
   selectedNodeId,
   onSelectNode,
   renderNode,
+  readOnly = false,
 }: TreeEditorProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -231,6 +242,7 @@ export function TreeEditor({
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
   function handleDragEnd(event: DragEndEvent) {
+    if (readOnly) return
     const { active, over } = event
     if (!over || active.id === over.id) return
 
@@ -268,6 +280,7 @@ export function TreeEditor({
               setDraftTitle={setDraftTitle}
               selectedNodeId={selectedNodeId}
               onSelectNode={onSelectNode}
+              readOnly={readOnly}
             />
           ))}
         </div>
