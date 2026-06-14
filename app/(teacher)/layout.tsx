@@ -10,7 +10,11 @@ export default async function TeacherLayout({
   const session = await auth()
 
   if (!session?.accessToken) {
-    redirect('/login')
+    redirect('/login?callbackUrl=/teacher/dashboard')
+  }
+
+  if (!session.user.roles?.includes('TEACHER')) {
+    redirect('/dashboard')
   }
 
   return (

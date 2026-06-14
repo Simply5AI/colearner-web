@@ -20,7 +20,7 @@ export default async function TeacherOnboardingPage() {
   }
 
   if (!session.user.roles?.includes('TEACHER')) {
-    redirect('/teacher/org-setup')
+    redirect('/teacher/signup')
   }
 
   return (

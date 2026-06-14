@@ -9,7 +9,6 @@ export const config = {
     '/admin/:path*',
     '/onboarding/:path*',
     '/teacher/:path*',
-    '/become-teacher',
     '/login',
     '/signup',
   ],

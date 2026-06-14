@@ -267,10 +267,8 @@ const authConfig: NextAuthConfig = {
         ?.systemRole === 'SUPER_ADMIN'
       const isTeacher = (auth as { user?: { roles?: string[] } })?.user?.roles?.includes('TEACHER')
       const isOnboardingPage = nextUrl.pathname.startsWith('/onboarding')
-      const isBecomeTeacherPage = nextUrl.pathname.startsWith('/become-teacher')
       const isTeacherPage = nextUrl.pathname.startsWith('/teacher')
-      const isTeacherSetupPath =
-        nextUrl.pathname === '/teacher/org-setup' || isBecomeTeacherPage
+      const isTeacherPublicPath = nextUrl.pathname === '/teacher/signup'
       const isProtectedApp =
         nextUrl.pathname.startsWith('/dashboard') ||
         nextUrl.pathname.startsWith('/recall') ||
@@ -282,12 +280,11 @@ const authConfig: NextAuthConfig = {
       const isAdminPage = nextUrl.pathname.startsWith('/admin')
       const isAdminLoginPage = nextUrl.pathname === '/admin/login'
 
-      // Require auth for onboarding, teacher, become-teacher, and app routes
+      // Require auth for onboarding, teacher workspace, and app routes
       if (
         (isProtectedApp ||
           isOnboardingPage ||
-          isTeacherPage ||
-          isBecomeTeacherPage ||
+          (isTeacherPage && !isTeacherPublicPath) ||
           (isAdminPage && !isAdminLoginPage)) &&
         !isLoggedIn
       ) {
@@ -309,17 +306,14 @@ const authConfig: NextAuthConfig = {
         return Response.redirect(new URL('/admin/login', nextUrl))
       }
 
-      if (isTeacherPage && isLoggedIn && !isTeacher && !isTeacherSetupPath) {
-        return Response.redirect(new URL('/become-teacher', nextUrl))
+      if (isTeacherPublicPath && isLoggedIn) {
+        return Response.redirect(
+          new URL(isTeacher ? '/teacher/dashboard' : '/dashboard', nextUrl),
+        )
       }
 
-      if (
-        isTeacherPage &&
-        isLoggedIn &&
-        !isTeacher &&
-        nextUrl.pathname === '/teacher/onboarding'
-      ) {
-        return Response.redirect(new URL('/teacher/org-setup', nextUrl))
+      if (isTeacherPage && isLoggedIn && !isTeacher && !isTeacherPublicPath) {
+        return Response.redirect(new URL('/dashboard', nextUrl))
       }
 
       // Teachers use the teacher workspace only — not the student learning app.

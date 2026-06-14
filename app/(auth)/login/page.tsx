@@ -23,6 +23,12 @@ export default function LoginPage() {
         <LoginForm />
       </Suspense>
       <p className="text-center text-xs text-muted-foreground">
+        CoLearner for teachers?{' '}
+        <a href="/teacher/signup" className="font-semibold text-brand-orange hover:underline">
+          Create a teacher account
+        </a>
+      </p>
+      <p className="text-center text-xs text-muted-foreground">
         Platform admin?{' '}
         <a href="/admin/login" className="font-semibold text-brand-orange hover:underline">
           Sign in to the admin console

@@ -13,10 +13,10 @@ export function TeacherMarketingHeader() {
           </span>
         </Link>
         <Link
-          href="/dashboard"
+          href="/login?callbackUrl=/teacher/dashboard"
           className="text-xs font-semibold text-muted-foreground transition-colors hover:text-brand-orange"
         >
-          Back to learning
+          Teacher sign in
         </Link>
       </div>
     </div>
