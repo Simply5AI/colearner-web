@@ -32,7 +32,7 @@ export default async function TeacherPlanQuestionsPage({
         </Button>
       }
     >
-      <QuestionsListView planId={planId} initialQuestions={questions} />
+      <QuestionsListView planId={planId} planTree={plan.tree} initialQuestions={questions} />
     </TeacherPage>
   )
 }

@@ -128,7 +128,7 @@ export default async function TeacherDashboardPage() {
               <Users className="h-5 w-5 text-primary" />
               Student snapshot
             </CardTitle>
-            <CardDescription>Class-wide metrics (W5/W6) will refine these KPIs.</CardDescription>
+            <CardDescription>Aggregated across all published plans.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <ProgressBar value={avgProgress ?? 0} label="Class average progress" />

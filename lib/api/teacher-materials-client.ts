@@ -25,7 +25,12 @@ export function listTeacherMaterialsClient(query: {
 }
 
 export function createTeacherMaterialClient(
-  body: Omit<TeacherMaterial, 'id'>,
+  body: Omit<TeacherMaterial, 'id'> & {
+    storageKey?: string
+    mimeType?: string
+    sizeBytes?: number
+    richTextJson?: Record<string, unknown>
+  },
 ): Promise<TeacherMaterial> {
   return materialsFetch('/api/teacher/materials', { method: 'POST', body: JSON.stringify(body) })
 }

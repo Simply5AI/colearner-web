@@ -12,15 +12,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { TeacherQuestion, TeacherQuestionStatus } from '@/lib/types/teacher'
+import type { TeacherQuestion, TeacherQuestionStatus, TreeNode } from '@/lib/types/teacher'
+import { collectTopicOptions } from '@/lib/teacher/plan-tree-utils'
 
 interface QuestionsListViewProps {
   planId: string
+  planTree: TreeNode[]
   initialQuestions: TeacherQuestion[]
 }
 
-export function QuestionsListView({ planId, initialQuestions }: QuestionsListViewProps) {
+export function QuestionsListView({ planId, planTree, initialQuestions }: QuestionsListViewProps) {
   const [status, setStatus] = useState<TeacherQuestionStatus | 'ALL'>('ALL')
+  const topicLabels = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const topic of collectTopicOptions(planTree)) {
+      map.set(topic.id, topic.title)
+    }
+    return map
+  }, [planTree])
 
   const filtered = useMemo(
     () =>
@@ -79,7 +88,9 @@ export function QuestionsListView({ planId, initialQuestions }: QuestionsListVie
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{question.type}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{question.topicId}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {topicLabels.get(question.topicId) ?? question.topicId}
+                  </td>
                   <td className="px-4 py-3 capitalize">{question.status.toLowerCase()}</td>
                 </tr>
               ))}

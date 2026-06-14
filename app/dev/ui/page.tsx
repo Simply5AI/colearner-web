@@ -113,7 +113,14 @@ export default function TeacherUiDevPage() {
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">UploaderDropzone</h2>
-        <UploaderDropzone />
+        <UploaderDropzone
+          getUploadUrl={async (file) => ({
+            uploadUrl: URL.createObjectURL(file),
+            storageKey: `dev/${file.name}`,
+            mimeType: file.type || 'application/octet-stream',
+            type: file.type === 'application/pdf' ? 'PDF' : 'VIDEO_UPLOAD',
+          })}
+        />
       </section>
     </div>
   )

@@ -152,7 +152,11 @@ export interface UploadProgress {
 
 export interface CompletedUpload {
   fileName: string
-  material: Pick<TeacherMaterial, 'id' | 'title' | 'type' | 'url' | 'contentUrl'>
+  storageKey?: string
+  mimeType?: string
+  type?: MaterialType
+  sizeBytes?: number
+  material?: Pick<TeacherMaterial, 'id' | 'title' | 'type' | 'url' | 'contentUrl'>
 }
 
 export interface TeacherEnrollment {
@@ -167,6 +171,29 @@ export interface TeacherEnrollment {
   progressPercent: number
   lastExamScore: number | null
   lastRecallAt: string | null
+}
+
+export interface OrgStudentOption {
+  userId: string
+  name: string
+  email: string
+}
+
+export interface AssignStudentsResult {
+  results: Array<{
+    studentUserId: string
+    status: 'assigned' | 'skipped'
+    enrollmentId?: string
+    reason?: string
+  }>
+}
+
+export interface TeacherStudentRosterEntry {
+  studentUserId: string
+  studentName: string
+  studentEmail: string
+  totalPlans: number
+  enrolledPlans: Array<{ planId: string; planTitle: string; enrolledAt: string }>
 }
 
 export interface TeacherInviteCode {

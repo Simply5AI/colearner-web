@@ -21,7 +21,7 @@ export default async function TeacherQuestionEditPage({
 
   return (
     <TeacherPage title="Edit question" subtitle={plan.title}>
-      <QuestionForm planId={planId} initialQuestion={question} />
+      <QuestionForm planId={planId} planTree={plan.tree} initialQuestion={question} />
     </TeacherPage>
   )
 }

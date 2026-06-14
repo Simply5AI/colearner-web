@@ -19,7 +19,7 @@ export default async function TeacherQuestionNewPage({
 
   return (
     <TeacherPage title="New question" subtitle={plan.title}>
-      <QuestionForm planId={planId} />
+      <QuestionForm planId={planId} planTree={plan.tree} />
     </TeacherPage>
   )
 }

@@ -1,7 +1,12 @@
 'use client'
 
 import { ApiError } from '@/lib/api/client'
-import type { TeacherEnrollment, TeacherInviteCode } from '@/lib/types/teacher'
+import type {
+  AssignStudentsResult,
+  OrgStudentOption,
+  TeacherEnrollment,
+  TeacherInviteCode,
+} from '@/lib/types/teacher'
 import type { RedeemInviteResult, StudentEnrollmentSummary } from '@/lib/types/student-enrollment'
 
 async function enrollmentsFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -37,6 +42,21 @@ export function createInviteCodeClient(
 export function revokeInviteCodeClient(planId: string, inviteId: string): Promise<TeacherInviteCode> {
   return enrollmentsFetch(`/api/teacher/plans/${planId}/invite-codes/${inviteId}/revoke`, {
     method: 'POST',
+  })
+}
+
+export function listOrgStudentsClient(search?: string): Promise<OrgStudentOption[]> {
+  const params = search ? `?search=${encodeURIComponent(search)}` : ''
+  return enrollmentsFetch(`/api/teacher/org-students${params}`)
+}
+
+export function assignStudentsClient(
+  planId: string,
+  studentUserIds: string[],
+): Promise<AssignStudentsResult> {
+  return enrollmentsFetch(`/api/teacher/plans/${planId}/assign-students`, {
+    method: 'POST',
+    body: JSON.stringify({ studentUserIds }),
   })
 }
 

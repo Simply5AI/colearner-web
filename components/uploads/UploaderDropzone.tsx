@@ -5,39 +5,45 @@ import { AlertCircle, CheckCircle2, RefreshCw, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProgressBar } from '@/components/shared/ProgressBar'
 import { cn } from '@/lib/utils'
-import type { CompletedUpload, TeacherMaterial, UploadProgress } from '@/lib/types/teacher'
+import type { CompletedUpload, MaterialType, UploadProgress } from '@/lib/types/teacher'
+
+export interface UploadUrlResult {
+  uploadUrl: string
+  storageKey: string
+  mimeType: string
+  type: MaterialType
+}
 
 interface UploaderDropzoneProps {
   onUploadComplete?: (upload: CompletedUpload) => void
-  getUploadUrl?: (file: File) => Promise<{ uploadUrl: string; material: Pick<TeacherMaterial, 'id' | 'title' | 'type' | 'url' | 'contentUrl'> }>
+  getUploadUrl?: (file: File) => Promise<UploadUrlResult>
   accept?: string
   maxFiles?: number
   className?: string
 }
 
-function inferMaterialType(file: File): TeacherMaterial['type'] {
-  if (file.type === 'application/pdf') return 'PDF'
-  if (file.type.startsWith('video/')) return 'VIDEO_UPLOAD'
-  return 'EXTERNAL_LINK'
-}
-
-async function defaultGetUploadUrl(file: File) {
-  // Mock signed URL flow for W8 dev usage until B3 ships.
-  await new Promise((resolve) => setTimeout(resolve, 400))
-  return {
-    uploadUrl: URL.createObjectURL(file),
-    material: {
-      id: crypto.randomUUID(),
-      title: file.name,
-      type: inferMaterialType(file),
-      url: URL.createObjectURL(file),
-    },
-  }
+function uploadWithProgress(file: File, uploadUrl: string, onProgress: (progress: number) => void) {
+  return new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        onProgress(Math.round((event.loaded / event.total) * 100))
+      }
+    }
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve()
+      else reject(new Error(`Upload failed (${xhr.status})`))
+    }
+    xhr.onerror = () => reject(new Error('Upload failed'))
+    xhr.open('PUT', uploadUrl)
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
+    xhr.send(file)
+  })
 }
 
 export function UploaderDropzone({
   onUploadComplete,
-  getUploadUrl = defaultGetUploadUrl,
+  getUploadUrl,
   accept = '.pdf,.doc,.docx,.ppt,.pptx,video/*',
   maxFiles = 5,
   className,
@@ -47,26 +53,23 @@ export function UploaderDropzone({
 
   const uploadFile = useCallback(
     async (file: File) => {
+      if (!getUploadUrl) return
+
       setItems((current) => [
         ...current,
         { fileName: file.name, progress: 0, status: 'uploading' },
       ])
 
       try {
-        const { uploadUrl, material } = await getUploadUrl(file)
+        const { uploadUrl, storageKey, mimeType, type } = await getUploadUrl(file)
 
-        // Simulate progress for direct PUT uploads.
-        for (const progress of [25, 50, 75, 100]) {
-          await new Promise((resolve) => setTimeout(resolve, 120))
+        await uploadWithProgress(file, uploadUrl, (progress) => {
           setItems((current) =>
             current.map((item) =>
               item.fileName === file.name ? { ...item, progress, status: 'uploading' } : item,
             ),
           )
-        }
-
-        // In production this is a PUT to the signed URL.
-        void uploadUrl
+        })
 
         setItems((current) =>
           current.map((item) =>
@@ -75,7 +78,14 @@ export function UploaderDropzone({
               : item,
           ),
         )
-        onUploadComplete?.({ fileName: file.name, material })
+
+        onUploadComplete?.({
+          fileName: file.name,
+          storageKey,
+          mimeType,
+          type,
+          sizeBytes: file.size,
+        })
       } catch (error) {
         setItems((current) =>
           current.map((item) =>
@@ -94,9 +104,11 @@ export function UploaderDropzone({
   )
 
   async function handleFiles(fileList: FileList | null) {
-    if (!fileList) return
+    if (!fileList || !getUploadUrl) return
     const files = Array.from(fileList).slice(0, maxFiles)
-    await Promise.all(files.map((file) => uploadFile(file)))
+    for (const file of files) {
+      await uploadFile(file)
+    }
   }
 
   return (
@@ -115,6 +127,7 @@ export function UploaderDropzone({
         className={cn(
           'flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-colors',
           isDragging ? 'border-brand-teal bg-brand-teal/5' : 'border-muted-foreground/30 hover:border-brand-teal/60',
+          !getUploadUrl && 'pointer-events-none opacity-60',
         )}
       >
         <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
@@ -125,6 +138,7 @@ export function UploaderDropzone({
           className="sr-only"
           accept={accept}
           multiple
+          disabled={!getUploadUrl}
           onChange={(event) => void handleFiles(event.target.files)}
         />
       </label>
@@ -146,21 +160,7 @@ export function UploaderDropzone({
                 <ProgressBar value={item.progress} showValue label="Uploading" />
               )}
               {item.status === 'failed' && (
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs text-destructive">{item.error}</p>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      const file = new File(['retry'], item.fileName)
-                      void uploadFile(file)
-                    }}
-                  >
-                    <RefreshCw className="mr-1 h-3 w-3" />
-                    Retry
-                  </Button>
-                </div>
+                <p className="text-xs text-destructive">{item.error}</p>
               )}
             </div>
           ))}
