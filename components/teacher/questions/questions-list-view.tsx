@@ -2,7 +2,9 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { FileUp, Plus, Sparkles } from 'lucide-react'
+import { AiCoauthorModal } from '@/components/teacher/questions/ai-coauthor-modal'
+import { BulkImportModal } from '@/components/teacher/questions/bulk-import-modal'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -23,6 +25,8 @@ interface QuestionsListViewProps {
 
 export function QuestionsListView({ planId, planTree, initialQuestions }: QuestionsListViewProps) {
   const [status, setStatus] = useState<TeacherQuestionStatus | 'ALL'>('ALL')
+  const [aiOpen, setAiOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const topicLabels = useMemo(() => {
     const map = new Map<string, string>()
     for (const topic of collectTopicOptions(planTree)) {
@@ -51,13 +55,31 @@ export function QuestionsListView({ planId, planTree, initialQuestions }: Questi
             <SelectItem value="ARCHIVED">Archived</SelectItem>
           </SelectContent>
         </Select>
-        <Button asChild>
-          <Link href={`/teacher/plans/${planId}/questions/new`}>
-            <Plus className="h-4 w-4" />
-            New question
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <FileUp className="h-4 w-4" />
+            Import
+          </Button>
+          <Button variant="outline" onClick={() => setAiOpen(true)}>
+            <Sparkles className="h-4 w-4" />
+            AI Co-author
+          </Button>
+          <Button asChild>
+            <Link href={`/teacher/plans/${planId}/questions/new`}>
+              <Plus className="h-4 w-4" />
+              New question
+            </Link>
+          </Button>
+        </div>
       </div>
+
+      <AiCoauthorModal
+        planId={planId}
+        planTree={planTree}
+        open={aiOpen}
+        onOpenChange={setAiOpen}
+      />
+      <BulkImportModal planId={planId} open={importOpen} onOpenChange={setImportOpen} />
 
       {filtered.length === 0 ? (
         <Card>
