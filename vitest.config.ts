@@ -29,15 +29,15 @@ export default defineConfig({
         lines: 80,
       },
     },
+    server: {
+      deps: {
+        inline: ['@monaco-editor/react'],
+      },
+    },
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '.'),
-    },
-  },
-  server: {
-    deps: {
-      inline: ['@monaco-editor/react'],
     },
   },
 })

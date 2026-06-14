@@ -45,7 +45,7 @@ export default function TeacherUiDevPage() {
         <h2 className="text-lg font-semibold">QuestionRenderer (attempt)</h2>
         <div className="rounded-xl border p-4">
           <QuestionRenderer
-            question={mockQuestions[0]}
+            question={mockQuestions[0]!}
             mode="attempt"
             answer={answer}
             onAnswer={setAnswer}
