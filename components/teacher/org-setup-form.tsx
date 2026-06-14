@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,6 +28,7 @@ async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
 
 export function OrgSetupForm({ defaultDisplayName }: OrgSetupFormProps) {
   const router = useRouter()
+  const { update } = useSession()
   const [displayName, setDisplayName] = useState(defaultDisplayName)
   const [language, setLanguage] = useState('en')
   const [timezone, setTimezone] = useState(
@@ -39,13 +41,20 @@ export function OrgSetupForm({ defaultDisplayName }: OrgSetupFormProps) {
     setIsSubmitting(true)
 
     try {
-      await withRetry(() =>
+      const result = await withRetry(() =>
         bootstrapFreelanceOrgClient({
           displayName: displayName.trim(),
           language,
           timezone,
         }),
       )
+
+      await update({
+        onboardingCompleted: true,
+        ...(result.accessToken ? { accessToken: result.accessToken } : {}),
+        ...(result.refreshToken ? { refreshToken: result.refreshToken } : {}),
+      })
+
       toast.success('Teacher organization created')
       router.push('/teacher/onboarding')
       router.refresh()

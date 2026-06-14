@@ -11,6 +11,10 @@ export default async function BecomeTeacherPage() {
     redirect('/login?callbackUrl=/become-teacher')
   }
 
+  if (session.user.roles?.includes('TEACHER')) {
+    redirect('/teacher/dashboard')
+  }
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10">
       <div className="space-y-2">

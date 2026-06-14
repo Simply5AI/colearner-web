@@ -11,6 +11,8 @@ export interface FreelanceBootstrapResponse {
   orgId: string
   orgName: string
   role: 'TEACHER'
+  accessToken?: string
+  refreshToken?: string
 }
 
 export interface TeacherProfile {

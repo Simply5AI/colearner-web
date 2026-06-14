@@ -10,7 +10,11 @@ export default async function TeacherOrgSetupPage() {
     redirect('/login?callbackUrl=/teacher/org-setup')
   }
 
-  const defaultDisplayName = `${session.user.name}'s School`
+  if (session.user.roles?.includes('TEACHER')) {
+    redirect('/teacher/dashboard')
+  }
+
+  const defaultDisplayName = `${session.user.name || 'My'}'s School`
 
   return (
     <TeacherPage

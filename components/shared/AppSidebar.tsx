@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLearnerTerms } from '@/lib/hooks/use-learner-terms'
+import { RoleSwitcher } from '@/components/shared/role-switcher'
 import type { SourceProgress } from '@/lib/types'
 
 interface NavItem {
@@ -155,6 +156,7 @@ export function AppSidebar({
             Account
           </p>
           <div className="space-y-1">
+            <RoleSwitcher className="mx-1 w-[calc(100%-0.5rem)] justify-center" />
             {settingsNavItems.map((item) => {
               const active = isActive(item.href)
               const Icon = item.icon

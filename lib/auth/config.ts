@@ -108,8 +108,24 @@ const authConfig: NextAuthConfig = {
     async jwt({ token, user, account, trigger, session }) {
       const t = token as ExtendedJWT
 
-      if (trigger === 'update' && session?.onboardingCompleted) {
-        t.onboardingCompleted = true
+      if (trigger === 'update' && session) {
+        const updateSession = session as {
+          onboardingCompleted?: boolean
+          accessToken?: string
+          refreshToken?: string
+        }
+        if (updateSession.onboardingCompleted) {
+          t.onboardingCompleted = true
+        }
+        if (updateSession.accessToken) {
+          t.accessToken = updateSession.accessToken
+          t.accessTokenExpires = Date.now() + 14 * 60 * 1000
+          t.roles = undefined
+          t.systemRole = undefined
+        }
+        if (updateSession.refreshToken) {
+          t.refreshToken = updateSession.refreshToken
+        }
       }
 
       if (account?.provider === 'google' && user) {
@@ -165,12 +181,8 @@ const authConfig: NextAuthConfig = {
         return refreshed
       }
 
-      // Check onboarding status on initial sign-in or when session is updated
-      if (
-        (user || trigger === 'update' || !t.systemRole || !t.roles) &&
-        t.accessToken &&
-        (!session?.onboardingCompleted || !t.systemRole || !t.roles)
-      ) {
+      // Refresh profile claims on sign-in, token refresh, or explicit session update.
+      if (t.accessToken && (user || trigger === 'update' || !t.systemRole || !t.roles)) {
         try {
           const API_URL = process.env.NEXT_PUBLIC_API_URL
           const res = await fetch(`${API_URL}/api/users/me`, {
@@ -255,7 +267,10 @@ const authConfig: NextAuthConfig = {
         ?.systemRole === 'SUPER_ADMIN'
       const isTeacher = (auth as { user?: { roles?: string[] } })?.user?.roles?.includes('TEACHER')
       const isOnboardingPage = nextUrl.pathname.startsWith('/onboarding')
+      const isBecomeTeacherPage = nextUrl.pathname.startsWith('/become-teacher')
       const isTeacherPage = nextUrl.pathname.startsWith('/teacher')
+      const isTeacherSetupPath =
+        nextUrl.pathname === '/teacher/org-setup' || isBecomeTeacherPage
       const isProtectedApp =
         nextUrl.pathname.startsWith('/dashboard') ||
         nextUrl.pathname.startsWith('/recall') ||
@@ -267,9 +282,13 @@ const authConfig: NextAuthConfig = {
       const isAdminPage = nextUrl.pathname.startsWith('/admin')
       const isAdminLoginPage = nextUrl.pathname === '/admin/login'
 
-      // Require auth for onboarding, teacher, and app routes
+      // Require auth for onboarding, teacher, become-teacher, and app routes
       if (
-        (isProtectedApp || isOnboardingPage || isTeacherPage || (isAdminPage && !isAdminLoginPage)) &&
+        (isProtectedApp ||
+          isOnboardingPage ||
+          isTeacherPage ||
+          isBecomeTeacherPage ||
+          (isAdminPage && !isAdminLoginPage)) &&
         !isLoggedIn
       ) {
         const loginUrl = new URL('/login', nextUrl)
@@ -290,8 +309,17 @@ const authConfig: NextAuthConfig = {
         return Response.redirect(new URL('/admin/login', nextUrl))
       }
 
-      if (isProtectedApp && isLoggedIn && isTeacher) {
-        return Response.redirect(new URL('/teacher/dashboard', nextUrl))
+      if (isTeacherPage && isLoggedIn && !isTeacher && !isTeacherSetupPath) {
+        return Response.redirect(new URL('/become-teacher', nextUrl))
+      }
+
+      if (
+        isTeacherPage &&
+        isLoggedIn &&
+        !isTeacher &&
+        nextUrl.pathname === '/teacher/onboarding'
+      ) {
+        return Response.redirect(new URL('/teacher/org-setup', nextUrl))
       }
 
       // Redirect to onboarding if not completed (when accessing student app routes)
