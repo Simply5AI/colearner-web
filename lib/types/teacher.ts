@@ -100,6 +100,7 @@ export interface TeacherMaterial {
   type: MaterialType
   visibility: MaterialVisibility
   downloadable: boolean
+  sortOrder?: number
   url?: string
   contentUrl?: string
   richTextContent?: Record<string, unknown>
@@ -109,6 +110,7 @@ export interface TeacherMaterial {
   externalImageUrl?: string
   extensionContent?: string
   mimeType?: string
+  sizeBytes?: number
 }
 
 export type PlanStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
@@ -208,15 +210,61 @@ export interface TeacherInviteCode {
   revokedAt: string | null
 }
 
+export interface TopicAnalyticsEntry {
+  topicId: string
+  title: string
+  avgMastery: number
+  avgFirstAttemptCorrectPct: number
+}
+
 export interface PlanAggregateAnalytics {
   planId: string
   enrollmentCount: number
+  activeCount: number
+  completedCount: number
   avgProgress: number
   avgExamScore: number
   hardestTopic: string
   strongestTopic: string
+  hardestTopics: TopicAnalyticsEntry[]
+  strongestTopics: TopicAnalyticsEntry[]
   scoreDistribution: { range: string; count: number }[]
-  engagementTrend: { date: string; sessions: number }[]
+  engagementTrend: { date: string; sessions: number; dailyActiveStudents: number }[]
+}
+
+export interface StudentTopicProgress {
+  topicId: string
+  title: string
+  mastery: MasteryLevel
+  attempts: number
+  correctPct: number
+  lastReviewed: string | null
+}
+
+export interface StudentPlanAnalytics {
+  profile: {
+    userId: string
+    name: string
+    email: string
+    enrolledAt: string
+    progressPercent: number
+    masteryLevel: MasteryLevel
+  }
+  topicProgress: StudentTopicProgress[]
+  recallHistory: Array<{
+    sessionId: string
+    completedAt: string | null
+    accuracy: number
+    totalQuestions: number
+    correctCount: number
+  }>
+  examHistory: Array<{
+    sessionId: string
+    completedAt: string | null
+    score: number
+    totalQuestions: number
+    correctCount: number
+  }>
 }
 
 export interface PlanRosterEntry {

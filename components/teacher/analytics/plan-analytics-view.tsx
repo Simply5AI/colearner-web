@@ -27,11 +27,17 @@ interface PlanAnalyticsViewProps {
 export function PlanAnalyticsView({ planId, aggregate, roster }: PlanAnalyticsViewProps) {
   return (
     <div className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Enrollments</CardDescription>
             <CardTitle className="text-3xl">{aggregate.enrollmentCount}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Active</CardDescription>
+            <CardTitle className="text-3xl">{aggregate.activeCount}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -83,7 +89,20 @@ export function PlanAnalyticsView({ planId, aggregate, roster }: PlanAnalyticsVi
                 <XAxis dataKey="date" tickFormatter={(value) => String(value).slice(5)} />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
-                <Line type="monotone" dataKey="sessions" stroke="hsl(var(--primary))" strokeWidth={2} />
+                <Line
+                  type="monotone"
+                  dataKey="sessions"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  name="Sessions"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="dailyActiveStudents"
+                  stroke="hsl(var(--chart-2))"
+                  strokeWidth={2}
+                  name="Active students"
+                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>

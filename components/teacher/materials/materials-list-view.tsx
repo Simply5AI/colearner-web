@@ -1,7 +1,23 @@
 'use client'
 
-import { useState } from 'react'
-import { FileText, Link2, Plus, Trash2, Video } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSession } from 'next-auth/react'
+import {
+  DndContext,
+  type DragEndEvent,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { FileText, GripVertical, Link2, Plus, Trash2, Video } from 'lucide-react'
 import { toast } from 'sonner'
 import { MaterialViewer } from '@/components/materials/MaterialViewer'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
@@ -24,12 +40,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
+import { listExtractions } from '@/lib/api/extraction'
 import {
   createMaterialUploadUrlClient,
   createTeacherMaterialClient,
   deleteTeacherMaterialClient,
+  getMaterialDownloadUrlClient,
+  linkMaterialExtractionClient,
+  reorderMaterialsClient,
   setMaterialVisibilityClient,
+  updateTeacherMaterialClient,
 } from '@/lib/api/teacher-materials-client'
+import type { Extraction } from '@/lib/types'
 import type { MaterialType, MaterialVisibility, TeacherMaterial } from '@/lib/types/teacher'
 
 const typeIcon = {
@@ -40,6 +63,8 @@ const typeIcon = {
   RICH_TEXT: FileText,
   EXTENSION_CAPTURE: FileText,
 } as const
+
+const UPLOAD_TYPES = new Set(['PDF', 'VIDEO_UPLOAD'])
 
 function fileToMaterialType(file: File): string {
   const name = file.name.toLowerCase()
@@ -62,6 +87,89 @@ function fileToMaterialType(file: File): string {
   return 'PDF'
 }
 
+function SortableMaterialCard({
+  material,
+  onVisibilityChange,
+  onDownloadableChange,
+  onDelete,
+}: {
+  material: TeacherMaterial
+  onVisibilityChange: (materialId: string, visibility: MaterialVisibility) => void
+  onDownloadableChange: (materialId: string, downloadable: boolean) => void
+  onDelete: (materialId: string) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: material.id,
+  })
+  const Icon = typeIcon[material.type] ?? FileText
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  }
+
+  return (
+    <Card ref={setNodeRef} style={style}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <button
+            type="button"
+            className="cursor-grab text-muted-foreground hover:text-foreground"
+            aria-label="Drag to reorder"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+          <Icon className="h-4 w-4 text-primary" />
+          {material.title}
+        </CardTitle>
+        <div className="flex items-center gap-2">
+          {UPLOAD_TYPES.has(material.type) && (
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Checkbox
+                checked={material.downloadable}
+                onCheckedChange={(checked) =>
+                  onDownloadableChange(material.id, checked === true)
+                }
+              />
+              Download
+            </label>
+          )}
+          <Select
+            value={material.visibility}
+            onValueChange={(value) => onVisibilityChange(material.id, value as MaterialVisibility)}
+          >
+            <SelectTrigger className="h-8 w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PREVIEW">Preview</SelectItem>
+              <SelectItem value="SUBSCRIBER">Subscriber</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="ghost" onClick={() => onDelete(material.id)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <MaterialViewer
+          material={material}
+          resolveDownloadUrl={
+            material.downloadable
+              ? async () => {
+                  const result = await getMaterialDownloadUrlClient(material.id)
+                  return result.downloadUrl
+                }
+              : undefined
+          }
+        />
+      </CardContent>
+    </Card>
+  )
+}
+
 interface MaterialsListViewProps {
   planId: string
   topicId: string
@@ -69,14 +177,34 @@ interface MaterialsListViewProps {
 }
 
 export function MaterialsListView({ planId, topicId, initialMaterials }: MaterialsListViewProps) {
-  const [materials, setMaterials] = useState(initialMaterials)
-  const [linkDialog, setLinkDialog] = useState<'VIDEO_LINK' | 'EXTERNAL_LINK' | 'RICH_TEXT' | null>(
-    null,
+  const { data: session } = useSession()
+  const [materials, setMaterials] = useState(
+    [...initialMaterials].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
   )
+  const [linkDialog, setLinkDialog] = useState<
+    'VIDEO_LINK' | 'EXTERNAL_LINK' | 'RICH_TEXT' | 'EXTENSION_CAPTURE' | null
+  >(null)
   const [linkTitle, setLinkTitle] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
   const [richText, setRichText] = useState<Record<string, unknown>>({ type: 'doc', content: [] })
   const [isSaving, setIsSaving] = useState(false)
+  const [extractions, setExtractions] = useState<Extraction[]>([])
+  const [selectedExtractionId, setSelectedExtractionId] = useState('')
+  const [isLoadingExtractions, setIsLoadingExtractions] = useState(false)
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
+  const materialIds = useMemo(() => materials.map((material) => material.id), [materials])
+
+  useEffect(() => {
+    if (linkDialog !== 'EXTENSION_CAPTURE' || !session?.accessToken) return
+    setIsLoadingExtractions(true)
+    listExtractions({ Authorization: `Bearer ${session.accessToken}` }, { status: 'COMPLETED', limit: 50 })
+      .then((result) => setExtractions(result.data))
+      .catch((error) => {
+        toast.error(error instanceof Error ? error.message : 'Failed to load captures')
+      })
+      .finally(() => setIsLoadingExtractions(false))
+  }, [linkDialog, session?.accessToken])
 
   async function handleUploadComplete(upload: {
     fileName: string
@@ -98,7 +226,7 @@ export function MaterialsListView({ planId, topicId, initialMaterials }: Materia
         mimeType: upload.mimeType,
         sizeBytes: upload.sizeBytes,
       })
-      setMaterials((current) => [material, ...current])
+      setMaterials((current) => [...current, material])
       toast.success('Material uploaded')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to save material')
@@ -109,23 +237,33 @@ export function MaterialsListView({ planId, topicId, initialMaterials }: Materia
     if (!linkDialog) return
     setIsSaving(true)
     try {
-      const material = await createTeacherMaterialClient({
-        planId,
-        topicId,
-        title: linkTitle.trim() || (linkDialog === 'RICH_TEXT' ? 'Rich text note' : 'Link'),
-        type: linkDialog,
-        visibility: 'SUBSCRIBER',
-        downloadable: false,
-        ...(linkDialog === 'RICH_TEXT'
-          ? { richTextJson: richText }
-          : { externalUrl: linkUrl.trim() }),
-      })
-      setMaterials((current) => [material, ...current])
+      const material =
+        linkDialog === 'EXTENSION_CAPTURE'
+          ? await linkMaterialExtractionClient({
+              planId,
+              topicId,
+              extractionId: selectedExtractionId,
+              title: linkTitle.trim() || 'Captured content',
+              visibility: 'SUBSCRIBER',
+            })
+          : await createTeacherMaterialClient({
+              planId,
+              topicId,
+              title: linkTitle.trim() || (linkDialog === 'RICH_TEXT' ? 'Rich text note' : 'Link'),
+              type: linkDialog,
+              visibility: 'SUBSCRIBER',
+              downloadable: false,
+              ...(linkDialog === 'RICH_TEXT'
+                ? { richTextJson: richText }
+                : { externalUrl: linkUrl.trim() }),
+            })
+      setMaterials((current) => [...current, material])
       toast.success('Material added')
       setLinkDialog(null)
       setLinkTitle('')
       setLinkUrl('')
       setRichText({ type: 'doc', content: [] })
+      setSelectedExtractionId('')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to add material')
     } finally {
@@ -142,6 +280,15 @@ export function MaterialsListView({ planId, topicId, initialMaterials }: Materia
     }
   }
 
+  async function handleDownloadableChange(materialId: string, downloadable: boolean) {
+    try {
+      const updated = await updateTeacherMaterialClient(materialId, { downloadable })
+      setMaterials((current) => current.map((m) => (m.id === materialId ? updated : m)))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update download setting')
+    }
+  }
+
   async function handleDelete(materialId: string) {
     try {
       await deleteTeacherMaterialClient(materialId)
@@ -149,6 +296,29 @@ export function MaterialsListView({ planId, topicId, initialMaterials }: Materia
       toast.success('Material deleted')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to delete material')
+    }
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = materials.findIndex((material) => material.id === active.id)
+    const newIndex = materials.findIndex((material) => material.id === over.id)
+    if (oldIndex < 0 || newIndex < 0) return
+
+    const reordered = arrayMove(materials, oldIndex, newIndex)
+    setMaterials(reordered)
+
+    try {
+      const updated = await reorderMaterialsClient({
+        planId,
+        items: reordered.map((material, index) => ({ id: material.id, orderIndex: index })),
+      })
+      setMaterials(updated)
+    } catch (error) {
+      setMaterials(materials)
+      toast.error(error instanceof Error ? error.message : 'Failed to reorder materials')
     }
   }
 
@@ -195,6 +365,10 @@ export function MaterialsListView({ planId, topicId, initialMaterials }: Materia
           <Plus className="h-4 w-4" />
           Rich text
         </Button>
+        <Button size="sm" variant="outline" onClick={() => setLinkDialog('EXTENSION_CAPTURE')}>
+          <FileText className="h-4 w-4" />
+          Extension capture
+        </Button>
       </div>
 
       {materials.length === 0 ? (
@@ -204,45 +378,23 @@ export function MaterialsListView({ planId, topicId, initialMaterials }: Materia
           </CardContent>
         </Card>
       ) : (
-        materials.map((material) => {
-          const Icon = typeIcon[material.type] ?? FileText
-          return (
-            <Card key={material.id}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Icon className="h-4 w-4 text-primary" />
-                  {material.title}
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={material.visibility}
-                    onValueChange={(value) =>
-                      void handleVisibilityChange(material.id, value as MaterialVisibility)
-                    }
-                  >
-                    <SelectTrigger className="h-8 w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PREVIEW">Preview</SelectItem>
-                      <SelectItem value="SUBSCRIBER">Subscriber</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => void handleDelete(material.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <MaterialViewer material={material} />
-              </CardContent>
-            </Card>
-          )
-        })
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={materialIds} strategy={verticalListSortingStrategy}>
+            <div className="space-y-4">
+              {materials.map((material) => (
+                <SortableMaterialCard
+                  key={material.id}
+                  material={material}
+                  onVisibilityChange={(id, visibility) => void handleVisibilityChange(id, visibility)}
+                  onDownloadableChange={(id, downloadable) =>
+                    void handleDownloadableChange(id, downloadable)
+                  }
+                  onDelete={(id) => void handleDelete(id)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       <Dialog open={linkDialog !== null} onOpenChange={(open) => !open && setLinkDialog(null)}>
@@ -253,7 +405,9 @@ export function MaterialsListView({ planId, topicId, initialMaterials }: Materia
                 ? 'Add rich text note'
                 : linkDialog === 'VIDEO_LINK'
                   ? 'Add video link'
-                  : 'Add external link'}
+                  : linkDialog === 'EXTENSION_CAPTURE'
+                    ? 'Link extension capture'
+                    : 'Add external link'}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -266,7 +420,31 @@ export function MaterialsListView({ planId, topicId, initialMaterials }: Materia
                 placeholder="Resource title"
               />
             </div>
-            {linkDialog !== 'RICH_TEXT' && (
+            {linkDialog === 'EXTENSION_CAPTURE' && (
+              <div className="space-y-2">
+                <Label htmlFor="material-extraction">Completed capture</Label>
+                <Select
+                  value={selectedExtractionId}
+                  onValueChange={(value) => setSelectedExtractionId(value ?? '')}
+                >
+                  <SelectTrigger id="material-extraction">
+                    <SelectValue
+                      placeholder={
+                        isLoadingExtractions ? 'Loading captures...' : 'Select a capture'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {extractions.map((extraction) => (
+                      <SelectItem key={extraction.id} value={extraction.id}>
+                        {extraction.title || extraction.id}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {linkDialog !== 'RICH_TEXT' && linkDialog !== 'EXTENSION_CAPTURE' && (
               <div className="space-y-2">
                 <Label htmlFor="material-url">URL</Label>
                 <Input
@@ -287,7 +465,13 @@ export function MaterialsListView({ planId, topicId, initialMaterials }: Materia
               Cancel
             </Button>
             <Button
-              disabled={isSaving || (linkDialog !== 'RICH_TEXT' && !linkUrl.trim())}
+              disabled={
+                isSaving ||
+                (linkDialog === 'EXTENSION_CAPTURE' && !selectedExtractionId) ||
+                (linkDialog !== 'RICH_TEXT' &&
+                  linkDialog !== 'EXTENSION_CAPTURE' &&
+                  !linkUrl.trim())
+              }
               onClick={() => void handleCreateLinkMaterial()}
             >
               {isSaving ? 'Saving...' : 'Add material'}

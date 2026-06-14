@@ -69,3 +69,32 @@ export function setMaterialVisibilityClient(
 ): Promise<TeacherMaterial> {
   return updateTeacherMaterialClient(materialId, { visibility })
 }
+
+export function reorderMaterialsClient(body: {
+  planId: string
+  items: Array<{ id: string; orderIndex: number }>
+}): Promise<TeacherMaterial[]> {
+  return materialsFetch('/api/teacher/materials/reorder', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+export function linkMaterialExtractionClient(body: {
+  planId: string
+  topicId: string
+  extractionId: string
+  title: string
+  visibility?: MaterialVisibility
+}): Promise<TeacherMaterial> {
+  return materialsFetch('/api/teacher/materials/link-extraction', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+export function getMaterialDownloadUrlClient(
+  materialId: string,
+): Promise<{ downloadUrl: string }> {
+  return materialsFetch(`/api/teacher/materials/${materialId}/download`)
+}

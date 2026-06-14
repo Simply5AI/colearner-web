@@ -1,5 +1,9 @@
 import { apiClient } from '@/lib/api/client'
-import type { PlanAggregateAnalytics, PlanRosterEntry } from '@/lib/types/teacher'
+import type {
+  PlanAggregateAnalytics,
+  PlanRosterEntry,
+  StudentPlanAnalytics,
+} from '@/lib/types/teacher'
 
 export async function fetchPlanAggregate(
   headers: Record<string, string>,
@@ -15,4 +19,15 @@ export async function fetchPlanRoster(
   planId: string,
 ): Promise<PlanRosterEntry[]> {
   return apiClient<PlanRosterEntry[]>(`/api/teacher/analytics/plan/${planId}/roster`, { headers })
+}
+
+export async function fetchStudentDetail(
+  headers: Record<string, string>,
+  studentUserId: string,
+  planId: string,
+): Promise<StudentPlanAnalytics | null> {
+  return apiClient<StudentPlanAnalytics | null>(
+    `/api/teacher/analytics/student/${studentUserId}?planId=${planId}`,
+    { headers },
+  )
 }

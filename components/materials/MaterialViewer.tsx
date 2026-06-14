@@ -10,6 +10,7 @@ import ReactMarkdown from 'react-markdown'
 interface MaterialViewerProps {
   material: TeacherMaterial
   canDownload?: boolean
+  resolveDownloadUrl?: () => Promise<string>
 }
 
 function PdfViewer({ url }: { url: string }) {
@@ -78,9 +79,28 @@ function ExternalLinkCard({ material }: { material: TeacherMaterial }) {
   )
 }
 
-export function MaterialViewer({ material, canDownload = true }: MaterialViewerProps) {
+export function MaterialViewer({
+  material,
+  canDownload = true,
+  resolveDownloadUrl,
+}: MaterialViewerProps) {
   const [page, setPage] = useState(1)
-  const showDownload = material.downloadable && canDownload && (material.url || material.contentUrl)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const showDownload =
+    material.downloadable && canDownload && (resolveDownloadUrl || material.url || material.contentUrl)
+
+  async function handleDownload() {
+    if (!showDownload) return
+    setIsDownloading(true)
+    try {
+      const url = resolveDownloadUrl
+        ? await resolveDownloadUrl()
+        : (material.url ?? material.contentUrl)
+      if (url) window.open(url, '_blank', 'noopener,noreferrer')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
   return (
     <div className="space-y-3">
@@ -92,11 +112,14 @@ export function MaterialViewer({ material, canDownload = true }: MaterialViewerP
           </p>
         </div>
         {showDownload && (
-          <Button asChild size="sm" variant="outline">
-            <a href={material.url ?? material.contentUrl} download target="_blank" rel="noopener noreferrer">
-              <Download className="mr-2 h-4 w-4" />
-              Download
-            </a>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={isDownloading}
+            onClick={() => void handleDownload()}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            {isDownloading ? 'Preparing...' : 'Download'}
           </Button>
         )}
       </div>
