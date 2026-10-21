@@ -1,0 +1,58 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { auth } from '@/lib/auth/config'
+import { platformApiBaseUrl } from '@/lib/api/platform-client'
+import { FAMILY_CHILD_COOKIE } from '@/lib/auth/family-cookies'
+
+export const runtime = 'nodejs'
+type Context = { params: Promise<{ path?: string[] }> }
+const resource = '[a-zA-Z0-9_-]{1,128}'
+/** Only these learner reads and writes exist. Everything else is a 404 before any credential is read. */
+/** B09 practice routes: the session item index is digits only. Nothing else under `practice/` exists. */
+const itemIndex = '[0-9]{1,3}'
+const practiceReads = `practice/(?:hub|sets/${resource}|sessions|sessions/${resource}|sessions/${resource}/items/${itemIndex}|sessions/${resource}/summary|sessions/${resource}/answer-sheet)`
+const practiceWrites = `practice/(?:sets|sets/${resource}/(?:retry|cancel)|sessions|sessions/${resource}/items/${itemIndex}/(?:answer|hint|skip)|sessions/${resource}/complete|attempts/${resource}/regrade)`
+const reads = new RegExp(`^(?:home|overview|link-status|plans/${resource}|lessons/${resource}|${practiceReads})$`)
+const writes = new RegExp(`^(?:enrollments/join|lessons|lessons/${resource}/(?:check|complete|retry|cancel|notes)|${practiceWrites})$`)
+/** B08 lesson routes: progress is the only PUT and a note is the only DELETE. */
+const puts = new RegExp(`^lessons/${resource}/progress$`)
+const deletes = new RegExp(`^lessons/${resource}/notes/${resource}$`)
+const allowed: Record<string, RegExp | undefined> = { GET: reads, POST: writes, PUT: puts, DELETE: deletes }
+const overviewQuery = new Set(['q', 'subjectId', 'kind', 'status', 'cursor', 'limit'])
+/** The only query strings forwarded: overview filters, the hub filters and the session-history cursor. */
+const queryKeys: Record<string, Set<string> | undefined> = {
+  overview: overviewQuery,
+  'practice/hub': new Set(['subjectId', 'planId']),
+  'practice/sessions': new Set(['cursor', 'limit']),
+}
+
+/** Transport only. The product API rechecks membership, learner, plan ownership, age and policy. */
+async function forward(request: NextRequest, context: Context) {
+  const path = ((await context.params).path ?? []).join('/')
+  if (!allowed[request.method]?.test(path)) return NextResponse.json({ message: 'Unknown learning operation.' }, { status: 404, headers: { 'Cache-Control': 'no-store' } })
+  if (request.method !== 'GET' && request.headers.get('origin') !== request.nextUrl.origin) return NextResponse.json({ message: 'A same-origin learning request is required.' }, { status: 403, headers: { 'Cache-Control': 'no-store' } })
+  const jar = await cookies()
+  // Child presence takes precedence: an empty or revoked child selection never falls back to an adult session.
+  const child = jar.get(FAMILY_CHILD_COOKIE)
+  const session = child === undefined ? await auth() : null
+  const token = child === undefined ? session?.accessToken : child.value
+  if (!token || (child === undefined && !session?.user?.id)) return NextResponse.json({ message: 'Authentication required.' }, { status: 401, headers: { 'Cache-Control': 'no-store' } })
+  const membership = child === undefined ? jar.get('colearner-school-membership')?.value : undefined
+  if (membership && !/^[a-f0-9-]{36}$/i.test(membership)) return NextResponse.json({ message: 'Choose a current school membership again.' }, { status: 403, headers: { 'Cache-Control': 'no-store' } })
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+  if (request.method === 'POST' || request.method === 'PUT') headers['Content-Type'] = request.headers.get('content-type') ?? 'application/json'
+  if (membership) headers['X-School-Membership-Id'] = membership
+  const query = new URLSearchParams()
+  const keys = request.method === 'GET' ? queryKeys[path] : undefined
+  if (keys) for (const [key, value] of request.nextUrl.searchParams) if (keys.has(key)) query.append(key, value)
+  try {
+    const init: RequestInit = { method: request.method, headers, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(30000) }
+    if (request.method === 'POST' || request.method === 'PUT') init.body = await request.text()
+    const response = await fetch(`${platformApiBaseUrl()}/learn/${path}${query.size > 0 ? `?${query}` : ''}`, init)
+    return new Response(response.body, { status: response.status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } })
+  } catch { return NextResponse.json({ message: 'Learning services are unavailable. Please try again.' }, { status: 503, headers: { 'Cache-Control': 'no-store' } }) }
+}
+export const GET = forward
+export const POST = forward
+export const PUT = forward
+export const DELETE = forward
