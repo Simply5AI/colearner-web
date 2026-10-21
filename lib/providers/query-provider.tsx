@@ -5,10 +5,13 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { useState } from 'react'
 import { signOut } from 'next-auth/react'
 import { ApiError } from '@/lib/api/client'
+import { FamilyError } from '@/lib/api/family'
 
 let signingOut = false
 
 function handleGlobal401(error: unknown) {
+  // Missing device/child credentials and wrong pictures do not expire an adult account.
+  if (error instanceof FamilyError && error.credentialScope === 'family-access') return
   if (error instanceof ApiError && error.status === 401 && !signingOut) {
     signingOut = true
     signOut({ redirectTo: '/login' })

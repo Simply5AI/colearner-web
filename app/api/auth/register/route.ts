@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { platformApiBaseUrl } from '@/lib/api/platform-client'
 
 const inFlightRegisterRequests = new Set<string>()
 
 export async function POST(req: NextRequest) {
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
   let dedupeKey: string | null = null
 
   try {
@@ -19,11 +18,6 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const safeBody = {
-      ...body,
-      password: body?.password ? '[REDACTED]' : undefined,
-      confirmPassword: body?.confirmPassword ? '[REDACTED]' : undefined,
-    }
 
     const forwardedFor = req.headers.get('x-forwarded-for') || 'unknown'
     const clientIp = forwardedFor.split(',')[0]?.trim() || 'unknown'
@@ -40,7 +34,7 @@ export async function POST(req: NextRequest) {
     }
     inFlightRegisterRequests.add(dedupeKey)
 
-    const url = `${API_URL}/api/auth/register`
+    const url = `${platformApiBaseUrl()}/auth/register`
 
     // Prevent proxy recursion when API URL points back to this same Next.js app.
     const target = new URL(url)
@@ -59,7 +53,6 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    console.log('[proxy] POST →', url, 'body:', JSON.stringify(safeBody))
 
     const res = await fetch(url, {
       method: 'POST',
@@ -73,16 +66,14 @@ export async function POST(req: NextRequest) {
     })
 
     const text = await res.text()
-    console.log('[proxy] response:', res.status, text)
 
     const data = text
       ? JSON.parse(text)
       : { message: res.statusText }
     return NextResponse.json(data, { status: res.status })
-  } catch (error) {
-    console.error('[proxy] failed:', error)
+  } catch {
     return NextResponse.json(
-      { message: `Proxy error: ${error}` },
+      { message: 'Account registration is unavailable. Please try again.' },
       { status: 502 },
     )
   } finally {

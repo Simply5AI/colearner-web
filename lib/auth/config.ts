@@ -3,6 +3,10 @@ import Google from 'next-auth/providers/google'
 import Credentials from 'next-auth/providers/credentials'
 import type { NextAuthConfig } from 'next-auth'
 import { loginUser } from '@/lib/api/auth'
+import { platformApiBaseUrl, platformClient } from '@/lib/api/platform-client'
+import { acceptSessionPair, clearSession, refreshSession } from './session-tokens'
+import { getGoogleProviderConfiguration } from './google-provider.server'
+import {googleIdentityOnly} from './google-identity'
 
 declare module 'next-auth' {
   interface Session {
@@ -21,6 +25,8 @@ declare module 'next-auth' {
   interface User {
     accessToken?: string
     refreshToken?: string
+    expiresIn?: number
+    refreshRequestId?: string
   }
 }
 
@@ -29,6 +35,8 @@ interface ExtendedJWT {
   [key: string]: unknown
   accessToken?: string
   refreshToken?: string
+  refreshRequestId?: string
+  backendUserId?: string
   accessTokenExpires?: number
   onboardingCompleted?: boolean
   systemRole?: string
@@ -37,37 +45,13 @@ interface ExtendedJWT {
 }
 
 async function refreshAccessToken(t: ExtendedJWT): Promise<ExtendedJWT> {
-  try {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL
-    const res = await fetch(`${API_URL}/api/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: t.refreshToken }),
-    })
-
-    if (!res.ok) {
-      return { ...t, error: 'RefreshTokenExpired' }
-    }
-
-    const json = await res.json()
-    const tokens = json.data ?? json
-
-    return {
-      ...t,
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken ?? t.refreshToken,
-      // 14 min — refresh before the 15 min server-side expiry
-      accessTokenExpires: Date.now() + 14 * 60 * 1000,
-      error: undefined,
-    }
-  } catch {
-    return { ...t, error: 'RefreshTokenExpired' }
-  }
+  return refreshSession(t)
 }
 
+const googleProvider = getGoogleProviderConfiguration()
 const authConfig: NextAuthConfig = {
   providers: [
-    Google,
+    ...(googleProvider ? [Google({...googleProvider,authorization:{params:{scope:'openid email'}},profile:googleIdentityOnly})] : []),
     Credentials({
       name: 'credentials',
       credentials: {
@@ -85,8 +69,8 @@ const authConfig: NextAuthConfig = {
             rememberMe: credentials.rememberMe === 'true',
           })
 
-          if (!tokens.accessToken) {
-            console.error('[auth] loginUser returned no accessToken:', JSON.stringify(tokens))
+          if (!tokens.accessToken || !tokens.refreshToken || !Number.isFinite(tokens.expiresIn) || tokens.expiresIn <= 0) {
+            console.error('[auth] Login did not establish a session')
             return null
           }
 
@@ -96,9 +80,11 @@ const authConfig: NextAuthConfig = {
             name: '',
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
+            expiresIn: tokens.expiresIn,
+            refreshRequestId: tokens.refreshRequestId,
           }
-        } catch (err) {
-          console.error('[auth] authorize failed:', err)
+        } catch {
+          console.error('[auth] Sign-in failed')
           return null
         }
       },
@@ -106,7 +92,12 @@ const authConfig: NextAuthConfig = {
   ],
   callbacks: {
     async jwt({ token, user, account, trigger, session }) {
-      const t = token as ExtendedJWT
+      let t = token as ExtendedJWT
+
+      // Pre-foundation cookies carry unscoped credentials and unverified role
+      // metadata. Invalidate immediately instead of showing a logged-in shell
+      // until their old access-token timestamp happens to expire.
+      if (!user && !account && (!t.backendUserId || !t.refreshRequestId || !Number.isFinite(t.accessTokenExpires))) return clearSession(t)
 
       if (trigger === 'update' && session) {
         const updateSession = session as {
@@ -114,55 +105,41 @@ const authConfig: NextAuthConfig = {
           accessToken?: string
           refreshToken?: string
         }
-        if (updateSession.onboardingCompleted) {
-          t.onboardingCompleted = true
-        }
-        if (updateSession.accessToken) {
-          t.accessToken = updateSession.accessToken
-          t.accessTokenExpires = Date.now() + 14 * 60 * 1000
-          t.roles = undefined
-          t.systemRole = undefined
-        }
-        if (updateSession.refreshToken) {
-          t.refreshToken = updateSession.refreshToken
+        // Client session updates are untrusted. Bootstrap may supply a new org
+        // session, but both credentials must be validated by the backend and
+        // remain bound to the current backend user.
+        if (updateSession.accessToken || updateSession.refreshToken) {
+          if (!t.backendUserId || !updateSession.accessToken || !updateSession.refreshToken) return clearSession(t)
+          try {
+            t = await acceptSessionPair(t, { accessToken: updateSession.accessToken, refreshToken: updateSession.refreshToken })
+            t.roles = undefined
+            t.systemRole = undefined
+          } catch { return clearSession(t) }
         }
       }
 
       if (account?.provider === 'google' && user) {
-        // Exchange Google profile with backend to get backend JWTs
+        // Discard Auth.js provider defaults before consulting the verified app profile.
+        delete t.name
+        delete t.picture
+        // Auth.js verifies OIDC state/nonce. Nest independently verifies Google's
+        // ID-token signature and identity claims before issuing product tokens.
         try {
-          const API_URL = process.env.NEXT_PUBLIC_API_URL
-          const res = await fetch(`${API_URL}/api/auth/google/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: user.email,
-              name: user.name,
-              image: user.image,
-              googleId: account.providerAccountId,
-            }),
-          })
-          if (res.ok) {
-            const json = await res.json()
-            const tokens = json.data ?? json
-            t.accessToken = tokens.accessToken
-            t.refreshToken = tokens.refreshToken
-            t.accessTokenExpires = Date.now() + 14 * 60 * 1000
-          } else {
-            console.error('[auth:jwt] Google token exchange failed:', res.status)
-            t.accessToken = undefined
-          }
-        } catch (err) {
-          console.error('[auth:jwt] Google token exchange error:', err)
-          t.accessToken = undefined
+          if (!account.id_token) throw new Error('Missing provider identity evidence')
+          t = await acceptSessionPair(t, await platformClient().exchangeGoogle({ idToken: account.id_token }))
+        } catch {
+          console.error('[auth] Google sign-in failed')
+          return clearSession(t)
         }
       }
       if (user) {
-        if (user.accessToken) {
-          t.accessToken = user.accessToken
-          t.accessTokenExpires = Date.now() + 14 * 60 * 1000
+        if (user.accessToken && user.refreshToken) {
+          try { t = await acceptSessionPair(t, {
+            accessToken: user.accessToken, refreshToken: user.refreshToken,
+            ...(typeof user.expiresIn === 'number' && Number.isFinite(user.expiresIn) && user.expiresIn > 0 ? { expiresIn: user.expiresIn, refreshRequestId: user.refreshRequestId } : {}),
+          }) }
+          catch { return clearSession(t) }
         }
-        if (user.refreshToken) t.refreshToken = user.refreshToken
       }
 
       // Refresh the access token if it has expired (or if accessTokenExpires
@@ -178,25 +155,22 @@ const authConfig: NextAuthConfig = {
           // Refresh failed — clear tokens so middleware sees isLoggedIn=false
           return { ...refreshed, accessToken: undefined, refreshToken: undefined }
         }
-        return refreshed
+        t = refreshed
       }
 
       // Refresh profile claims on sign-in, token refresh, or explicit session update.
       if (t.accessToken && (user || trigger === 'update' || !t.systemRole || !t.roles)) {
         try {
-          const API_URL = process.env.NEXT_PUBLIC_API_URL
-          const res = await fetch(`${API_URL}/api/users/me`, {
+          const res = await fetch(`${platformApiBaseUrl()}/users/me`, {
             headers: { Authorization: `Bearer ${t.accessToken}` },
             cache: 'no-store',
+            signal: AbortSignal.timeout(10000),
           })
           if (res.ok) {
             const json = await res.json()
             // Backend wraps responses in { statusCode, data, timestamp } envelope
             const profile = json.data ?? json
-            console.log('[auth:jwt] /api/users/me raw json keys:', Object.keys(json))
-            console.log('[auth:jwt] profile keys:', Object.keys(profile))
-            console.log('[auth:jwt] profile.goals:', profile.goals)
-            console.log('[auth:jwt] profile.onboardingCompletedAt:', profile.onboardingCompletedAt)
+            if (profile.id !== t.backendUserId) return clearSession(t)
             t.onboardingCompleted = !!(
               profile.onboardingCompleted ||
               profile.onboardingCompletedAt ||
@@ -211,15 +185,11 @@ const authConfig: NextAuthConfig = {
             if (profile.displayName || profile.name) {
               t.name = profile.displayName || profile.name
             }
-            if (profile.systemRole) {
-              t.systemRole = profile.systemRole
-            }
-            if (Array.isArray(profile.roles)) {
-              t.roles = profile.roles
-            }
-            console.log('[auth:jwt] resolved onboardingCompleted:', t.onboardingCompleted)
+            t.picture=typeof profile.avatarUrl==='string'?profile.avatarUrl:undefined
+            t.systemRole = typeof profile.systemRole === 'string' ? profile.systemRole : undefined
+            t.roles = Array.isArray(profile.roles) ? profile.roles.filter((role: unknown) => typeof role === 'string') : []
           } else {
-            console.log('[auth:jwt] /api/users/me returned:', res.status)
+            if (res.status === 401 || res.status === 403) return clearSession(t)
             // New user — profile may not exist yet
             t.onboardingCompleted = false
           }
@@ -237,11 +207,14 @@ const authConfig: NextAuthConfig = {
       // so the client knows to redirect to login
       if (t.error === 'RefreshTokenExpired') {
         session.accessToken = undefined
+        session.user = { id: '', email: '', name: '', emailVerified: null, onboardingCompleted: false, roles: [] }
         return session
       }
 
       session.accessToken = t.accessToken
       if (session.user) {
+        session.user.image=typeof t.picture==='string'?t.picture:undefined
+        session.user.id = t.backendUserId ?? ''
         session.user.onboardingCompleted = t.onboardingCompleted ?? false
         if (t.name) {
           session.user.name = t.name as string
@@ -267,6 +240,10 @@ const authConfig: NextAuthConfig = {
         ?.systemRole === 'SUPER_ADMIN'
       const isTeacher = (auth as { user?: { roles?: string[] } })?.user?.roles?.includes('TEACHER')
       const isOnboardingPage = nextUrl.pathname.startsWith('/onboarding')
+      const isSchoolPage = nextUrl.pathname === '/family' || nextUrl.pathname === '/workspaces' || nextUrl.pathname === '/invite' || nextUrl.pathname.startsWith('/org/')
+      // B07 Meet Co admits an opaque child cookie that has no Auth.js session; its
+      // own server layout enforces the child/account gate, so only the login redirect is skipped.
+      const isMeetCoPage = nextUrl.pathname === '/onboarding/meet-co'
       const isTeacherPage = nextUrl.pathname.startsWith('/teacher')
       const isTeacherPublicPath = nextUrl.pathname === '/teacher/signup'
       const isProtectedApp =
@@ -283,7 +260,8 @@ const authConfig: NextAuthConfig = {
       // Require auth for onboarding, teacher workspace, and app routes
       if (
         (isProtectedApp ||
-          isOnboardingPage ||
+          isSchoolPage ||
+          (isOnboardingPage && !isMeetCoPage) ||
           (isTeacherPage && !isTeacherPublicPath) ||
           (isAdminPage && !isAdminLoginPage)) &&
         !isLoggedIn
@@ -295,22 +273,18 @@ const authConfig: NextAuthConfig = {
 
       // Redirect from root based on auth/onboarding status
       if (nextUrl.pathname === '/') {
-        if (!isLoggedIn) return Response.redirect(new URL('/login', nextUrl))
-        if (isSuperAdmin) return Response.redirect(new URL('/admin/login', nextUrl))
-        if (isTeacher) return Response.redirect(new URL('/teacher/dashboard', nextUrl))
-        const target = isOnboarded ? '/dashboard' : '/onboarding/profile'
-        return Response.redirect(new URL(target, nextUrl))
+        // The server page performs live school membership lookup before falling
+        // back to legacy personal routes. Middleware still persists refreshes.
+        return true
       }
 
       if ((isProtectedApp || isOnboardingPage) && isLoggedIn && isSuperAdmin) {
         return Response.redirect(new URL('/admin/login', nextUrl))
       }
 
-      if (isTeacherPublicPath && isLoggedIn) {
-        return Response.redirect(
-          new URL(isTeacher ? '/teacher/dashboard' : '/dashboard', nextUrl),
-        )
-      }
+      // This route now explains bound school entry; an authenticated personal
+      // account must not be redirected into an unrelated learning workspace.
+      if (isTeacherPublicPath) return true
 
       if (isTeacherPage && isLoggedIn && !isTeacher && !isTeacherPublicPath) {
         return Response.redirect(new URL('/dashboard', nextUrl))
@@ -338,6 +312,22 @@ const authConfig: NextAuthConfig = {
   pages: {
     signIn: '/login',
     error: '/login',
+  },
+  events: {
+    async signOut(message) {
+      // Auth.js sign-out revokes backend sessions as well as its web cookie.
+      if ('token' in message && message.token?.accessToken) {
+        try {
+          let token = message.token as ExtendedJWT
+          if (token.accessTokenExpires && Date.now() >= token.accessTokenExpires) token = await refreshAccessToken(token)
+          if (!token.accessToken) throw new Error('No active backend session')
+          const response = await fetch(`${platformApiBaseUrl()}/auth/logout`, {
+            method: 'POST', headers: { Authorization: `Bearer ${token.accessToken}` }, signal: AbortSignal.timeout(10000),
+          })
+          if (!response.ok) throw new Error('Backend session revocation failed')
+        } catch { console.error('[auth] Backend sign-out could not be completed') }
+      }
+    },
   },
 }
 

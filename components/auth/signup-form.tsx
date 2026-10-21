@@ -3,292 +3,66 @@
 import { useRef, useState } from 'react'
 import { useForm, useWatch, Controller } from 'react-hook-form'
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
-import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { getSession, signIn } from 'next-auth/react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { isSafeCallbackUrl } from '@/lib/auth/post-login'
 import Link from 'next/link'
-import { User, Mail, Lock, Eye, EyeOff, Check } from 'lucide-react'
-import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
-
+import { RecaptchaUnavailableError, useOptionalRecaptcha } from './use-optional-recaptcha'
 import { signupSchema, type SignupInput } from '@/lib/validators/auth'
 import { getPasswordStrength } from '@/lib/utils/password-strength'
 import { registerUser } from '@/lib/api/auth'
-import { ApiError } from '@/lib/api/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
-import { SocialButtons } from '@/components/auth/social-buttons'
-import { AuthDivider } from '@/components/auth/auth-divider'
-import { PasswordStrengthMeter } from '@/components/auth/password-strength-meter'
-import { cn } from '@/lib/utils'
+import { SocialButtons } from './social-buttons'
+import { AuthDivider } from './auth-divider'
+import { useClientReady } from './use-client-ready'
+import { PasswordField } from './password-field'
+import { PasswordStrengthMeter } from './password-strength-meter'
 
-export function SignupForm() {
+export function SignupForm({ googleEnabled = false }: { googleEnabled?: boolean }) {
+  const clientReady = useClientReady()
   const router = useRouter()
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const callbackUrl = useSearchParams().get('callbackUrl')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const isSubmittingRef = useRef(false)
-  const { executeRecaptcha } = useGoogleReCaptcha()
-
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors, dirtyFields, touchedFields, isSubmitting },
-  } = useForm<SignupInput>({
-    resolver: standardSchemaResolver(signupSchema),
-    mode: 'onBlur',
-    defaultValues: {
-      acceptTerms: false as unknown as true,
-    },
-  })
-
+  const submitting = useRef(false)
+  const alertRef = useRef<HTMLDivElement>(null)
+  const getRecaptchaToken = useOptionalRecaptcha()
+  const { register, handleSubmit, control, formState: { errors } } = useForm<SignupInput>({ resolver: standardSchemaResolver(signupSchema), mode: 'onBlur', defaultValues: { acceptTerms: false as unknown as true } })
   const passwordValue = useWatch({ control, name: 'password', defaultValue: '' })
-  const passwordStrength = getPasswordStrength(passwordValue)
-
-  const isFieldValid = (field: keyof SignupInput) =>
-    touchedFields[field] && dirtyFields[field] && !errors[field]
-
-  const onSubmit = async (data: SignupInput) => {
-    // Prevent duplicate submissions before state updates disable the form.
-    if (isSubmittingRef.current) return
-    isSubmittingRef.current = true
-
+  const acceptedTerms = useWatch({ control, name: 'acceptTerms' })
+  async function onSubmit(data: SignupInput) {
+    if (submitting.current) return
+    submitting.current = true
     setIsLoading(true)
     setError(null)
-
     try {
-      let recaptchaToken: string | undefined = undefined
-      if (executeRecaptcha) {
-        recaptchaToken = await executeRecaptcha('register')
-      }
-
-      await registerUser({
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        acceptedTerms: true,
-        recaptchaToken,
-      })
-
-      // Auto-login after successful registration
-      const result = await signIn('credentials', {
-        email: data.email,
-        password: data.password,
-        redirect: false,
-      })
-
-      if (result?.error) {
-        // Registration succeeded but auto-login failed
-        router.push('/login?registered=true')
-      } else {
-        router.push('/onboarding/profile')
-      }
-    } catch (err) {
-      if (err instanceof ApiError) {
-        if (err.status === 400) {
-          setError(err.message || 'Email is already registered.')
-        } else if (err.status === 429) {
-          setError('Too many requests. Please try again later.')
-        } else {
-          setError(err.message)
-        }
-      } else {
-        setError('Something went wrong. Please try again.')
-      }
-    } finally {
-      setIsLoading(false)
-      isSubmittingRef.current = false
-    }
+      const recaptchaToken = await getRecaptchaToken('register')
+      await registerUser({ email: data.email, password: data.password, acceptedTerms: true, recaptchaToken })
+      const result = await signIn('credentials', { email: data.email, password: data.password, redirect: false })
+      const session = result && !result.error ? await getSession() : null
+      router.push(session?.accessToken && session.user?.id ? isSafeCallbackUrl(callbackUrl) ? callbackUrl : '/age' : `/login?registered=true&callbackUrl=${encodeURIComponent(isSafeCallbackUrl(callbackUrl) ? callbackUrl : '/age')}`)
+    } catch (error) { setError(error instanceof RecaptchaUnavailableError ? error.message : 'We could not create your account. Check your details or try again later. If you already registered, log in or reset your password.'); }
+    finally { setIsLoading(false); submitting.current = false; requestAnimationFrame(() => alertRef.current?.focus()) }
   }
-
   return (
     <div className="space-y-6">
-      <SocialButtons isLoading={isLoading} />
-
-      <AuthDivider />
-
-      {error && (
-        <div className="flex items-center gap-3 p-3.5 bg-destructive/5 border border-destructive/15 rounded-lg">
-          <span className="text-lg shrink-0">&#9888;&#65039;</span>
-          <div>
-            <p className="text-[13px] font-bold text-destructive">Registration failed</p>
-            <p className="text-[11px] text-muted-foreground">{error}</p>
-          </div>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {/* Full Name */}
-        <div className="space-y-1.5">
-          <Label htmlFor="name" className="text-xs font-semibold">
-            Full Name
-          </Label>
-          <div className="relative">
-            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-            <Input
-              {...register('name')}
-              id="name"
-              placeholder="Enter your full name"
-              className={cn(
-                'pl-11 h-11',
-                isFieldValid('name') && 'border-success focus-visible:border-success'
-              )}
-              aria-invalid={!!errors.name}
-              disabled={isLoading}
-            />
-            {isFieldValid('name') && (
-              <Check className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-success" />
-            )}
-          </div>
-          {errors.name && (
-            <p className="text-[11px] text-destructive">{errors.name.message}</p>
-          )}
-        </div>
-
-        {/* Email */}
-        <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-xs font-semibold">
-            Email
-          </Label>
-          <div className="relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-            <Input
-              {...register('email')}
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              className={cn(
-                'pl-11 h-11',
-                isFieldValid('email') && 'border-success focus-visible:border-success'
-              )}
-              aria-invalid={!!errors.email}
-              disabled={isLoading}
-            />
-            {isFieldValid('email') && (
-              <Check className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-success" />
-            )}
-          </div>
-          {errors.email && (
-            <p className="text-[11px] text-destructive">{errors.email.message}</p>
-          )}
-        </div>
-
-        {/* Password */}
-        <div className="space-y-1.5">
-          <Label htmlFor="password" className="text-xs font-semibold">
-            Password
-          </Label>
-          <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-            <Input
-              {...register('password')}
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Min. 8 characters"
-              className={cn(
-                'pl-11 pr-11 h-11',
-                isFieldValid('password') && 'border-success focus-visible:border-success'
-              )}
-              aria-invalid={!!errors.password}
-              disabled={isLoading}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-              tabIndex={-1}
-            >
-              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            </button>
-          </div>
-          <PasswordStrengthMeter strength={passwordStrength} />
-          {errors.password && (
-            <p className="text-[11px] text-destructive">{errors.password.message}</p>
-          )}
-        </div>
-
-        {/* Confirm Password */}
-        <div className="space-y-1.5">
-          <Label htmlFor="confirmPassword" className="text-xs font-semibold">
-            Confirm Password
-          </Label>
-          <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-            <Input
-              {...register('confirmPassword')}
-              id="confirmPassword"
-              type={showConfirmPassword ? 'text' : 'password'}
-              placeholder="Re-enter your password"
-              className={cn(
-                'pl-11 pr-11 h-11',
-                isFieldValid('confirmPassword') && 'border-success focus-visible:border-success'
-              )}
-              aria-invalid={!!errors.confirmPassword}
-              disabled={isLoading}
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-              tabIndex={-1}
-            >
-              {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            </button>
-          </div>
-          {errors.confirmPassword && (
-            <p className="text-[11px] text-destructive">{errors.confirmPassword.message}</p>
-          )}
-        </div>
-
-        {/* Terms */}
-        <div className="flex items-start gap-2.5">
-          <Controller
-            name="acceptTerms"
-            control={control}
-            render={({ field }) => (
-              <Checkbox
-                checked={field.value === true}
-                onCheckedChange={(checked) => field.onChange(checked === true ? true : false)}
-                className="mt-0.5"
-                aria-invalid={!!errors.acceptTerms}
-              />
-            )}
-          />
-          <span className="text-xs text-muted-foreground leading-relaxed">
-            I agree to the{' '}
-            <Link href="/terms" className="font-semibold text-brand-orange hover:underline">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link href="/privacy" className="font-semibold text-brand-orange hover:underline">
-              Privacy Policy
-            </Link>
-          </span>
-        </div>
-        {errors.acceptTerms && (
-          <p className="text-[11px] text-destructive -mt-3">{errors.acceptTerms.message}</p>
-        )}
-
-        {/* Submit */}
-        <Button
-          type="submit"
-          className="w-full h-12 text-sm font-bold bg-brand-orange hover:bg-brand-orange-dark text-white shadow-[0_2px_8px_rgba(196,98,26,0.2)]"
-          disabled={isLoading || isSubmitting}
-        >
-          {isLoading ? 'Creating account...' : 'Create Account'}
-        </Button>
+      <p className="rounded-2xl bg-muted p-4 text-sm text-muted-foreground">Create a minimal account with email and password. Your birthday is checked next. No child name or school details are collected until verified guardian consent. A school invitation is required to link a learner profile.</p>
+      {error && <div ref={alertRef} role="alert" tabIndex={-1} className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm focus:outline-2 focus:outline-ring">{error}</div>}
+      <form method="post" onSubmit={handleSubmit(onSubmit)} className="space-y-5" aria-busy={isLoading} noValidate>
+        {googleEnabled && <><SocialButtons isLoading={!clientReady || isLoading || !acceptedTerms} enabled callbackUrl={isSafeCallbackUrl(callbackUrl) ? callbackUrl : "/age"} /><p className="text-sm text-muted-foreground">Read and accept the notices below before continuing with Google.</p><AuthDivider /></>}
+        <div className="space-y-2"><Label htmlFor="email">Email</Label><Input {...register('email')} id="email" type="email" autoComplete="email" autoCapitalize="none" className="h-12" disabled={!clientReady || isLoading} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} />{errors.email && <p id="email-error" className="text-sm text-destructive">{errors.email.message}</p>}</div>
+        <PasswordField {...register('password')} id="password" label="Password" autoComplete="new-password" disabled={!clientReady || isLoading} error={errors.password?.message} aria-describedby="password-requirements" />
+        <p id="password-requirements" className="text-sm text-muted-foreground">At least 8 characters, with uppercase and lowercase letters and a number.</p>
+        <PasswordStrengthMeter strength={getPasswordStrength(passwordValue)} />
+        <PasswordField {...register('confirmPassword')} id="confirmPassword" label="Confirm password" autoComplete="new-password" disabled={!clientReady || isLoading} error={errors.confirmPassword?.message} />
+        <div className="flex items-start gap-3"><Controller name="acceptTerms" control={control} render={({ field }) => <input id="acceptTerms" ref={field.ref} type="checkbox" checked={field.value === true} onChange={(event) => field.onChange(event.target.checked)} onBlur={field.onBlur} disabled={!clientReady || isLoading} aria-invalid={!!errors.acceptTerms} aria-describedby={errors.acceptTerms ? 'terms-error' : undefined} className="mt-1 size-5 shrink-0 accent-primary" />} /><label htmlFor="acceptTerms" className="text-sm leading-relaxed">I have read the current <Link href="/terms" className="font-semibold text-primary underline">terms notice</Link> and <Link href="/privacy" className="font-semibold text-primary underline">privacy notice</Link>. These notices remain under review.</label></div>
+        {errors.acceptTerms && <p id="terms-error" className="text-sm text-destructive">{errors.acceptTerms.message}</p>}
+        <Button type="submit" className="h-12 w-full text-base font-bold" disabled={!clientReady || isLoading}>{isLoading ? 'Creating account…' : error ? 'Try creating account again' : 'Create account'}</Button>
+        <p role="status" className="sr-only">{isLoading ? 'Creating your account. Please wait.' : ''}</p>
       </form>
-
-      <p className="text-center text-[13px] text-muted-foreground">
-        Already have an account?{' '}
-        <Link href="/login" className="font-bold text-brand-orange hover:underline">
-          Sign In
-        </Link>
-      </p>
+      <p className="text-center text-sm text-muted-foreground">Already have an account? <Link href="/login" className="font-semibold text-primary">Log in</Link></p>
     </div>
   )
 }

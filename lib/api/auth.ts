@@ -1,12 +1,10 @@
-import { apiClient, ApiError } from '@/lib/api/client'
+import { ApiError } from '@/lib/api/client'
+import { platformClient } from './platform-client'
+import type { AuthTokens } from '@colearner/api-client'
 
-interface AuthTokens {
-  accessToken: string
-  refreshToken: string
-}
 
 interface RegisterPayload {
-  name: string
+  name?: string
   email: string
   password: string
   acceptedTerms?: boolean
@@ -44,10 +42,7 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthTokens
  * so it uses apiClient which resolves NEXT_PUBLIC_API_URL server-side.
  */
 export async function loginUser(payload: LoginPayload): Promise<AuthTokens> {
-  return apiClient<AuthTokens>('/api/auth/login', {
-    method: 'POST',
-    body: payload,
-  })
+  return platformClient().login(payload)
 }
 
 /**

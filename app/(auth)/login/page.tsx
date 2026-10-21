@@ -1,39 +1,18 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
+import Link from 'next/link'
 import { LoginForm } from '@/components/auth/login-form'
+import { isGoogleProviderConfigured } from '@/lib/auth/google-provider.server'
+import { PublicSchoolEntry } from '@/components/school/public-school-entry'
 
-export const metadata: Metadata = {
-  title: 'Sign In | CoLearner',
-  description: 'Sign in to your CoLearner account',
-}
-
+export const metadata: Metadata = { title: 'Log in', description: 'Log in to your CoLearner account' }
 export default function LoginPage() {
+  const googleEnabled = isGoogleProviderConfigured()
   return (
-    <div className="space-y-8">
-      <div className="space-y-1">
-        <p className="text-xs font-semibold text-brand-orange">Welcome back!</p>
-        <h1 className="text-[28px] font-black tracking-tight leading-tight">
-          Sign in to your account
-        </h1>
-        <p className="text-[13px] text-muted-foreground">
-          Continue your learning journey
-        </p>
-      </div>
-      <Suspense fallback={<div className="text-sm text-muted-foreground">Loading sign in...</div>}>
-        <LoginForm />
-      </Suspense>
-      <p className="text-center text-xs text-muted-foreground">
-        CoLearner for teachers?{' '}
-        <a href="/teacher/signup" className="font-semibold text-brand-orange hover:underline">
-          Create a teacher account
-        </a>
-      </p>
-      <p className="text-center text-xs text-muted-foreground">
-        Platform admin?{' '}
-        <a href="/admin/login" className="font-semibold text-brand-orange hover:underline">
-          Sign in to the admin console
-        </a>
-      </p>
+    <div className="space-y-7">
+      <div className="space-y-3"><p className="text-sm font-semibold text-primary">Hello again.</p><h1 className="font-[family-name:var(--font-display)] text-3xl font-extrabold tracking-tight sm:text-4xl">Let’s keep learning.</h1><p className="text-muted-foreground">Log in with your existing CoLearner account.</p></div>
+      <Suspense fallback={<p role="status">Loading sign-in form…</p>}><LoginForm googleEnabled={googleEnabled} /></Suspense>
+      <div className="border-t pt-5 text-sm text-muted-foreground"><PublicSchoolEntry /><p className="mt-3">Platform administrator? <Link href="/admin/login" className="font-semibold text-primary">Open admin sign-in</Link></p></div>
     </div>
   )
 }

@@ -1,7 +1,15 @@
 import type { Session } from 'next-auth'
 
-function isSafeCallbackUrl(callbackUrl: string | null | undefined): callbackUrl is string {
-  return !!callbackUrl && callbackUrl.startsWith('/') && !callbackUrl.startsWith('//')
+export function isSafeCallbackUrl(callbackUrl: string | null | undefined): callbackUrl is string {
+  if (!callbackUrl || !callbackUrl.startsWith('/') || callbackUrl.startsWith('//')) return false
+  // WHATWG URL parsing treats backslashes as slashes and strips ASCII controls.
+  // Reject those before normalization so browser navigation cannot turn a path
+  // into a protocol-relative external URL.
+  if (/[\\\u0000-\u001f\u007f]/.test(callbackUrl)) return false
+  try {
+    const origin = 'https://colearner-callback.invalid'
+    return new URL(callbackUrl, origin).origin === origin
+  } catch { return false }
 }
 
 export function resolvePostLoginPath(
