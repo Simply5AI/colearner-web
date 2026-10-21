@@ -48,3 +48,7 @@ next-env.d.ts
 /output/
 /.cache/
 debug.log
+
+# environment files with real values must never be committed
+.env.staging
+.env.production
