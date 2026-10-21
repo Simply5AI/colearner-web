@@ -2,6 +2,8 @@ import type { NextConfig } from 'next'
 import { withSentryConfig } from '@sentry/nextjs'
 
 const nextConfig: NextConfig = {
+  // Keep concurrent local review artifacts separate from the normal dev server.
+  distDir: /^\.next-b\d{2}[a-z0-9-]*$/.test(process.env.COLEARNER_REVIEW_DIST_DIR ?? '') ? process.env.COLEARNER_REVIEW_DIST_DIR : '.next',
   reactStrictMode: true,
   images: {
     remotePatterns: [

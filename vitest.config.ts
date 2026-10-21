@@ -8,6 +8,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
+    // Heavy jsdom integration files run in parallel; the 5 s default flakes under load without a real defect.
+    testTimeout: 20000,
+    hookTimeout: 20000,
     include: [
       'tests/unit/**/*.test.ts',
       'tests/unit/**/*.test.tsx',

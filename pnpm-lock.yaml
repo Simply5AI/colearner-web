@@ -11,6 +11,9 @@ importers:
       '@base-ui/react':
         specifier: ^1.2.0
         version: 1.2.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@colearner/api-client':
+        specifier: file:vendor\colearner-api-client-0.4.0.tgz
+        version: file:vendor/colearner-api-client-0.4.0.tgz
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -198,10 +201,6 @@ importers:
       vitest:
         specifier: ^4.0.18
         version: 4.0.18(@opentelemetry/api@1.9.1)(@types/node@25.3.5)(jiti@2.6.1)(jsdom@28.1.0(@noble/hashes@1.8.0))(lightningcss@1.31.1)(msw@2.12.10(@types/node@25.3.5)(typescript@5.9.3))(terser@5.47.1)
-    optionalDependencies:
-      '@rollup/rollup-linux-x64-gnu':
-        specifier: ^4.59.0
-        version: 4.60.4
 
 packages:
 
@@ -412,6 +411,10 @@ packages:
   '@bramus/specificity@2.4.2':
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
     hasBin: true
+
+  '@colearner/api-client@file:vendor/colearner-api-client-0.4.0.tgz':
+    resolution: {integrity: sha512-tM62Z1D3W/fBxprCU/8yZi1deBEWqdQ6maRdNVFJK2oe3pNLSGMM1ALh4IZ22lVMIsPT+PY1Wq8GKAv5iI8isw==, tarball: file:vendor/colearner-api-client-0.4.0.tgz}
+    version: 0.4.0
 
   '@csstools/color-helpers@6.0.2':
     resolution: {integrity: sha512-LMGQLS9EuADloEFkcTBR3BwV/CGHV7zyDxVRtVDTwdI2Ca4it0CCVTT9wCkxSgokjE5Ho41hEPgb8OEUwoXr6Q==}
@@ -5914,6 +5917,8 @@ snapshots:
   '@bramus/specificity@2.4.2':
     dependencies:
       css-tree: 3.2.1
+
+  '@colearner/api-client@file:vendor/colearner-api-client-0.4.0.tgz': {}
 
   '@csstools/color-helpers@6.0.2': {}
 

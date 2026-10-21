@@ -16,6 +16,10 @@
 
 # production
 /build
+/.next-b03-review/
+/.next-b06-review/
+/.next-b09w1/
+/.next-b09w2/
 
 # misc
 .DS_Store
@@ -36,3 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# review evidence, logs and local scratch (regenerable)
+/output/
+/.cache/
+debug.log
