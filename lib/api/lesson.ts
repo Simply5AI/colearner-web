@@ -43,8 +43,11 @@ export interface LessonDetail {
   progress: LessonProgress
   notes: LessonNote[]
   readAloud: { mode: 'DEVICE'; note: string }
-  /** B10 owns Ask Co. B08 only shows the truthful state. */
-  askCo: { status: 'UNAVAILABLE' | 'AVAILABLE'; reason?: string }
+  /**
+   * B10: `AVAILABLE` carries the context Ask Co opens with; `UNAVAILABLE` carries the reason shown instead of a working control.
+   * A reason of `null` (sent with AVAILABLE) is the same as none.
+   */
+  askCo: { status: 'UNAVAILABLE' | 'AVAILABLE'; reason?: string | null; context?: { kind: 'LESSON'; lessonId: string } | null }
   completion: { practice: Actionable; home: Link }
   source: { materialLink: Link }
   generatedBy: { kind: 'AI'; packVersion: string; promptRelease: string }
@@ -127,7 +130,10 @@ const detailBase = z.object({
   progress: progressSchema,
   notes: z.array(note).max(200),
   readAloud: z.object({ mode: z.literal('DEVICE'), note: short }),
-  askCo: z.object({ status: z.enum(['UNAVAILABLE', 'AVAILABLE']), reason: short.optional() }),
+  askCo: z.object({
+    status: z.enum(['UNAVAILABLE', 'AVAILABLE']), reason: short.nullish(),
+    context: z.object({ kind: z.literal('LESSON'), lessonId: id }).nullish(),
+  }),
   completion: z.object({ practice: actionable, home: link }),
   source: z.object({ materialLink: link }),
   generatedBy: z.object({ kind: z.literal('AI'), packVersion: z.string().max(64), promptRelease: z.string().max(128) }),

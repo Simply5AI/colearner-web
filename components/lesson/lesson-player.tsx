@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import { ArrowLeft, ArrowRight, Check, Mic, X } from 'lucide-react'
+import { AskCoLauncher } from '@/components/co/co-launcher'
 import { Button } from '@/components/design-system'
 import { linkHref, type LearnBand } from '@/lib/api/learn'
 import { isAccessChangedError, lessonApi, lessonErrorMessage, notesAllowed, type LessonContentView, type LessonDetail } from '@/lib/api/lesson'
@@ -23,7 +24,7 @@ const isTyping = (target: EventTarget | null) => target instanceof HTMLElement &
 /** Radio groups and selects use the arrow keys themselves, so they keep them. */
 const ownsArrows = (target: EventTarget | null) => isTyping(target) || (target instanceof HTMLInputElement && target.type === 'radio') || target instanceof HTMLSelectElement
 
-/** Ask Co (B10) is not built. The control exists so the layout and the "/" shortcut are real, but it never acts and always says why. */
+/** Ask Co cannot answer here (the server said so). The control keeps the layout and the "/" shortcut real, but it never acts and always says why. */
 function AskCoControl({ band, reason, controlRef }: { band: LearnBand; reason: string; controlRef: React.RefObject<HTMLButtonElement | null> }) {
   const reasonId = useId()
   const kids = band === 'kids'
@@ -70,6 +71,7 @@ export function LessonPlayer({ detail, content, band, onExit, review = false, ti
   const [hints, setHints] = useState(0)
   const [announcement, setAnnouncement] = useState('')
   const [exitOpen, setExitOpen] = useState(false)
+  const [askOpen, setAskOpen] = useState(false)
   const [finishing, setFinishing] = useState(false)
   const [finishError, setFinishError] = useState<string | null>(null)
   const heading = useRef<HTMLHeadingElement | null>(null)
@@ -120,12 +122,14 @@ export function LessonPlayer({ detail, content, band, onExit, review = false, ti
   const requestExit = useCallback(() => { speech.onStop(); setExitOpen(true) }, [speech])
   const leave = async () => { await progress.settle(); onExit() }
 
-  // Keyboard: arrows move (logical direction in RTL), Escape asks to leave, "/" reaches Ask Co.
+  // Keyboard: arrows move (logical direction in RTL), Escape asks to leave, "/" reaches Ask Co (and opens it when it is available).
+  // While Ask Co or the leave question is open they own the keyboard.
+  const askAvailable = detail.askCo.status === 'AVAILABLE'
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || exitOpen) return
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || exitOpen || askOpen) return
       if (event.key === 'Escape') { event.preventDefault(); requestExit(); return }
-      if (event.key === '/') { if (isTyping(event.target)) return; event.preventDefault(); askCo.current?.focus(); return }
+      if (event.key === '/') { if (isTyping(event.target)) return; event.preventDefault(); askCo.current?.focus(); if (askAvailable) askCo.current?.click(); return }
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
       if (ownsArrows(event.target)) return
       const rtl = (document.documentElement.dir || getComputedStyle(document.documentElement).direction) === 'rtl'
@@ -135,11 +139,15 @@ export function LessonPlayer({ detail, content, band, onExit, review = false, ti
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [back, exitOpen, next, requestExit])
+  }, [askAvailable, askOpen, back, exitOpen, next, requestExit])
 
   const dots = Array.from({ length: STEP_COUNT }, (_, index) => index)
-  const askReason = detail.askCo.status === 'UNAVAILABLE' ? (detail.askCo.reason ?? 'Asking Co questions is not ready yet.') : 'Asking Co is not part of this lesson screen yet.'
-  const ask = <AskCoControl band={band} reason={askReason} controlRef={askCo} />
+  const askReason = detail.askCo.reason ?? 'Asking Co questions is not ready yet.'
+  // B10: only a server-confirmed AVAILABLE state opens the real panel, at the step the learner is on; anything else keeps the reason.
+  const ask = askAvailable
+    ? <AskCoLauncher band={band} controlRef={askCo} context={{ kind: 'LESSON', lessonId: detail.askCo.context?.lessonId ?? lessonId, stepIndex }} materialHref={materialHref}
+      onOpenChange={open => { if (open) speech.onStop(); setAskOpen(open) }} />
+    : <AskCoControl band={band} reason={askReason} controlRef={askCo} />
   const saveText = status === 'saving' ? 'Saving your place…' : status === 'saved' ? 'Your place is saved' : status === 'error' ? 'We could not save your place yet.' : ''
   const pose = coPose(step.kind, band, hints > 0)
 

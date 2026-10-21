@@ -27,6 +27,8 @@ export interface MockOptions {
   startError?: string
   /** Milliseconds every answer is delayed by. */
   delayMs?: number
+  /** B10: the lesson reports Ask Co as available (the panel itself is answered by the Ask Co mock). */
+  askCo?: boolean
 }
 export interface MockCall { method: string; path: string; body: unknown }
 export interface MockReply { status: number; body: unknown }
@@ -56,6 +58,7 @@ export function createLessonMock(options: MockOptions) {
     currentStep: options.step ?? (state === 'done' ? 4 : 0),
     completedSteps: options.completed ?? (state === 'done' ? [0, 1, 2, 3, 4] : []),
     completedAt: state === 'done' ? NOW : null,
+    askCo: options.askCo ? { status: 'AVAILABLE', reason: null, context: { kind: 'LESSON', lessonId: fixtureLessonId } } : undefined,
     notes: options.notes ? [{ id: 'note-1', stepIndex: 1, text: 'Remember: the bottom number stays the same.', createdAt: '2026-10-19T09:10:00.000Z' }] : [],
   })
   let revision = 0

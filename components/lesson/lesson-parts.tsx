@@ -10,10 +10,11 @@ import { coSizeFor, sourceChipText, termIndexFor, uniqueSources } from './lesson
 import { Spoken } from './lesson-speech'
 
 /** Visible, plain statement of where the lesson came from. The model is Co; the facts come from the learner's material. */
-export function AiOriginTag({ band, packVersion, promptRelease }: { band: LearnBand; packVersion?: string; promptRelease?: string }) {
+export function AiOriginTag({ band, packVersion, promptRelease, variant = 'lesson' }: { band: LearnBand; packVersion?: string; promptRelease?: string; /** B10: 'helper' labels an Ask Co reply ("Co is an AI helper") instead of a made lesson. */ variant?: 'lesson' | 'helper' }) {
+  const helper = variant === 'helper'
   return <p data-kind="ai-origin" className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-[length:var(--ds-small)] font-bold text-muted-foreground">
-    <span className="ds-pill text-[var(--brand-orange,#cf5d0b)]"><Sparkles size={16} aria-hidden="true" />{band === 'kids' ? 'Co made this' : 'Made by Co with AI'}</span>
-    <span>{band === 'kids' ? 'from your pages' : 'from your material'}</span>
+    <span className="ds-pill text-[var(--brand-orange,#cf5d0b)]"><Sparkles size={16} aria-hidden="true" />{helper ? 'Co is an AI helper' : band === 'kids' ? 'Co made this' : 'Made by Co with AI'}</span>
+    {!helper && <span>{band === 'kids' ? 'from your pages' : 'from your material'}</span>}
     {band !== 'kids' && packVersion && promptRelease && <span className="sr-only">AI pack {packVersion}, prompt release {promptRelease}</span>}
   </p>
 }

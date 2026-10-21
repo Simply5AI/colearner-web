@@ -7,6 +7,7 @@ import type { LearnBand } from '@/lib/api/learn'
 import { LessonScreen, LessonStartScreen } from '../lesson-screen'
 import { installFakeSpeech, removeSpeech } from './fake-speech'
 import { fixtureLessonId, fixtureMaterialId, lessonBands } from './lesson-fixtures'
+import { createCoMock } from '@/components/co/dev/co-mock'
 import { createLessonMock, type MockState } from './lesson-mock'
 
 const states: MockState[] = ['ready', 'generating', 'failed', 'failed-final', 'cancelled', 'access-changed', 'done', 'denied', 'unavailable', 'loading']
@@ -41,10 +42,16 @@ export function LessonBrowserHarness() {
       const server = createLessonMock({
         band, state, step: num(params.get('step')), notes: params.get('notes') === '1', startError: params.get('startError') ?? undefined,
         completed: params.get('completed')?.split(',').map(Number).filter(Number.isInteger), delayMs: num(params.get('delay')),
-        progressFailures: num(params.get('progressFailures')), conflictOnce: params.get('conflictOnce') === '1', generatingPolls: num(params.get('polls')),
+        progressFailures: num(params.get('progressFailures')), conflictOnce: params.get('conflictOnce') === '1', generatingPolls: num(params.get('polls')), askCo: params.get('askCo') === '1',
       })
       const original = window.fetch
-      window.fetch = (input, init) => (typeof input === 'string' ? input : input instanceof URL ? input.href : input.url).includes('/api/learn/lessons') ? server.fetch(input, init) : original(input, init)
+      // B10: with askCo=1 the Ask Co endpoints are answered by the Ask Co test double as well.
+      const co = params.get('askCo') === '1' ? createCoMock({ band }) : null
+      window.fetch = (input, init) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+        if (co && url.includes('/api/learn/co/')) return co.fetch(input, init)
+        return url.includes('/api/learn/lessons') ? server.fetch(input, init) : original(input, init)
+      }
       undo.push(() => { window.fetch = original })
     }
     // The fake engine is also reachable as window.__lessonSpeech so the browser review can prove nothing autoplays.

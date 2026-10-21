@@ -112,6 +112,8 @@ export interface DetailOverrides {
   revision?: number
   notes?: LessonDetail['notes']
   content?: LessonContentView | null
+  /** B10: the Ask Co state the lesson reports (default: unavailable, as in B08). */
+  askCo?: LessonDetail['askCo']
 }
 export function lessonDetailFixture(band: LearnBand, over: DetailOverrides = {}): LessonDetail {
   const status = over.status ?? 'READY'
@@ -125,7 +127,7 @@ export function lessonDetailFixture(band: LearnBand, over: DetailOverrides = {})
     progress: { currentStep: over.currentStep ?? 0, completedSteps: over.completedSteps ?? [], completedAt: over.completedAt ?? null, revision: over.revision ?? 0 },
     notes: over.notes ?? [],
     readAloud: { mode: 'DEVICE', note: 'Read aloud uses your device voice. Nothing is sent anywhere.' },
-    askCo: { status: 'UNAVAILABLE', reason: 'Asking Co questions is coming soon. For now, use the lesson and your material.' },
+    askCo: over.askCo ?? { status: 'UNAVAILABLE', reason: 'Asking Co questions is coming soon. For now, use the lesson and your material.' },
     completion: {
       practice: { link: { route: 'PRACTICE', id: fixtureMaterialId, scope: 'MATERIAL' }, enabled: false, disabledReason: 'Practice opens when practice ships.' },
       home: { route: 'HOME', id: null },
