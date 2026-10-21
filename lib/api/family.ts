@@ -3,8 +3,16 @@ import { platformApiBaseUrl } from './platform-client'
 
 import type { FamilyPreferenceSettings } from '@colearner/api-client'
 export type { FamilyAgeCheck as AgeCheck, GuardianHandoff as Handoff, FamilyConsentNotice as ConsentNotice, FamilyChild, GuardianInvitationInspection as GuardianInvitation, SchoolGuardians as GuardianRecords, FamilyDeviceProfile as DeviceProfile, FamilySchoolPolicy as SchoolPolicy, FamilyEffectivePolicy as EffectivePolicy, FamilyChildContext as ChildContext } from '@colearner/api-client'
+/**
+ * B10 stricter-wins flags for Ask Co and homework help (school policy and guardian preference settings). The vendored
+ * 0.4.0 types predate them, so they are optional here: an older saved row without them means the platform defaults
+ * (allowed, up to 3 hints).
+ */
+export type HomeworkHintsMax = 0 | 1 | 2 | 3
+export interface CoPolicyFlags { askCoAllowed?: boolean; homeworkHelpAllowed?: boolean; homeworkHintsMax?: HomeworkHintsMax }
+export const coPolicyDefaults = { askCoAllowed: true, homeworkHelpAllowed: true, homeworkHintsMax: 3 } as const
 /** Form-only editing shape: education version is omitted for guardian preferences. */
-export type PolicySettings = FamilyPreferenceSettings & { educationPackVersion?: string | null }
+export type PolicySettings = FamilyPreferenceSettings & CoPolicyFlags & { educationPackVersion?: string | null }
 export type FamilyMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
 export class FamilyError extends ApiError {
