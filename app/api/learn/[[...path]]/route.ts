@@ -12,10 +12,18 @@ const resource = '[a-zA-Z0-9_-]{1,128}'
 const itemIndex = '[0-9]{1,3}'
 const practiceReads = `practice/(?:hub|sets/${resource}|sessions|sessions/${resource}|sessions/${resource}/items/${itemIndex}|sessions/${resource}/summary|sessions/${resource}/answer-sheet)`
 const practiceWrites = `practice/(?:sets|sets/${resource}/(?:retry|cancel)|sessions|sessions/${resource}/items/${itemIndex}/(?:answer|hint|skip)|sessions/${resource}/complete|attempts/${resource}/regrade)`
-const reads = new RegExp(`^(?:home|overview|link-status|plans/${resource}|lessons/${resource}|${practiceReads})$`)
-const writes = new RegExp(`^(?:enrollments/join|lessons|lessons/${resource}/(?:check|complete|retry|cancel|notes)|${practiceWrites})$`)
-/** B08 lesson routes: progress is the only PUT and a note is the only DELETE. */
-const puts = new RegExp(`^lessons/${resource}/progress$`)
+/**
+ * B10 Ask Co and guided homework (exact path and method pairs from the contract and the coordinator's decisions: GET and POST, plus the
+ * one PUT `homework/sessions/:id/problem`). Nothing else under `co/` or `homework/` exists: no worker or internal route, no DELETE.
+ */
+const coReads = `co/(?:context|conversations|conversations/${resource}|conversations/${resource}/turns/${resource})`
+const coWrites = `co/(?:conversations|conversations/${resource}/turns|conversations/${resource}/turns/${resource}/(?:retry|cancel))`
+const homeworkReads = `homework/sessions|homework/sessions/${resource}`
+const homeworkWrites = `homework/(?:sessions|sessions/${resource}/(?:restatement|steps|hint|final|final-phase|finish|abandon|retry))`
+const reads = new RegExp(`^(?:home|overview|link-status|plans/${resource}|lessons/${resource}|${practiceReads}|${coReads}|${homeworkReads})$`)
+const writes = new RegExp(`^(?:enrollments/join|lessons|lessons/${resource}/(?:check|complete|retry|cancel|notes)|${practiceWrites}|${coWrites}|${homeworkWrites})$`)
+/** PUTs: the B08 lesson progress and the B10 homework problem (replaced in CAPTURE). A lesson note is the only DELETE. */
+const puts = new RegExp(`^(?:lessons/${resource}/progress|homework/sessions/${resource}/problem)$`)
 const deletes = new RegExp(`^lessons/${resource}/notes/${resource}$`)
 const allowed: Record<string, RegExp | undefined> = { GET: reads, POST: writes, PUT: puts, DELETE: deletes }
 const overviewQuery = new Set(['q', 'subjectId', 'kind', 'status', 'cursor', 'limit'])
@@ -24,6 +32,9 @@ const queryKeys: Record<string, Set<string> | undefined> = {
   overview: overviewQuery,
   'practice/hub': new Set(['subjectId', 'planId']),
   'practice/sessions': new Set(['cursor', 'limit']),
+  'co/context': new Set(['lessonId', 'materialId', 'stepIndex']),
+  'co/conversations': new Set(['cursor', 'limit']),
+  'homework/sessions': new Set(['cursor', 'limit']),
 }
 
 /** Transport only. The product API rechecks membership, learner, plan ownership, age and policy. */

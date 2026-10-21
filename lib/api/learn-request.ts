@@ -31,7 +31,7 @@ const byCode: Record<string, string> = {
   PLAN_STRUCTURE_LOCKED: 'Your teacher controls the steps of this plan.',
   SKIP_NOT_ALLOWED: 'This step cannot be skipped.',
   // B09 practice. Server text is never shown for these; only POLICY_BLOCKED carries a reason that is contractually safe.
-  SESSION_NOT_FOUND: 'We could not find that practice. It may have been removed.',
+  SESSION_NOT_FOUND: 'We could not find that. It may have been removed.',
   SESSION_COMPLETED: 'This practice is already finished.',
   SESSION_EXPIRED: 'The time for this practice has run out.',
   SESSION_NOT_COMPLETED: 'This practice is not finished yet.',
@@ -55,7 +55,7 @@ const byCode: Record<string, string> = {
   SET_NOT_FOUND: 'We could not find those questions. They may have been removed.',
   TOPIC_NOT_FOUND: 'We could not find that topic. It may have been removed.',
   EXAM_NOT_AVAILABLE: 'There is no timed test ready for this plan yet.',
-  SESSION_CONFLICT: 'This practice changed somewhere else. Open it again to carry on.',
+  SESSION_CONFLICT: 'This changed somewhere else. Open it again to carry on.',
   NOT_RETRYABLE: 'This cannot be tried again.',
   NOT_CANCELLABLE: 'This can no longer be stopped.',
   NOT_REGRADABLE: 'Co cannot check this answer again.',
@@ -67,6 +67,28 @@ const byCode: Record<string, string> = {
   SKIP_DISABLED_IN_EXAM: 'You cannot skip questions in a timed test.',
   REGRADE_LIMIT: 'Co has already checked this answer again. Ask your teacher if you need more help.',
   FEEDBACK_UNAVAILABLE: 'Co could not check this answer right now.',
+  // B10 Ask Co and guided homework. Server text is never shown for these; only POLICY_BLOCKED carries a reason that is contractually safe.
+  // HINT_OUT_OF_ORDER is shared with practice (above).
+  CO_UNAVAILABLE: 'Co is not available right now. Please try again a little later.',
+  CO_DISABLED_BY_POLICY: 'Your school or family has switched this off for now. Ask a grown-up if you have a question.',
+  CONTEXT_NOT_READY: 'This material is still being read. Come back in a moment.',
+  CONTEXT_NOT_FOUND: 'We could not find that. It may have been removed.',
+  TURN_PENDING: 'Co is still working on your last message. One moment.',
+  TURN_LIMIT_REACHED: 'You have asked Co a lot today. Come back tomorrow for more.',
+  MESSAGE_INVALID: 'That message could not be sent. Check it and try again.',
+  TURN_CONFLICT: 'That did not match what we sent before. Please check it and send it again.',
+  CONVERSATION_NOT_FOUND: 'We could not find that chat. It may have been removed.',
+  HOMEWORK_UNAVAILABLE: 'Homework help is not switched on for you yet.',
+  HOMEWORK_PHASE_INVALID: 'That part of your homework help has already moved on. Here is where you are now.',
+  HINTS_DISABLED: 'Hints are switched off for your homework help.',
+  FINAL_ATTEMPTS_EXHAUSTED: 'You have used all your tries for this answer.',
+  PROBLEM_INVALID: 'Co could not use that problem. Try writing it a little differently.',
+  // Platform codes of the same modules that had no copy: the learner never sees the server text or a raw code for these.
+  TURN_NOT_FOUND: 'We could not find that message. It may have been removed.',
+  CONVERSATION_CLOSED: 'This chat is finished. Open Ask Co again to start a new one.',
+  HOMEWORK_CONVERSATION: 'Continue this one from Homework help.',
+  MATERIAL_NOT_FOUND: 'We could not find that material. It may have been removed.',
+  DAILY_HOMEWORK_LIMIT: 'You have used all your homework help for today. Come back tomorrow.',
 }
 const codePattern = /^[A-Z][A-Z0-9_]{2,63}$/
 
