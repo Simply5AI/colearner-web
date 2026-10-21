@@ -1,0 +1,50 @@
+'use client'
+
+import Link from 'next/link'
+import { useRef, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { LayoutGrid, List, Plus } from 'lucide-react'
+import { Button, Card, Checkbox, EmptyState, Input, Select } from '@/components/design-system'
+import { lessonDisabledReason, materialApi, materialStatuses, sourceTypes, type Material, type MaterialFilters } from '@/lib/api/materials'
+import { MaterialFrame, MaterialLoadState, materialKeys, materialStatusLabels, sourceIcons, sourceLabels, useMaterialConfig } from './material-common'
+
+export function MaterialLibrary() {
+  const config = useMaterialConfig()
+  const cache = useQueryClient()
+  const [filters, setFilters] = useState<MaterialFilters>({ page: 1 })
+  const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [selected, setSelected] = useState<string[]>([])
+  const [planId, setPlanId] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const retryKeys = useRef(new Map<string, string>())
+  const list = useQuery({ queryKey: materialKeys.list(config.actor, filters), queryFn: () => materialApi.list(filters), enabled: !!config.data && !config.isError, retry: false, staleTime: 0, gcTime: 0, refetchInterval: 4000 })
+  const refresh = () => { void cache.invalidateQueries({ queryKey: materialKeys.root }) }
+  const bulk = useMutation({ mutationFn: (action: 'delete' | 'addToPlan') => materialApi.bulk(action, selected, action === 'addToPlan' ? planId : undefined), retry: false, onSuccess: () => { setSelected([]); setConfirmDelete(false); refresh() } })
+  const retry = useMutation({ mutationFn: (material: Material) => { const key = retryKeys.current.get(material.id) ?? crypto.randomUUID(); retryKeys.current.set(material.id, key); return materialApi.retry(material.id, key) }, retry: false, onSuccess: material => { retryKeys.current.delete(material.id); refresh() } })
+  const changeFilter = (key: keyof MaterialFilters, value: string) => { setFilters(current => ({ ...current, [key]: value, page: 1 })); setSelected([]); setConfirmDelete(false) }
+  const items = list.data?.items ?? []
+  const picked = items.filter(item => selected.includes(item.id))
+  const allDelete = picked.length > 0 && picked.length === selected.length && picked.every(item => item.actions.delete)
+  const allPlan = picked.length > 0 && picked.length === selected.length && picked.every(item => item.actions.addToPlan)
+  return <MaterialFrame title={config.data?.band === 'kids' ? 'My pages' : 'Your library'} description="Keep your sources and key ideas together. Processing continues when you leave." config={config.data}>
+    <div className="flex flex-wrap gap-3"><Link href="/learn/import" className="ds-button ds-button-primary"><Plus size={18} aria-hidden="true" />Import material</Link><Link href="/learn/snap" className="ds-button ds-button-secondary">Snap a page</Link></div>
+    <MaterialLoadState loading={config.isPending} error={config.error} retry={() => void config.refetch()} />
+    {config.data && !config.error && <>
+      <Card className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-4"><Input label="Search your library" type="search" value={filters.search ?? ''} onChange={event => changeFilter('search', event.target.value)} /><Select label="Subject filter" value={filters.subjectId ?? ''} onChange={event => changeFilter('subjectId', event.target.value)}><option value="">All subjects</option>{config.data.subjects.map(subject => <option key={subject.id} value={subject.id}>{subject.name}</option>)}</Select><Select label="Source filter" value={filters.sourceType ?? ''} onChange={event => changeFilter('sourceType', event.target.value)}><option value="">All sources</option>{sourceTypes.map(type => <option key={type} value={type}>{sourceLabels[type]}</option>)}</Select><Select label="Status filter" value={filters.status ?? ''} onChange={event => changeFilter('status', event.target.value)}><option value="">All statuses</option>{materialStatuses.map(status => <option key={status} value={status}>{materialStatusLabels[status]}</option>)}</Select></Card>
+      <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-muted-foreground">{list.data ? `${list.data.total} materials` : 'Checking your library…'}</p><div className="flex gap-2" aria-label="Library view"><Button variant="secondary" aria-pressed={view === 'grid'} onClick={() => setView('grid')}><LayoutGrid size={18} aria-hidden="true" />Cards</Button><Button variant="secondary" aria-pressed={view === 'list'} onClick={() => setView('list')}><List size={18} aria-hidden="true" />List</Button></div></div>
+      <MaterialLoadState loading={list.isPending} error={list.error} retry={() => void list.refetch()} />
+      {selected.length > 0 && <Card className="space-y-3 p-4"><p className="font-semibold">{selected.length} selected</p><div className="flex flex-wrap items-end gap-3"><Select label="Plan for selected material" value={planId} onChange={event => setPlanId(event.target.value)}><option value="">Choose an editable plan</option>{config.data.plans.map(plan => <option key={plan.id} value={plan.id}>{plan.title}</option>)}</Select><Button variant="secondary" disabled={!allPlan || !planId || bulk.isPending} onClick={() => bulk.mutate('addToPlan')}>Add to plan</Button><Button variant="secondary" disabled={!allDelete || bulk.isPending} onClick={() => setConfirmDelete(true)}>Delete selected</Button><Button variant="ghost" onClick={() => { setSelected([]); setConfirmDelete(false) }}>Clear selection</Button></div>{confirmDelete && <div role="group" aria-label="Confirm material deletion" className="rounded-lg border border-border p-3"><p>Delete {selected.length} materials from your library? Current permissions will be checked again.</p><div className="mt-3 flex gap-3"><Button onClick={() => bulk.mutate('delete')} disabled={!allDelete} loading={bulk.isPending}>Confirm delete</Button><Button variant="secondary" onClick={() => setConfirmDelete(false)}>Keep materials</Button></div></div>}</Card>}
+      {(bulk.error || retry.error) && <p role="alert" className="rounded-xl border border-border p-4">{(bulk.error ?? retry.error)?.message}</p>}
+      {!list.error && list.data && items.length === 0 && <EmptyState title="No material here yet" band={config.data.band} description={filters.search || filters.subjectId || filters.sourceType || filters.status ? 'Try another search or filter.' : 'Add a source and Co will help you find its key ideas.'} action={<Link href="/learn/import" className="ds-button ds-button-primary">Add something to learn</Link>} />}
+      {!list.error && <div className={view === 'grid' ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3' : 'space-y-3'}>{items.map(material => {
+        const Icon = sourceIcons[material.sourceType]
+        return <Card key={material.id} className={`min-w-0 p-5 ${view === 'list' ? 'sm:flex sm:items-start sm:gap-5' : ''}`}>
+          <div className="mb-4 flex items-center justify-between gap-3"><div className={`flex items-center justify-center rounded-2xl bg-primary/10 text-primary ${config.data?.band === 'kids' ? 'size-20' : 'size-12'}`}><Icon size={config.data?.band === 'kids' ? 36 : 24} aria-hidden="true" /></div>{(material.actions.delete || material.actions.addToPlan) && <Checkbox label={<span className="sr-only">Select {material.title}</span>} checked={selected.includes(material.id)} onChange={event => { setSelected(current => event.target.checked ? [...current, material.id] : current.filter(id => id !== material.id)); setConfirmDelete(false) }} />}</div>
+          <div className="min-w-0 flex-1 space-y-2"><h2 className="break-words text-lg font-bold"><Link href={`/learn/import?material=${encodeURIComponent(material.id)}`} className="hover:underline focus-visible:outline-2">{material.title}</Link></h2><p className="text-sm text-muted-foreground">{sourceLabels[material.sourceType]} · {material.subjectName}</p><p className="text-sm">{materialStatusLabels[material.status]}{material.concepts.length > 0 ? ` · ${material.concepts.length} key ideas` : ''}</p>{material.planTitle && <p className="text-sm text-muted-foreground">Plan: {material.planTitle}</p>}<p className="text-xs text-muted-foreground">Added {new Date(material.createdAt).toLocaleDateString()}</p>{material.error && <details className="text-sm"><summary className="cursor-pointer font-semibold">Why couldn’t this finish?</summary><p className="mt-2">{material.error.message}</p></details>}<div className="flex flex-wrap gap-2 pt-2">{material.links.reader && <Link href={material.links.reader} className="ds-button ds-button-secondary">Open reader</Link>}{material.links.lesson && <Link href={material.links.lesson} className="ds-button ds-button-primary">Start lesson</Link>}{material.actions.retry && <Button variant="secondary" loading={retry.isPending && retry.variables?.id === material.id} onClick={() => retry.mutate(material)}>Try again</Button>}</div>{material.status === 'ready' && !material.links.lesson && lessonDisabledReason(material) && <p className="text-sm text-muted-foreground" data-testid="lesson-unavailable">{lessonDisabledReason(material)}</p>}</div>
+        </Card>
+      })}</div>}
+      {list.data && list.data.total > list.data.limit && <nav aria-label="Library pages" className="flex items-center justify-center gap-4"><Button variant="secondary" disabled={list.data.page <= 1} onClick={() => { setFilters(current => ({ ...current, page: (current.page ?? 1) - 1 })); setSelected([]) }}>Previous</Button><span>Page {list.data.page}</span><Button variant="secondary" disabled={list.data.page * list.data.limit >= list.data.total} onClick={() => { setFilters(current => ({ ...current, page: (current.page ?? 1) + 1 })); setSelected([]) }}>Next</Button></nav>}
+      <p className="text-sm text-muted-foreground">Research papers and video tools stay locked until their source permissions and processors are available. Import shows the current options.</p>
+    </>}
+  </MaterialFrame>
+}
