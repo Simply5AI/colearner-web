@@ -17,7 +17,7 @@
   "packageManager": "pnpm@10.28.1",
   "dependencies": {
     "@base-ui/react": "^1.2.0",
-    "@colearner/api-client": "file:vendor\\colearner-api-client-0.4.0.tgz",
+    "@colearner/api-client": "file:vendor/colearner-api-client-0.4.0.tgz",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",

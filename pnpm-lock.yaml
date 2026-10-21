@@ -12,7 +12,7 @@ importers:
         specifier: ^1.2.0
         version: 1.2.0(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@colearner/api-client':
-        specifier: file:vendor\colearner-api-client-0.4.0.tgz
+        specifier: file:vendor/colearner-api-client-0.4.0.tgz
         version: file:vendor/colearner-api-client-0.4.0.tgz
       '@dnd-kit/core':
         specifier: ^6.3.1
