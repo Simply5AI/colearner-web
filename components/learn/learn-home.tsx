@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { BookOpen, Camera, CalendarClock, Gamepad2, ListChecks, RefreshCw } from 'lucide-react'
+import { BookOpen, Camera, CalendarClock, Gamepad2, ListChecks, PencilLine, RefreshCw } from 'lucide-react'
 import { Card, CoCharacter, EmptyState, ProgressBar, RewardBadge, SpeechBubble } from '@/components/design-system'
 import { bandFromApi, linkHref, type HomeAssignment, type LearnBand, type LearnHome, type NextAction, type Recommendation, type SubjectProgress, type TodayItem } from '@/lib/api/learn'
 import { cn } from '@/lib/utils'
@@ -161,6 +161,21 @@ function Chips({ data, band }: { data: LearnHome; band: LearnBand }) {
   </div>
 }
 
+/** B10: the entry to guided homework help (L18). Co guides; the learner finds the answer. */
+const homeworkWords: Record<LearnBand, { title: string; line: string }> = {
+  kids: { title: 'Homework help', line: 'Co helps you work it out' },
+  tweens: { title: 'Homework help', line: 'Co guides you step by step. You find the answer.' },
+  teens: { title: 'Homework help', line: 'Stuck on a problem? Co guides you; you work out the answer.' },
+}
+export function HomeworkHelpCard({ band }: { band: LearnBand }) {
+  const words = homeworkWords[band]
+  const kids = band === 'kids'
+  return <Link href="/learn/homework" data-testid="homework-help-card" className={cn('ds-card flex items-center gap-4', kids ? 'min-h-32 text-[length:var(--ds-h3)] font-extrabold' : 'min-h-16')}>
+    <PencilLine size={kids ? 44 : 28} aria-hidden="true" className="flex-none text-primary" />
+    <span className="min-w-0"><span className="block font-extrabold">{words.title}</span><span className={cn('block break-words font-normal text-muted-foreground', 'text-[length:var(--ds-small)]')}>{words.line}</span></span>
+  </Link>
+}
+
 /* ---------- band layouts ---------- */
 
 function KidsHome({ data, limited }: { data: LearnHome; limited: boolean }) {
@@ -174,6 +189,7 @@ function KidsHome({ data, limited }: { data: LearnHome; limited: boolean }) {
     <div className="grid gap-4 sm:grid-cols-2">
       <Link href="/learn/snap" className="ds-card flex min-h-32 items-center gap-4 text-[length:var(--ds-h3)] font-extrabold"><Camera size={44} aria-hidden="true" className="text-primary" />Snap something new</Link>
       <Link href="/learn/practice" className="ds-card flex min-h-32 items-center gap-4 text-[length:var(--ds-h3)] font-extrabold"><Gamepad2 size={44} aria-hidden="true" className="text-primary" />Play</Link>
+      <HomeworkHelpCard band="kids" />
     </div>
     <Assignments items={data.assignments} band="kids" />
     <Suggestion state={data.recommendation} />
@@ -189,6 +205,7 @@ function TweensHome({ data, limited }: { data: LearnHome; limited: boolean }) {
     <div className="flex flex-wrap items-center gap-3">{data.timeBudget && <TimePill minutes={data.timeBudget.minutesLeftToday} />}<Chips data={data} band="tweens" /></div>
     {data.nextAction && <NextActionCard action={data.nextAction} band="tweens" limited={limited} />}
     {data.todayPlan && <TodayPlan plan={data.todayPlan} band="tweens" limited={limited} />}
+    <HomeworkHelpCard band="tweens" />
     <Assignments items={data.assignments} band="tweens" />
     <Suggestion state={data.recommendation} />
     <Recent items={data.recentMaterials} />
@@ -203,6 +220,7 @@ function TeensHome({ data, limited }: { data: LearnHome; limited: boolean }) {
       <div className="space-y-6">
         {data.nextAction && <NextActionCard action={data.nextAction} band="teens" limited={limited} />}
         {data.todayPlan && <TodayPlan plan={data.todayPlan} band="teens" limited={limited} />}
+        <HomeworkHelpCard band="teens" />
         <Assignments items={data.assignments} band="teens" />
       </div>
       <div className="space-y-6">
