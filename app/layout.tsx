@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import localFont from 'next/font/local'
 import './globals.css'
 import { cn } from '@/lib/utils'
 import { AuthProvider } from '@/lib/providers/auth-provider'
@@ -8,7 +8,18 @@ import { ThemeProvider } from '@/lib/providers/theme-provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from '@/components/ui/sonner'
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
+const geist = localFont({
+  src: './fonts/geist-latin-variable.woff2',
+  weight: '200 900',
+  display: 'swap',
+  variable: '--font-geist',
+})
+const nunito = localFont({
+  src: './fonts/nunito-latin-variable.woff2',
+  weight: '200 900',
+  display: 'swap',
+  variable: '--font-nunito',
+})
 
 export const metadata: Metadata = {
   title: {
@@ -25,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={cn('font-sans', geist.variable)} suppressHydrationWarning>
+    <html lang="en" className={cn('font-sans', geist.variable, nunito.variable)} suppressHydrationWarning>
       <body>
         <AuthProvider>
           <QueryProvider>

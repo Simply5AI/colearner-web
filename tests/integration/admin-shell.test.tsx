@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AdminShell } from '@/components/admin/admin-shell'
@@ -23,6 +23,8 @@ function renderShell() {
   )
 }
 
+function navigation() { return within(screen.getByRole('navigation', { name: 'Primary navigation' })) }
+
 describe('AdminShell', () => {
   beforeEach(() => {
     pathnameMock.mockReset()
@@ -32,22 +34,22 @@ describe('AdminShell', () => {
   it('links the Learning sidebar item to the learning directory', () => {
     renderShell()
 
-    expect(screen.getByRole('link', { name: /^Learning$/i })).toHaveAttribute('href', '/admin/learning')
+    expect(navigation().getByRole('link', { name: /^Learning$/i })).toHaveAttribute('href', '/admin/learning')
   })
 
   it('highlights Learning for per-user learning routes instead of Users', () => {
     pathnameMock.mockReturnValue('/admin/users/user-1/learning/sessions')
     renderShell()
 
-    expect(screen.getByRole('link', { name: /^Learning$/i })).toHaveClass('text-primary')
-    expect(screen.getByRole('link', { name: /^Users$/i })).not.toHaveClass('text-primary')
+    expect(navigation().getByRole('link', { name: /^Learning$/i })).toHaveAttribute('aria-current', 'page')
+    expect(navigation().getByRole('link', { name: /^Users$/i })).not.toHaveAttribute('aria-current')
   })
 
   it('keeps ordinary user detail routes under Users', () => {
     pathnameMock.mockReturnValue('/admin/users/user-1')
     renderShell()
 
-    expect(screen.getByRole('link', { name: /^Users$/i })).toHaveClass('text-primary')
-    expect(screen.getByRole('link', { name: /^Learning$/i })).not.toHaveClass('text-primary')
+    expect(navigation().getByRole('link', { name: /^Users$/i })).toHaveAttribute('aria-current', 'page')
+    expect(navigation().getByRole('link', { name: /^Learning$/i })).not.toHaveAttribute('aria-current')
   })
 })

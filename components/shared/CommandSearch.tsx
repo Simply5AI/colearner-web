@@ -2,52 +2,25 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  Search,
-  Home,
-  Download,
-  BookOpen,
-  Clock,
-  BarChart3,
-  Users,
-  Trophy,
-  Settings,
-} from 'lucide-react'
+import { Search } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
-import { useLearnerTerms } from '@/lib/hooks/use-learner-terms'
-
-interface NavItem {
-  href: string
-  label: string
-  icon: React.ElementType
-}
-
-const baseNavItems: NavItem[] = [
-  { href: '/dashboard', label: 'Home', icon: Home },
-  { href: '/capture', label: 'Library', icon: Download },
-  { href: '/practice', label: 'Practice', icon: Clock },
-  { href: '/progress', label: 'Progress', icon: BarChart3 },
-  { href: '/pods', label: 'Study Groups', icon: Users },
-  { href: '/trophies', label: 'Achievements', icon: Trophy },
-  { href: '/settings', label: 'Settings', icon: Settings },
-]
+import { useProfile } from '@/lib/hooks/use-profile'
+import { ageBandFromDateOfBirth, studentNavigation } from '@/components/roles/role-config'
 
 export function CommandSearch() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const router = useRouter()
-  const terms = useLearnerTerms()
+  const { data: profile } = useProfile()
+  const knownBand = ageBandFromDateOfBirth(profile?.dateOfBirth)
   const navItems = useMemo(
-    () => [
-      baseNavItems[0],
-      baseNavItems[1],
-      { href: '/roadmaps', label: terms.plansLabel, icon: BookOpen },
-      ...baseNavItems.slice(2),
-    ].filter(Boolean) as NavItem[],
-    [terms.plansLabel],
+    () => studentNavigation(knownBand ?? 'teens', !!knownBand).flatMap((group) => group.items),
+    [knownBand],
   )
 
   useEffect(() => {
@@ -81,12 +54,14 @@ export function CommandSearch() {
   return (
     <>
       <button
+        type="button"
+        aria-label="Search pages"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 rounded-lg border border-border bg-accent/50 px-3.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground"
+        className="flex min-h-[var(--ds-target,44px)] items-center gap-1.5 rounded-lg border border-border bg-accent/50 px-3.5 py-1.5 text-xs text-muted-foreground motion-safe:transition-colors hover:border-muted-foreground"
       >
-        <Search className="h-3.5 w-3.5" />
+        <Search aria-hidden="true" className="h-3.5 w-3.5" />
         <span>Search...</span>
-        <kbd className="ml-1 rounded border border-border bg-card px-1 py-0.5 font-mono text-[9px]">
+        <kbd className="ms-1 hidden rounded border border-border bg-card px-1 py-0.5 font-mono text-[9px] sm:block">
           ⌘K
         </kbd>
       </button>
@@ -102,10 +77,13 @@ export function CommandSearch() {
           showCloseButton={false}
           className="top-[35%] gap-0 overflow-hidden p-0 sm:max-w-md"
         >
+          <DialogTitle className="sr-only">Search pages</DialogTitle>
+          <DialogDescription className="sr-only">Find a page in your learning workspace.</DialogDescription>
           <div className="flex items-center gap-2 border-b border-border px-3">
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
             <input
               autoFocus
+              aria-label="Search pages"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search pages..."

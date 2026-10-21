@@ -1,66 +1,14 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import {
-  Home,
-  Download,
-  Clock,
-  BarChart3,
-  Settings,
-  Trophy,
-  BookOpen,
-  Users,
-  History,
-  GraduationCap,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { useLearnerTerms } from '@/lib/hooks/use-learner-terms'
+import { signOut } from 'next-auth/react'
+import { LogOut } from 'lucide-react'
+import { useProfile } from '@/lib/hooks/use-profile'
+import { RoleShell, RoleNavigation } from '@/components/roles/role-shell'
+import { ageBandFromDateOfBirth, studentNavigation } from '@/components/roles/role-config'
 import type { SourceProgress } from '@/lib/types'
-
-interface NavItem {
-  href: string
-  label: string
-  icon: React.ElementType
-}
-
-interface NavSection {
-  title: string
-  items: NavItem[]
-}
-
-function getNavSections(plansLabel: string): NavSection[] {
-  return [
-    {
-      title: 'Learn',
-      items: [
-        { href: '/dashboard', label: 'Home', icon: Home },
-        { href: '/capture', label: 'Library', icon: Download },
-        { href: '/roadmaps', label: plansLabel, icon: BookOpen },
-        { href: '/learn/enrolled', label: 'Enrolled', icon: GraduationCap },
-      ],
-    },
-    {
-      title: 'Practice',
-      items: [
-        { href: '/practice', label: 'Practice', icon: Clock },
-        { href: '/progress', label: 'Progress', icon: BarChart3 },
-        { href: '/trophies', label: 'Achievements', icon: Trophy },
-      ],
-    },
-    {
-      title: 'Together',
-      items: [
-        { href: '/pods', label: 'Study Groups', icon: Users },
-        { href: '/dashboard/history', label: 'History', icon: History },
-      ],
-    },
-  ]
-}
-
-const settingsNavItems: NavItem[] = [
-  { href: '/settings', label: 'Settings', icon: Settings },
-]
+import { usePathname } from 'next/navigation'
+import { BrandMark } from '@/components/design-system'
+import Link from 'next/link'
 
 interface AppSidebarProps {
   sourceProgress?: SourceProgress | null
@@ -68,158 +16,40 @@ interface AppSidebarProps {
   failedCount?: number
 }
 
-export function AppSidebar({
-  sourceProgress,
-  recallDueCount = 0,
-  failedCount: _failedCount = 0,
-}: AppSidebarProps) {
+function SourceProgressSummary({ progress }: { progress: SourceProgress }) {
+  const total = Math.max(0, progress.totalAttempts)
+  const required = Math.max(0, progress.requiredAttempts)
+  const percent = required > 0 ? Math.min(100, Math.round(total / required * 100)) : 0
+  return <div className="rounded-xl border border-border bg-card p-3">
+    <p className="text-sm font-semibold">Source {progress.currentSource}: {progress.sourceName}</p>
+    <p className="mt-1 text-xs text-muted-foreground">{total} / {required} practice attempts</p>
+    <progress max={100} value={percent} aria-label="Practice attempts complete" className="mt-3 h-2 w-full accent-primary" />
+    <p className="text-xs text-muted-foreground">{Math.max(0, required - total)} to go</p>
+  </div>
+}
+
+/** Existing standalone adapter, using the same route configuration as the shell. */
+export function AppSidebar({ sourceProgress, recallDueCount = 0 }: AppSidebarProps) {
   const pathname = usePathname()
-  const terms = useLearnerTerms()
+  const { data: profile } = useProfile()
+  const knownBand = ageBandFromDateOfBirth(profile?.dateOfBirth)
+  const band = knownBand ?? 'teens'
+  return <aside data-age-band={band} className="hidden w-64 shrink-0 flex-col border-e border-sidebar-border bg-sidebar lg:flex">
+    <Link href="/dashboard" className="inline-flex min-h-[var(--ds-target,44px)] min-w-[var(--ds-target,44px)] items-center p-5" aria-label="CoLearner home"><BrandMark /></Link>
+    <div className="p-3"><RoleNavigation groups={studentNavigation(band, !!knownBand, recallDueCount)} pathname={pathname} label="Primary navigation" band={band} /></div>
+    {sourceProgress && band !== 'kids' && <div className="p-3"><SourceProgressSummary progress={sourceProgress} /></div>}
+  </aside>
+}
 
-  function isActive(href: string): boolean {
-    if (href === '/dashboard') return pathname === '/dashboard'
-    if (href === '/practice') return pathname.startsWith('/practice') || pathname.startsWith('/recall')
-    return pathname.startsWith(href)
-  }
-
-  function getBadge(item: NavItem): number | undefined {
-    if (item.href === '/practice' && recallDueCount > 0) return recallDueCount
-    return undefined
-  }
-
-  function getBadgeVariant(_item: NavItem): 'default' | 'warning' {
-    return 'default'
-  }
-
-  return (
-    <aside className="flex w-60 flex-col border-r border-sidebar-border bg-sidebar">
-      {/* Logo */}
-      <div className="border-b border-sidebar-border/70 px-5 py-5">
-        <Link href="/dashboard" className="text-[17px] font-extrabold tracking-tight text-foreground">
-          Co<span className="text-primary">Learner</span>
-        </Link>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 space-y-4 px-2.5 pt-3">
-        {getNavSections(terms.plansLabel).map((section) => (
-          <div key={section.title}>
-            <p className="px-3 pb-1.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">
-              {section.title}
-            </p>
-            <div className="space-y-1">
-              {section.items.map((item) => {
-                const active = isActive(item.href)
-                const badge = getBadge(item)
-                const variant = getBadgeVariant(item)
-                const Icon = item.icon
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      'group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors',
-                      active
-                        ? 'bg-primary/10 font-bold text-primary shadow-[inset_3px_0_0_var(--primary)]'
-                        : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground'
-                    )}
-                  >
-                    <Icon
-                      className={cn(
-                        'h-[18px] w-[18px] shrink-0 transition-colors',
-                        active ? 'text-primary' : 'text-muted-foreground/70 group-hover:text-foreground'
-                      )}
-                    />
-                    <span className="flex-1">{item.label}</span>
-                    {badge !== undefined && (
-                      <span
-                        className={cn(
-                          'min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-bold text-white',
-                          variant === 'warning' ? 'bg-warning' : 'bg-primary'
-                        )}
-                      >
-                        {badge}
-                      </span>
-                    )}
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-
-        {/* Settings Section */}
-        <div>
-          <p className="px-3 pb-1.5 pt-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">
-            Account
-          </p>
-          <div className="space-y-1">
-            {settingsNavItems.map((item) => {
-              const active = isActive(item.href)
-              const Icon = item.icon
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'group flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors',
-                    active
-                      ? 'bg-primary/10 font-bold text-primary shadow-[inset_3px_0_0_var(--primary)]'
-                      : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground'
-                  )}
-                >
-                  <Icon
-                    className={cn(
-                      'h-[18px] w-[18px] shrink-0 transition-colors',
-                      active ? 'text-primary' : 'text-muted-foreground/70 group-hover:text-foreground'
-                    )}
-                  />
-                  <span>{item.label}</span>
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Source Progress Mini Card */}
-        {sourceProgress && (
-          <div className="mx-0.5 mt-4 rounded-xl border border-border/50 bg-accent/50 p-3.5">
-            <div className="mb-2.5 flex items-center gap-2.5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-teal to-[#2A9494] text-base font-black text-white">
-                {sourceProgress.currentSource}
-              </div>
-              <div>
-                <p className="text-xs font-bold text-foreground">
-                  Source {sourceProgress.currentSource} — {sourceProgress.sourceName}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {sourceProgress.totalAttempts} / {sourceProgress.requiredAttempts} practice attempts
-                </p>
-              </div>
-            </div>
-            <div className="h-1 overflow-hidden rounded-full bg-border">
-              <div
-                className="h-full rounded-full bg-brand-teal transition-all duration-500"
-                style={{
-                  width: `${Math.min(100, (sourceProgress.totalAttempts / sourceProgress.requiredAttempts) * 100)}%`,
-                }}
-              />
-            </div>
-            <div className="mt-1 flex justify-between text-[9px] text-muted-foreground">
-              <span>
-                {Math.round((sourceProgress.totalAttempts / sourceProgress.requiredAttempts) * 100)}% complete
-              </span>
-              <span>
-                {sourceProgress.requiredAttempts - sourceProgress.totalAttempts} to go
-              </span>
-            </div>
-          </div>
-        )}
-      </nav>
-
-      <div className="border-t border-sidebar-border/70 p-2.5" />
-    </aside>
-  )
+export function StudentShell({ children, sourceProgress, recallDueCount = 0 }: AppSidebarProps & { children: React.ReactNode }) {
+  const { data: profile } = useProfile()
+  const knownBand = ageBandFromDateOfBirth(profile?.dateOfBirth)
+  const band = knownBand ?? 'teens'
+  const navigation = studentNavigation(band, !!knownBand, recallDueCount)
+  return <RoleShell
+    role="student" band={band} homeHref="/learn/home" navigation={navigation}
+    bottomNavigation={navigation[0]?.items} identity={profile?.name}
+    sidebarFooter={sourceProgress && band !== 'kids' ? <SourceProgressSummary progress={sourceProgress} /> : undefined}
+    accountActions={<button type="button" onClick={() => void signOut({ redirectTo: '/login' })} aria-label="Sign out" className="flex min-h-[var(--ds-tap,44px)] min-w-[var(--ds-tap,44px)] items-center justify-center rounded-xl border border-border bg-card focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"><LogOut aria-hidden="true" className="size-5" /></button>}
+  >{children}</RoleShell>
 }
