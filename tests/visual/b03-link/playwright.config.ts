@@ -1,0 +1,2 @@
+import { defineConfig } from '@playwright/test'
+export default defineConfig({ testDir: '.', testMatch: 'link-review.spec.ts', timeout: 240000, expect: { timeout: 20000 }, workers: 1, retries: 0, reporter: [['list']], outputDir: '../../../test-results/b03-link', use: { baseURL: process.env.B03_LINK_BASE_URL ?? 'http://localhost:3313', browserName: 'chromium', extraHTTPHeaders: { 'Accept-Encoding': 'identity' }, trace: 'retain-on-failure', screenshot: 'only-on-failure' } })
