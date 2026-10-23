@@ -1,3 +1,4 @@
+import { withLegacyGuard } from '@/lib/auth/teacher-legacy'
 import Link from 'next/link'
 import { auth } from '@/lib/auth/config'
 import { fetchStudentDetail } from '@/lib/api/teacher-analytics'
@@ -8,7 +9,7 @@ import { TeacherPage } from '@/components/teacher/teacher-page'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-export default async function TeacherStudentDetailPage({
+async function TeacherStudentDetailPage({
   params,
   searchParams,
 }: {
@@ -164,3 +165,5 @@ export default async function TeacherStudentDetailPage({
     </TeacherPage>
   )
 }
+
+export default withLegacyGuard('Student', TeacherStudentDetailPage)

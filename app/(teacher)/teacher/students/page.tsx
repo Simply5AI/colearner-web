@@ -1,3 +1,4 @@
+import { withLegacyGuard } from '@/lib/auth/teacher-legacy'
 import Link from 'next/link'
 import { auth } from '@/lib/auth/config'
 import { fetchTeacherStudentRoster } from '@/lib/api/teacher-enrollments'
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { TeacherPage } from '@/components/teacher/teacher-page'
 
-export default async function TeacherStudentsPage() {
+async function TeacherStudentsPage() {
   const session = await auth()
   const headers: Record<string, string> = {}
   if (session?.accessToken) {
@@ -94,3 +95,5 @@ export default async function TeacherStudentsPage() {
     </TeacherPage>
   )
 }
+
+export default withLegacyGuard('Students', TeacherStudentsPage)

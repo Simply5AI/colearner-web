@@ -1,3 +1,4 @@
+import { withLegacyGuard } from '@/lib/auth/teacher-legacy'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { auth } from '@/lib/auth/config'
@@ -7,7 +8,7 @@ import { TeacherPage } from '@/components/teacher/teacher-page'
 import { Button } from '@/components/ui/button'
 import { fetchPlanAggregate, fetchPlanRoster } from '@/lib/api/teacher-analytics'
 
-export default async function TeacherPlanAnalyticsPage({
+async function TeacherPlanAnalyticsPage({
   params,
 }: {
   params: Promise<{ planId: string }>
@@ -43,3 +44,5 @@ export default async function TeacherPlanAnalyticsPage({
     </TeacherPage>
   )
 }
+
+export default withLegacyGuard('Plan analytics', TeacherPlanAnalyticsPage)

@@ -1,29 +1,33 @@
-import { notFound } from 'next/navigation'
-import { auth } from '@/lib/auth/config'
-import { fetchTeacherPlan } from '@/lib/api/teacher-plans'
-import { PlanEditor } from '@/components/teacher/plans/plan-editor'
-import { TeacherPage } from '@/components/teacher/teacher-page'
+import { PlanWorkspace } from "@/components/teacher/plans/plan-workspace";
+import { TeachingWorkspace } from "@/components/teacher/teaching-workspace";
+import { TeacherPage } from "@/components/teacher/teacher-page";
 
 export default async function TeacherPlanEditorPage({
   params,
+  searchParams,
 }: {
-  params: Promise<{ planId: string }>
+  params: Promise<{ planId: string }>;
+  searchParams: Promise<{
+    topic?: string | string[];
+    assign?: string | string[];
+  }>;
 }) {
-  const { planId } = await params
-  const session = await auth()
-  const headers: Record<string, string> = {}
-  if (session?.accessToken) {
-    headers.Authorization = `Bearer ${session.accessToken}`
-  }
-  const plan = await fetchTeacherPlan(headers, planId)
-
-  if (!plan) {
-    notFound()
-  }
-
+  const { planId } = await params;
+  const query = await searchParams;
+  const topic = Array.isArray(query.topic) ? query.topic[0] : query.topic;
+  const assign = Array.isArray(query.assign) ? query.assign[0] : query.assign;
   return (
-    <TeacherPage title="Plan editor" subtitle="Organize modules, topics, and assessments.">
-      <PlanEditor initialPlan={plan} />
-    </TeacherPage>
-  )
+    <TeachingWorkspace>
+      <TeacherPage
+        title="Plan editor"
+        subtitle="Organise phases and topics, add material and write lessons."
+      >
+        <PlanWorkspace
+          planId={planId}
+          initialTopicId={topic ?? null}
+          assignOpen={assign === "1"}
+        />
+      </TeacherPage>
+    </TeachingWorkspace>
+  );
 }

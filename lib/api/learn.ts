@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { learnRequest } from './learn-request'
+import { lessonCheckResultSchema, studentLessonViewSchema, type LessonCheckResult, type StudentLessonView } from './teaching/lesson-schema'
 
 /*
  * B07 learn contract (platform <-> web), 19 October 2026. Until the portable
@@ -15,8 +16,8 @@ export type AiState<T> =
   | { status: 'UNAVAILABLE'; reason: string }
   | { status: 'AVAILABLE'; items: T[]; generatedAt: string; promptRelease: string }
 
-/** HOME is produced only by the lesson completion (B08). */
-export type LinkRoute = 'PLAN' | 'LIBRARY_ITEM' | 'IMPORT' | 'SNAP' | 'LESSON' | 'PRACTICE' | 'ASSIGNMENT' | 'HOME'
+/** HOME is produced only by the lesson completion (B08). TEACH opens teach-back for a practice session id (B11). */
+export type LinkRoute = 'PLAN' | 'LIBRARY_ITEM' | 'IMPORT' | 'SNAP' | 'LESSON' | 'PRACTICE' | 'ASSIGNMENT' | 'HOME' | 'TEACH'
 /** B09: what a PRACTICE link opens (HUB = the practice hub; DUE = review everything due; SET = a generated question set). */
 export type PracticeScope = 'HUB' | 'DUE' | 'MATERIAL' | 'LESSON' | 'TOPIC' | 'PLAN_EXAM' | 'SET'
 export const practiceScopes = ['HUB', 'DUE', 'MATERIAL', 'LESSON', 'TOPIC', 'PLAN_EXAM', 'SET'] as const satisfies readonly PracticeScope[]
@@ -59,7 +60,7 @@ export interface PlanCard {
   assignedBy: { name: string } | null; className: string | null
   locked: boolean
 }
-export interface PendingEnrollment { id: string; planTitle: string; teacherName: string | null; status: 'PENDING_GUARDIAN_APPROVAL'; requestedAt: string }
+export interface PendingEnrollment { id: string; planTitle: string; teacherName: string | null; status: 'PENDING_GUARDIAN_APPROVAL' | 'DECLINED'; requestedAt: string }
 export interface OverviewSubject { id: string; name: string; icon: string | null; planCount: number; progress: Progress }
 export interface LearnOverview {
   band: ApiBand
@@ -77,8 +78,11 @@ export type ItemStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'DONE' | 'SKIPPED'
 export type TopicStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'DONE'
 export type MaterialOrigin = 'PERSONAL' | 'TEACHER' | 'CENTRAL'
 export interface PlanItem extends Actionable { id: string; kind: 'LESSON' | 'PRACTICE' | 'QUIZ' | 'MOCK_TEST'; title: string; status: ItemStatus }
+/** B12 section 7: present only when the teacher has published a lesson for this topic. Optional so an older server still parses. */
+export interface TeacherLessonSummary { version: number; title: string; stepCount: number; publishedAt: string }
 export interface PlanTopic {
   id: string; title: string; status: TopicStatus; masteryPercent: number | null; dueAt: string | null
+  teacherLesson?: TeacherLessonSummary | null
   items: PlanItem[]
   materials: { id: string; title: string; sourceType: string; origin: MaterialOrigin }[]
 }
@@ -104,7 +108,7 @@ const iso = z.string().min(1)
 const band = z.enum(['6-9', '10-13', '14-17'])
 const progress = z.object({ done: count, total: count }) satisfies z.ZodType<Progress>
 const link = z.object({
-  route: z.enum(['PLAN', 'LIBRARY_ITEM', 'IMPORT', 'SNAP', 'LESSON', 'PRACTICE', 'ASSIGNMENT', 'HOME']),
+  route: z.enum(['PLAN', 'LIBRARY_ITEM', 'IMPORT', 'SNAP', 'LESSON', 'PRACTICE', 'ASSIGNMENT', 'HOME', 'TEACH']),
   id: id.nullable(), planId: id.nullish(), planItemId: id.nullish(), scope: z.enum(practiceScopes).nullish(),
 }) satisfies z.ZodType<Link>
 /** Shared by the lesson and practice contracts so a PRACTICE link keeps its scope everywhere. */
@@ -148,7 +152,7 @@ export const learnOverviewSchema = z.object({
   band,
   subjects: z.array(z.object({ id, name: text, icon: z.string().max(64).nullable(), planCount: count, progress })),
   plans: z.array(planCard),
-  pendingEnrollments: z.array(z.object({ id, planTitle: text, teacherName: text.nullable(), status: z.literal('PENDING_GUARDIAN_APPROVAL'), requestedAt: iso })),
+  pendingEnrollments: z.array(z.object({ id, planTitle: text, teacherName: text.nullable(), status: z.enum(['PENDING_GUARDIAN_APPROVAL', 'DECLINED']), requestedAt: iso })),
   canJoinWithCode: z.boolean(), canCreatePersonalPlan: z.boolean(), unavailableReason: text.nullable(),
   nextCursor: z.string().max(1024).nullable(),
 }) satisfies z.ZodType<LearnOverview>
@@ -167,6 +171,7 @@ export const planDetailSchema = z.object({
     id, title: text, ordinal: count, progress,
     topics: z.array(z.object({
       id, title: text, status: topicStatus, masteryPercent: z.number().min(0).max(100).nullable(), dueAt: iso.nullable(),
+      teacherLesson: z.object({ version: z.number().int().positive(), title: text, stepCount: count, publishedAt: iso }).nullish(),
       items: z.array(z.object({ ...actionable, id, kind: z.enum(['LESSON', 'PRACTICE', 'QUIZ', 'MOCK_TEST']), title: text, status: itemStatus })),
       materials: z.array(z.object({ id, title: text, sourceType: z.string(), origin })),
     })),
@@ -176,6 +181,10 @@ export const planDetailSchema = z.object({
   suggestedResources: aiState(z.object({ title: text, url: z.string().max(2048).nullable(), reason: text })),
   permissions: z.object({ canEditStructure: z.boolean(), canAttachMaterial: z.boolean(), canStartNext: z.boolean(), lockedReason: text.nullable() }),
 }) satisfies z.ZodType<PlanDetail>
+
+/** B12 section 7: `view` is parsed with the STRICT learner schema, so an answer key in it fails the parse (F-T3-08). */
+export interface TeacherLessonPayload { planId: string; topicId: string; version: number; publishedAt: string; view: StudentLessonView }
+export const teacherLessonSchema = z.strictObject({ planId: id, topicId: id, version: z.number().int().positive(), publishedAt: iso, view: studentLessonViewSchema }) satisfies z.ZodType<TeacherLessonPayload>
 
 const resourceId = /^[a-zA-Z0-9_-]{1,128}$/
 
@@ -192,6 +201,7 @@ export function linkHref(target: Link | null | undefined): string | null {
     case 'PLAN': { const planId = safe(target.id); return planId ? `/learn/plans/${planId}` : null }
     case 'LIBRARY_ITEM': { const itemId = safe(target.id); return itemId ? `/learn/library/${itemId}` : null }
     case 'HOME': return '/learn/home'
+    case 'TEACH': { const practiceSessionId = safe(target.id); return practiceSessionId ? `/learn/teach?practiceSessionId=${practiceSessionId}` : '/learn/teach' }
     case 'IMPORT': return '/learn/import'
     case 'SNAP': return '/learn/snap'
     case 'LESSON': {
@@ -240,4 +250,8 @@ export const learnApi = {
   overview: (filters: OverviewFilters, cursor?: string | null) => learnRequest(`/overview?${overviewQuery(filters, cursor)}`, learnOverviewSchema),
   plan: (planId: string) => learnRequest(`/plans/${encodeURIComponent(planId)}`, planDetailSchema),
   join: (code: string) => learnRequest('/enrollments/join', joinResultSchema, 'POST', { code: code.trim() }),
+  teacherLesson: (planId: string, topicId: string) => learnRequest(`/plans/${encodeURIComponent(planId)}/topics/${encodeURIComponent(topicId)}/teacher-lesson`, teacherLessonSchema),
+  /** Formative and not stored: reveals `correctOptionId` only when the answer is correct. */
+  checkTeacherLesson: (planId: string, topicId: string, stepIndex: number, optionId: string): Promise<LessonCheckResult> =>
+    learnRequest(`/plans/${encodeURIComponent(planId)}/topics/${encodeURIComponent(topicId)}/teacher-lesson/check`, lessonCheckResultSchema, 'POST', { stepIndex, optionId }),
 }

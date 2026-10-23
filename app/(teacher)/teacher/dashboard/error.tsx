@@ -1,19 +1,19 @@
 'use client'
 
-import { ErrorFallback } from '@/components/shared/ErrorFallback'
+import { TeachingFailurePanel } from '@/components/teacher/dashboard/failure-panel'
 
 export default function TeacherDashboardError({
-  error,
   reset,
 }: {
   error: Error & { digest?: string }
   reset: () => void
 }) {
   return (
-    <ErrorFallback
-      title="Dashboard unavailable"
-      message={error.message}
+    <TeachingFailurePanel
+      kind="retry"
+      message="The dashboard could not be shown."
       onRetry={reset}
+      testId="t1-route-error"
     />
   )
 }

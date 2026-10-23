@@ -1,33 +1,16 @@
-import Link from 'next/link'
-import { Plus } from 'lucide-react'
-import { auth } from '@/lib/auth/config'
-import { fetchTeacherPlans } from '@/lib/api/teacher-plans'
-import { PlansListView } from '@/components/teacher/plans/plans-list-view'
-import { TeacherPage } from '@/components/teacher/teacher-page'
-import { Button } from '@/components/ui/button'
+import { TeachingPlansList } from "@/components/teacher/plans/teaching-plans-list";
+import { TeachingWorkspace } from "@/components/teacher/teaching-workspace";
+import { TeacherPage } from "@/components/teacher/teacher-page";
 
-export default async function TeacherPlansPage() {
-  const session = await auth()
-  const headers: Record<string, string> = {}
-  if (session?.accessToken) {
-    headers.Authorization = `Bearer ${session.accessToken}`
-  }
-  const plans = await fetchTeacherPlans(headers)
-
+export default function TeacherPlansPage() {
   return (
-    <TeacherPage
-      title="Study plans"
-      subtitle="Author and publish master study plans for your students."
-      actions={
-        <Button asChild>
-          <Link href="/teacher/plans/new">
-            <Plus className="h-4 w-4" />
-            New plan
-          </Link>
-        </Button>
-      }
-    >
-      <PlansListView initialPlans={plans} />
-    </TeacherPage>
-  )
+    <TeachingWorkspace>
+      <TeacherPage
+        title="Plans"
+        subtitle="Plans for the classes and subjects you teach. Students see a plan only after you publish and assign it."
+      >
+        <TeachingPlansList />
+      </TeacherPage>
+    </TeachingWorkspace>
+  );
 }

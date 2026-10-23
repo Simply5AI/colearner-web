@@ -1,26 +1,17 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { PlanCreateForm } from '@/components/teacher/plans/plan-create-form'
-import { TeacherPage } from '@/components/teacher/teacher-page'
+import { TeachingPlansList } from "@/components/teacher/plans/teaching-plans-list";
+import { TeachingWorkspace } from "@/components/teacher/teaching-workspace";
+import { TeacherPage } from "@/components/teacher/teacher-page";
 
+/** Deep link to the New plan dialog over the plan list. */
 export default function TeacherPlanNewPage() {
   return (
-    <TeacherPage
-      title="New study plan"
-      subtitle="Define the basics, then build your module and topic tree in the editor."
-    >
-      <div className="mx-auto max-w-xl">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Plan details</CardTitle>
-            <CardDescription>
-              All plans start as drafts and remain private until you publish them.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <PlanCreateForm />
-          </CardContent>
-        </Card>
-      </div>
-    </TeacherPage>
-  )
+    <TeachingWorkspace>
+      <TeacherPage
+        title="Plans"
+        subtitle="Plans for the classes and subjects you teach. Students see a plan only after you publish and assign it."
+      >
+        <TeachingPlansList openNewInitially />
+      </TeacherPage>
+    </TeachingWorkspace>
+  );
 }

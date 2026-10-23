@@ -6,6 +6,7 @@ import { ArrowLeft, BookOpen, ChevronDown, ClipboardCheck, ExternalLink, FileTex
 import { Card, CoCharacter, EmptyState, ProgressBar } from '@/components/design-system'
 import { bandFromApi, linkHref, safeExternalUrl, type LearnBand, type PlanDetail, type PlanItem, type PlanTopic } from '@/lib/api/learn'
 import { cn } from '@/lib/utils'
+import { TeacherLessonLink } from './teacher-lesson-reader'
 import { ActionControl, CoSuggestionTag, LearnFrame, LearnLoadError, LearnSkeleton, LockedTag, MeasuredTag, StepDots, useLearnIdentity, useLearnPlan } from './learn-common'
 import { dateLabel, dueLabel, itemStatusLabel, originLabel, sourceLabel } from './learn-format'
 
@@ -23,10 +24,11 @@ function ItemRow({ item, current, band }: { item: PlanItem; current: boolean; ba
   </li>
 }
 
-function TopicPanel({ topic, nextItemId, band, canAttach, id }: { topic: PlanTopic; nextItemId: string | null; band: LearnBand; canAttach: boolean; id?: string }) {
+function TopicPanel({ topic, nextItemId, band, canAttach, id, planId }: { topic: PlanTopic; nextItemId: string | null; band: LearnBand; canAttach: boolean; id?: string; /** B12: the plan id, needed to open a published teacher lesson for this topic. */ planId?: string }) {
   const due = dueLabel(topic.dueAt, band)
   return <div id={id} className="space-y-3" data-testid="topic-panel">
     {due && <p className={cn('text-[length:var(--ds-small)]', due.overdue && band !== 'kids' && 'font-bold text-destructive')}>{due.text}</p>}
+    {topic.teacherLesson && planId && <TeacherLessonLink planId={planId} topicId={topic.id} summary={topic.teacherLesson} band={band} />}
     {topic.items.length > 0 ? <ul className="space-y-2">{topic.items.map(item => <ItemRow key={item.id} item={item} current={item.id === nextItemId} band={band} />)}</ul> : <p className="text-muted-foreground">No lessons or practice have been added to this topic yet.</p>}
     {topic.materials.length > 0
       ? <div><h4 className="mb-2 font-bold">Sources for this topic</h4><ul className="flex flex-wrap gap-2">{topic.materials.map(material => {
@@ -62,13 +64,13 @@ function AdventureMap({ detail, stones, currentId, initialOpen }: { detail: Plan
         {here && <CoCharacter band="kids" state="idle" size={96} decorative />}
       </li>
     })}</ol>
-    <div id={panelId} aria-live="polite">{open && <Card className="space-y-3"><h3>{open.title}</h3><TopicPanel topic={open} nextItemId={detail.nextItemId} band="kids" canAttach={detail.permissions.canAttachMaterial} /></Card>}</div>
+    <div id={panelId} aria-live="polite">{open && <Card className="space-y-3"><h3>{open.title}</h3><TopicPanel topic={open} nextItemId={detail.nextItemId} band="kids" canAttach={detail.permissions.canAttachMaterial} planId={detail.plan.id} /></Card>}</div>
   </section>
 }
 
 /* ---------- tweens: levels; teens: chapters ---------- */
 
-function TopicCard({ topic, nextItemId, band, canAttach, expanded, onToggle }: { topic: PlanTopic; nextItemId: string | null; band: LearnBand; canAttach: boolean; expanded: boolean; onToggle: () => void }) {
+function TopicCard({ topic, nextItemId, band, canAttach, expanded, onToggle, planId }: { topic: PlanTopic; nextItemId: string | null; band: LearnBand; canAttach: boolean; expanded: boolean; onToggle: () => void; planId?: string }) {
   const panelId = useId()
   return <li className="ds-card space-y-3" data-testid="topic">
     <button type="button" aria-expanded={expanded} aria-controls={panelId} onClick={onToggle} className="flex w-full min-w-0 items-center gap-3 text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
@@ -77,7 +79,7 @@ function TopicCard({ topic, nextItemId, band, canAttach, expanded, onToggle }: {
           {topic.masteryPercent !== null && <span className="ds-pill" data-testid="topic-mastery">Mastery {Math.round(topic.masteryPercent)}%<MeasuredTag>Measured</MeasuredTag></span>}</span></span>
       <ChevronDown aria-hidden="true" className={cn('size-5 shrink-0 motion-safe:transition-transform', expanded && 'rotate-180')} />
     </button>
-    {expanded && <TopicPanel id={panelId} topic={topic} nextItemId={nextItemId} band={band} canAttach={canAttach} />}
+    {expanded && <TopicPanel id={panelId} topic={topic} nextItemId={nextItemId} band={band} canAttach={canAttach} planId={planId} />}
   </li>
 }
 
@@ -90,7 +92,7 @@ function PhaseList({ detail, band, initialOpen }: { detail: PlanDetail; band: Le
     {detail.phases.length === 0 && <p className="text-muted-foreground">No steps have been added to this plan yet.</p>}
     {[...detail.phases].sort((a, b) => a.ordinal - b.ordinal).map((phase, index) => <div key={phase.id} className="space-y-3" data-testid="phase">
       <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="break-words">{levels ? `Level ${index + 1}: ` : ''}{phase.title}</h3>{phase.progress.total > 0 && <div className="w-48 max-w-full"><ProgressBar label="Done" value={phase.progress.done} max={phase.progress.total} /></div>}</div>
-      <ul className="space-y-3">{phase.topics.map(topic => <TopicCard key={topic.id} topic={topic} nextItemId={detail.nextItemId} band={band} canAttach={detail.permissions.canAttachMaterial} expanded={levels || open.has(topic.id)} onToggle={() => toggle(topic.id)} />)}</ul>
+      <ul className="space-y-3">{phase.topics.map(topic => <TopicCard key={topic.id} topic={topic} nextItemId={detail.nextItemId} band={band} canAttach={detail.permissions.canAttachMaterial} expanded={levels || open.has(topic.id)} onToggle={() => toggle(topic.id)} planId={detail.plan.id} />)}</ul>
     </div>)}
   </section>
 }

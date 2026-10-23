@@ -22,7 +22,7 @@ interface PlansListViewProps {
 }
 
 export function PlansListView({ initialPlans }: PlansListViewProps) {
-  const [plans, setPlans] = useState(initialPlans)
+  const [plans] = useState(initialPlans)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<PlanStatus | 'ALL'>('ALL')
 

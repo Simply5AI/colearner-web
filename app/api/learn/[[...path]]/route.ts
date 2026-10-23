@@ -20,8 +20,15 @@ const coReads = `co/(?:context|conversations|conversations/${resource}|conversat
 const coWrites = `co/(?:conversations|conversations/${resource}/turns|conversations/${resource}/turns/${resource}/(?:retry|cancel))`
 const homeworkReads = `homework/sessions|homework/sessions/${resource}`
 const homeworkWrites = `homework/(?:sessions|sessions/${resource}/(?:restatement|steps|hint|final|final-phase|finish|abandon|retry))`
-const reads = new RegExp(`^(?:home|overview|link-status|plans/${resource}|lessons/${resource}|${practiceReads}|${coReads}|${homeworkReads})$`)
-const writes = new RegExp(`^(?:enrollments/join|lessons|lessons/${resource}/(?:check|complete|retry|cancel|notes)|${practiceWrites}|${coWrites}|${homeworkWrites})$`)
+/** B11 teach-back and progress. CSV is the one non-JSON read. No worker or internal route is forwarded. */
+const teachReads = `teach/context|teach/sessions/${resource}|teach/sessions/${resource}/turns/${resource}`
+const teachWrites = `teach/(?:sessions|sessions/${resource}/turns)`
+const progressReads = `progress|progress/export\\.csv`
+/** B12 teacher lessons: exactly these two routes (read a published teacher lesson, check one answer). */
+const teacherLessonRead = `plans/${resource}/topics/${resource}/teacher-lesson`
+const teacherLessonCheck = `plans/${resource}/topics/${resource}/teacher-lesson/check`
+const reads = new RegExp(`^(?:home|overview|link-status|plans/${resource}|${teacherLessonRead}|lessons/${resource}|${practiceReads}|${coReads}|${homeworkReads}|${teachReads}|${progressReads})$`)
+const writes = new RegExp(`^(?:enrollments/join|${teacherLessonCheck}|lessons|lessons/${resource}/(?:check|complete|retry|cancel|notes)|${practiceWrites}|${coWrites}|${homeworkWrites}|${teachWrites})$`)
 /** PUTs: the B08 lesson progress and the B10 homework problem (replaced in CAPTURE). A lesson note is the only DELETE. */
 const puts = new RegExp(`^(?:lessons/${resource}/progress|homework/sessions/${resource}/problem)$`)
 const deletes = new RegExp(`^lessons/${resource}/notes/${resource}$`)
@@ -35,6 +42,7 @@ const queryKeys: Record<string, Set<string> | undefined> = {
   'co/context': new Set(['lessonId', 'materialId', 'stepIndex']),
   'co/conversations': new Set(['cursor', 'limit']),
   'homework/sessions': new Set(['cursor', 'limit']),
+  'teach/context': new Set(['practiceSessionId', 'materialId']),
 }
 
 /** Transport only. The product API rechecks membership, learner, plan ownership, age and policy. */
@@ -50,7 +58,8 @@ async function forward(request: NextRequest, context: Context) {
   if (!token || (child === undefined && !session?.user?.id)) return NextResponse.json({ message: 'Authentication required.' }, { status: 401, headers: { 'Cache-Control': 'no-store' } })
   const membership = child === undefined ? jar.get('colearner-school-membership')?.value : undefined
   if (membership && !/^[a-f0-9-]{36}$/i.test(membership)) return NextResponse.json({ message: 'Choose a current school membership again.' }, { status: 403, headers: { 'Cache-Control': 'no-store' } })
-  const headers: Record<string, string> = { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+  const csv = path === 'progress/export.csv'
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}`, Accept: csv ? 'text/csv' : 'application/json' }
   if (request.method === 'POST' || request.method === 'PUT') headers['Content-Type'] = request.headers.get('content-type') ?? 'application/json'
   if (membership) headers['X-School-Membership-Id'] = membership
   const query = new URLSearchParams()
@@ -60,7 +69,11 @@ async function forward(request: NextRequest, context: Context) {
     const init: RequestInit = { method: request.method, headers, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(30000) }
     if (request.method === 'POST' || request.method === 'PUT') init.body = await request.text()
     const response = await fetch(`${platformApiBaseUrl()}/learn/${path}${query.size > 0 ? `?${query}` : ''}`, init)
-    return new Response(response.body, { status: response.status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } })
+    const upstreamType = response.headers.get('content-type')
+    const contentType = csv && response.ok ? (upstreamType?.includes('csv') ? upstreamType : 'text/csv; charset=utf-8') : 'application/json'
+    const responseHeaders: Record<string, string> = { 'Content-Type': contentType, 'Cache-Control': 'no-store' }
+    if (csv && response.ok) responseHeaders['Content-Disposition'] = 'attachment; filename="progress.csv"'
+    return new Response(response.body, { status: response.status, headers: responseHeaders })
   } catch { return NextResponse.json({ message: 'Learning services are unavailable. Please try again.' }, { status: 503, headers: { 'Cache-Control': 'no-store' } }) }
 }
 export const GET = forward

@@ -1,19 +1,19 @@
 'use client'
 
-import { ErrorFallback } from '@/components/shared/ErrorFallback'
+import { TeachingFailurePanel } from '@/components/teacher/dashboard/failure-panel'
 
 export default function TeacherOnboardingError({
-  error,
   reset,
 }: {
   error: Error & { digest?: string }
   reset: () => void
 }) {
   return (
-    <ErrorFallback
-      title="Onboarding unavailable"
-      message={error.message}
+    <TeachingFailurePanel
+      kind="retry"
+      message="Onboarding could not be shown. Anything you saved is kept."
       onRetry={reset}
+      testId="t8-route-error"
     />
   )
 }

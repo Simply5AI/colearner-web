@@ -1,5 +1,6 @@
 'use client'
 import { Card, EmptyState } from '@/components/design-system'
+import Link from 'next/link'
 import { useState } from 'react'
 import {
   type Paged,
@@ -22,8 +23,16 @@ export function ClassroomScreen({ schoolId }: { schoolId: string }) {
     <div className="space-y-8">
       <SchoolHeading
         title="My school teaching assignments"
-        description="These class and subject assignments are verified by your selected school membership. School lesson authoring and learner workflows follow in the teacher rollout."
+        description="These class and subject assignments are verified by your selected school membership. Plan and lesson authoring happens in your teacher workspace."
       />
+      <div className="flex flex-wrap gap-3">
+        <Link href="/teacher/dashboard" className="ds-pill font-semibold underline-offset-2 hover:underline">
+          Open teacher dashboard
+        </Link>
+        <Link href="/teacher/plans" className="ds-pill font-semibold underline-offset-2 hover:underline">
+          Open my plans
+        </Link>
+      </div>
       <QueryState
         pending={assignments.isPending}
         error={assignments.error}
