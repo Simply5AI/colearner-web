@@ -93,7 +93,6 @@ export function AdminUsersView({ data, query, currentAdminId }: AdminUsersViewPr
   const [isMutating, setIsMutating] = useState(false)
   const didMountSearch = useRef(false)
 
-  const currentIds = useMemo(() => data.items.map((user) => user.id), [data.items])
   const selectableCurrentIds = useMemo(
     () => data.items.filter((user) => user.id !== currentAdminId).map((user) => user.id),
     [currentAdminId, data.items]

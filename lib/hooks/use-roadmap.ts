@@ -20,7 +20,7 @@ import type { CreateRoadmapInput } from '@/lib/types'
 
 function useAuthHeaders() {
   const { data: session } = useSession()
-  const token = (session as any)?.accessToken as string | undefined
+  const token = (session as { accessToken?: string } | null)?.accessToken
   return token ? { Authorization: `Bearer ${token}` } : null
 }
 

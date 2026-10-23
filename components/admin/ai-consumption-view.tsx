@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Activity,
   AlertTriangle,
-  Coins,
   Download,
   ExternalLink,
   RefreshCw,

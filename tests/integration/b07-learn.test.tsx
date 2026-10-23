@@ -12,7 +12,16 @@ import { LearnHomeScreen, LearnHomeView } from '@/components/learn/learn-home'
 import { LearnOverviewScreen, LearnOverviewView } from '@/components/learn/learn-overview'
 import { LearnPlanScreen, PlanDetailView } from '@/components/learn/learn-plan'
 import { LearnBrowserHarness } from '@/components/learn/dev/learn-browser-harness'
-import { homeFixture, overviewFixture, planFixture } from '@/components/learn/dev/learn-fixtures'
+import { homeFixture, overviewFixture as rawOverviewFixture, planFixture as rawPlanFixture } from '@/components/learn/dev/learn-fixtures'
+
+// The fixtures derive exam dates from Date.now(). Build them at a fixed instant (noon UTC, so the calendar date
+// is the same in every timezone from UTC-11 to UTC+11) so the asserted exam date never depends on the run day or zone.
+const pinned = <A extends unknown[], R>(make: (...args: A) => R) => (...args: A): R => {
+  const spy = vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-21T12:00:00Z'))
+  try { return make(...args) } finally { spy.mockRestore() }
+}
+const overviewFixture = pinned(rawOverviewFixture)
+const planFixture = pinned(rawPlanFixture)
 import { dueLabel } from '@/components/learn/learn-format'
 import { matchesNavItem, studentNavigation } from '@/components/roles/role-config'
 
@@ -192,7 +201,7 @@ describe('L2 learn: subjects and plans', () => {
     overviewView(overviewFixture('teens'))
     const exam = screen.getAllByTestId('plan-card').find(card => card.textContent?.includes('Exam prep: Board exams'))!
     expect(exam).toHaveTextContent('Next: Algebra revision')
-    expect(exam).toHaveTextContent(/Exam \d/)
+    expect(exam).toHaveTextContent(/Exam (?:12 Mar 2027|Mar 12, 2027)/)
   })
   it('shows the server reason instead of controls it does not allow', () => {
     overviewView({ ...overviewFixture('tweens'), canJoinWithCode: false, canCreatePersonalPlan: false, unavailableReason: 'Your school has not turned on joining with a code yet.' })
@@ -376,7 +385,7 @@ describe('L3 plan detail', () => {
     expect(screen.getByTestId('weak-concepts')).toHaveTextContent('Measured from your practice')
     expect(screen.getAllByTestId('plan-material')).toHaveLength(2)
     expect(screen.getByRole('link', { name: 'Class notes: indicators' })).toHaveAttribute('href', '/learn/library/m-1')
-    expect(screen.getByText(/Exam \d/)).toBeInTheDocument()
+    expect(screen.getByText(/Exam (?:12 Mar 2027|Mar 12, 2027)/)).toBeInTheDocument()
   })
   it('hides weak concepts when empty (measured mastery does not exist yet)', () => {
     show('teens', 'default', detail => ({ ...detail, weakConcepts: [] }))

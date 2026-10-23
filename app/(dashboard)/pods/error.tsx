@@ -3,7 +3,7 @@
 import { ErrorFallback } from '@/components/shared/ErrorFallback'
 
 export default function PodsError({
-  error,
+  error: _error,
   reset,
 }: {
   error: Error & { digest?: string }

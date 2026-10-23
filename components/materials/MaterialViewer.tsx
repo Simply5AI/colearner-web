@@ -59,7 +59,6 @@ function ExternalLinkCard({ material }: { material: TeacherMaterial }) {
       className="block overflow-hidden rounded-lg border transition-colors hover:border-brand-teal"
     >
       {material.externalImageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={material.externalImageUrl}
           alt={material.externalTitle ?? material.title}

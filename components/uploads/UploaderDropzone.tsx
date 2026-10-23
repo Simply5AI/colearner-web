@@ -1,8 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { AlertCircle, CheckCircle2, RefreshCw, Upload } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { AlertCircle, CheckCircle2, Upload } from 'lucide-react'
 import { ProgressBar } from '@/components/shared/ProgressBar'
 import { cn } from '@/lib/utils'
 import type { CompletedUpload, MaterialType, UploadProgress } from '@/lib/types/teacher'

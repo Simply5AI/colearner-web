@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle2, Circle, Award, TrendingUp, AlertTriangle, Compass } from 'lucide-react'
+import { CheckCircle2, Award, TrendingUp, AlertTriangle, Compass } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import type { ConceptMastery } from '@/lib/types'

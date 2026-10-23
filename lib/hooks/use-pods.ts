@@ -38,13 +38,6 @@ import type {
   CreateCommentInput,
 } from '@/lib/types/pods'
 
-function useAuthHeaders() {
-  const { data: session } = useSession()
-  const token = session?.accessToken
-  if (!token) return null
-  return { Authorization: `Bearer ${token}` }
-}
-
 // ---- Queries ----
 
 export function useUserPods(initialData?: Pod[]) {

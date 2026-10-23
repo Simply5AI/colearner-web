@@ -9,7 +9,6 @@ import { format, formatDistanceToNow } from 'date-fns'
 import {
   Archive,
   ArrowLeft,
-  Building2,
   ChevronDown,
   MoreHorizontal,
   Plus,

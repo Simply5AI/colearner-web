@@ -11,7 +11,6 @@ import { AdminContentLibraryView } from '@/components/admin/admin-content-librar
 export const metadata: Metadata = { title: 'Content Library — Admin' }
 
 type PageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> }
-type LibraryTab = 'concepts' | 'questions'
 
 const SORTS = new Set<AdminLibrarySort>(['created_desc', 'created_asc', 'title_asc', 'title_desc'])
 

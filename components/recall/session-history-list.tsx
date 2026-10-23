@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Clock, CheckCircle2, XCircle, AlertCircle, BookOpen, Play } from 'lucide-react'
+import { Clock, CheckCircle2, AlertCircle, BookOpen, Play } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { RecallSessionHistoryItem } from '@/lib/types'
