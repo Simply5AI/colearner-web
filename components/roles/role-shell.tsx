@@ -6,8 +6,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Dialog } from '@base-ui/react/dialog'
 import { Menu, X } from 'lucide-react'
-import { BrandMark, CoCharacter, FoundationErrorBoundary } from '@/components/design-system'
+import { BrandMark, CoCharacter, FoundationErrorBoundary, ThemeToggle } from '@/components/design-system'
 import type { AgeBand } from '@/components/design-system'
+import styles from './student-shell.module.css'
 import { cn } from '@/lib/utils'
 import { matchesNavItem, workspaceLabels } from './role-config'
 import type { RoleNavGroup, RoleNavItem, WorkspaceRole } from './role-config'
@@ -44,9 +45,9 @@ export function RoleNavigation({ groups, pathname, label, onNavigate, band = 'ad
             <Link href={item.href} onClick={onNavigate} aria-current={active ? 'page' : undefined}
               className={cn('flex min-h-[var(--ds-target,44px)] items-center gap-3 rounded-[var(--radius,14px)] px-3 py-2.5 text-[length:var(--ds-small,14px)] font-semibold motion-safe:transition-colors', focusClasses,
                 kids && 'min-h-24 flex-col justify-center text-center text-[length:var(--ds-body,22px)]',
-                active ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-sidebar-accent')}
+                active ? 'bg-secondary text-primary' : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground')}
             >
-              <Icon aria-hidden="true" className={cn('size-5 shrink-0', kids && 'size-8')} />
+              <Icon strokeWidth={1.8} aria-hidden="true" className={cn('size-5 shrink-0', kids && 'size-8')} />
               <span className="min-w-0 break-words">{item.label}</span>
               {item.badge !== undefined && <span className="ms-auto rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground"><span className="sr-only">Due: </span>{item.badge}</span>}
             </Link>
@@ -97,7 +98,7 @@ export function RoleShell({ role, children, navigation, homeHref, band = 'adults
   const closeMenu = () => setMenuOpen(false)
   const skipToContent = () => document.getElementById(mainId)?.focus()
 
-  return <div data-role={role} data-age-band={band} className="min-h-dvh bg-background text-foreground" style={quickNavigationHeight === undefined ? undefined : { '--role-quick-nav-inset': `${quickNavigationHeight}px` } as CSSProperties}>
+  return <div data-role={role} data-age-band={band} className={cn("min-h-dvh bg-background text-foreground", role === 'student' && styles.student)} style={quickNavigationHeight === undefined ? undefined : { '--role-quick-nav-inset': `${quickNavigationHeight}px` } as CSSProperties}>
     <a href={`#${mainId}`} onClick={skipToContent} className={cn('fixed start-4 top-3 z-[100] inline-flex min-h-[var(--ds-target,44px)] min-w-[var(--ds-target,44px)] -translate-y-24 items-center justify-center rounded-xl bg-foreground px-5 py-3 font-semibold text-background focus:translate-y-0', focusClasses)}>Skip to content</a>
     <div className="flex min-h-dvh">
       {sidebar && <aside aria-label={`${workspaceLabel} sidebar`} className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col overflow-y-auto border-e border-sidebar-border bg-sidebar lg:flex">
@@ -130,8 +131,9 @@ export function RoleShell({ role, children, navigation, homeHref, band = 'adults
             </Dialog.Portal>
           </Dialog.Root>
           <Link href={homeHref} aria-label="CoLearner home" className={cn('inline-flex min-h-[var(--ds-target,44px)] min-w-[var(--ds-target,44px)] items-center justify-center rounded-lg', sidebar && 'lg:hidden', focusClasses)}><BrandMark compact={kids} /></Link>
-          <div className="min-w-0 flex-1"><p className="break-words text-sm font-semibold">{workspaceLabel}</p>{identity && <p className="break-words text-xs text-muted-foreground">{identity}</p>}</div>
+          <div className={cn("min-w-0 flex-1", role === 'student' && styles.identity)}><p className="break-words text-sm font-semibold">{workspaceLabel}</p>{identity && <p className="break-words text-xs text-muted-foreground">{identity}</p>}</div>
           {!sidebar && <div className="hidden shrink-0 md:block"><CoCharacter band={band} state="idle" size={kids ? 72 : band === 'tweens' ? 48 : 28} decorative /></div>}
+          {role === 'student' && <ThemeToggle />}
           {accountActions && <div className="flex shrink-0 items-center gap-2">{accountActions}</div>}
           {!sidebar && <div className="hidden w-full border-t border-border pt-3 lg:block"><RoleNavigation groups={navigation.slice(0, 1)} pathname={pathname} label="Primary navigation" band={band} horizontal /></div>}
         </header>
@@ -142,7 +144,7 @@ export function RoleShell({ role, children, navigation, homeHref, band = 'adults
       {bottomItems.map((item) => {
         const active = matchesNavItem(pathname, item)
         const Icon = item.icon
-        return <Link key={item.href} href={item.href} aria-current={active ? 'page' : undefined} className={cn('flex min-h-[var(--ds-target,44px)] min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-3 text-center text-xs font-semibold', focusClasses, kids && 'min-h-20 text-[length:var(--ds-caption,15px)]', active ? 'bg-primary/10 text-primary' : 'text-foreground')}><Icon aria-hidden="true" className={cn('size-5', kids && 'size-7')} /><span className="break-words">{item.label}</span></Link>
+        return <Link key={item.href} href={item.href} aria-current={active ? 'page' : undefined} className={cn('flex min-h-[var(--ds-target,44px)] min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-3 text-center text-xs font-semibold', focusClasses, kids && 'min-h-20 text-[length:var(--ds-caption,15px)]', active ? 'bg-primary/10 text-primary' : 'text-foreground')}><Icon strokeWidth={1.8} aria-hidden="true" className={cn('size-5', kids && 'size-7')} /><span className="break-words">{item.label}</span></Link>
       })}
     </nav>}
   </div>

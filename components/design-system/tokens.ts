@@ -1,4 +1,4 @@
-/** Platform-neutral values from Design System.dc.html. Native clients can reuse this data. */
+/** Shared palette and age scales. Keep colours aligned with app/globals.css. */
 export const ageBands = ['kids', 'tweens', 'teens', 'adults'] as const
 export type AgeBand = (typeof ageBands)[number]
 

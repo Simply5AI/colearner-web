@@ -1,41 +1,84 @@
 import Link from 'next/link'
+import { ArrowRight, BookOpen, Check, ChevronDown, FileText, GraduationCap, Lightbulb, MessageCircle, ShieldCheck, Users } from 'lucide-react'
 import { BrandMark, CoCharacter, ThemeToggle } from '@/components/design-system'
+import { AudienceTabs } from './audience-tabs'
+import { LandingMotion } from './landing-motion'
 import { AgePreviews } from './age-previews'
+import { LearningPreview } from './learning-preview'
+import styles from './landing.module.css'
 
 const steps = [
-  { title: 'Import', state: 'reading' as const, text: 'Start with reviewed curriculum or material shared by your school and teacher.' },
-  { title: 'Learn', state: 'explaining' as const, text: 'Work through clear explanations that suit the learner’s age and topic.' },
-  { title: 'Practice', state: 'hinting' as const, text: 'Try questions, use hints and build understanding through active recall.' },
-  { title: 'Review', state: 'celebrating' as const, text: 'Return to what matters with spaced review and visible learning progress.' },
+  { title: 'Start with your material', icon: FileText, text: 'Bring your notes or a document, or open a lesson shared by your teacher.' },
+  { title: 'Make the idea click', icon: Lightbulb, text: 'Learn one concept at a time, with clear explanations and room to ask Co a question.' },
+  { title: 'Put it into practice', icon: BookOpen, text: 'Try a question, learn from the feedback, then explain the idea in your own words.' },
+  { title: 'Know what comes next', icon: ArrowRight, text: 'Return to your reviews and use your progress to choose what to work on next.' },
 ]
 const faq = [
-  { question: 'Who is CoLearner being built for?', answer: 'Schools, with student, parent, teacher and school administrator experiences. The initial curriculum scope is CBSE and ICSE Classes 1–10 in English.' },
-  { question: 'Can our school start using every feature today?', answer: 'The full redesign is in development. This page explains the product direction. Your school administrator can confirm which capabilities are available in your school’s deployment.' },
-  { question: 'How will parents stay involved?', answer: 'The plan includes guardian consent, learning controls, full authorized chat access for children under 14, and summaries and safety alerts for teens. School and family policies will use the stricter setting. Availability will follow the school rollout.' },
-  { question: 'Which devices are planned?', answer: 'The first release targets responsive web on desktop, tablet and phone. Native mobile applications are planned after the functional web application is ready.' },
-  { question: 'What about pricing and other languages?', answer: 'School pricing and commercial plans will be decided later. English comes first; Hindi, senior classes and the ISC track are later scope.' },
+  { question: 'Who is CoLearner for?', answer: 'CoLearner brings students, parents and teachers together around school learning. The initial curriculum focus is CBSE and ICSE Classes 1–10 in English, with experiences shaped for different ages.' },
+  { question: 'How do I get started?', answer: 'If you already have access, log in with your CoLearner account. For school invitations, available lessons or account help, contact your school administrator. Feature availability depends on your school’s rollout.' },
+  { question: 'Does Co just give students the answer?', answer: 'The learning experience is designed around explanations, hints, practice and teach-back. Co is an AI helper, so its responses can make mistakes. Students should check important information against their learning material and ask a teacher when unsure.' },
+  { question: 'How do parents stay involved?', answer: 'Protected child learning uses guardian consent and school policies. Authorized parents can view full chats for children under 14; teen visibility uses summaries and safety alerts. Where school and family settings differ, the stricter setting applies. Available controls depend on the school rollout.' },
+  { question: 'Can we use it on a phone or tablet?', answer: 'The web experience is designed for desktop, tablet and phone. Native mobile apps are a later part of the roadmap.' },
+  { question: 'What about pricing and other languages?', answer: 'School pricing and commercial plans will follow product development. English comes first, with Hindi, senior classes and the ISC track planned for later.' },
 ]
-const actionClass = 'inline-flex min-h-12 items-center justify-center rounded-full px-6 py-3 text-base font-bold'
+
 export function PublicHeader() {
-  return <header className="border-b bg-background"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-8"><Link href="/" className="rounded-lg" aria-label="CoLearner home"><BrandMark /></Link><nav aria-label="Public navigation" className="order-3 flex w-full flex-wrap gap-x-5 gap-y-1 text-sm font-semibold text-muted-foreground md:order-none md:w-auto"><a href="/#how-it-works" className="py-3">How it works</a><a href="/#families" className="py-3">For families</a><a href="/#schools" className="py-3">For schools</a><a href="/#research" className="py-3">For researchers</a></nav><div className="flex items-center gap-2"><ThemeToggle /><Link href="/login" className="inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-bold">Log in</Link></div></div></header>
+  return <header className={styles.header}><div className={styles.headerInner}>
+    <Link href="/" className={styles.logoLink} aria-label="CoLearner home"><BrandMark /></Link>
+    <nav aria-label="Public navigation" className={styles.navigation}><a href="/#how-it-works">How it works</a><a href="/#for-you">Made for you</a><a href="/#schools">For schools</a></nav>
+    <div className={styles.headerActions}><ThemeToggle /><Link href="/login" className={styles.loginLink}>Log in <ArrowRight size={15} aria-hidden="true" /></Link></div>
+  </div></header>
 }
 export function PublicFooter() {
-  return <footer className="border-t bg-muted"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6 px-5 py-8 sm:px-8"><div><BrandMark /><p className="mt-3 text-sm text-muted-foreground">Curiosity has a companion.</p></div><nav aria-label="Footer" className="flex flex-wrap gap-5 text-sm"><Link href="/#schools" className="py-3">About</Link><Link href="/privacy" className="py-3">Privacy</Link><Link href="/terms" className="py-3">Terms</Link><Link href="/contact" className="py-3">Contact</Link></nav><p className="text-sm text-muted-foreground" lang="en">English · Hindi planned</p></div></footer>
+  return <footer className={styles.footer}><div className={styles.footerInner}>
+    <div><BrandMark /><p>Curiosity has a companion.</p></div>
+    <nav aria-label="Footer"><Link href="/#schools">About</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/contact">Contact</Link></nav>
+    <p lang="en">Made for learning, together.<br /><span>English · Hindi planned</span></p>
+  </div></footer>
 }
 export function LandingPage() {
-  return <div className="bg-background text-foreground">
+  return <div className={styles.page}>
     <a href="#main-content" className="sr-only z-50 rounded-lg bg-background p-3 focus:not-sr-only focus:absolute">Skip to content</a><PublicHeader />
-    <main id="main-content" className="mx-auto max-w-7xl space-y-20 px-5 py-8 sm:px-8 sm:py-12">
-      <section className="relative overflow-hidden rounded-[2rem] bg-brand-purple-bg p-7 sm:p-12 lg:rounded-[2.5rem] lg:p-16" aria-labelledby="hero-title">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-center"><div className="flex-1"><p className="mb-6 inline-block rounded-full bg-card px-4 py-2 text-sm font-semibold">School-first learning · CBSE & ICSE</p><h1 id="hero-title" className="max-w-[12ch] font-[family-name:var(--font-display)] text-5xl font-extrabold leading-[1.03] tracking-tight sm:text-6xl lg:text-7xl">Bring anything.<br />Learn it with <span className="text-primary">Co.</span></h1><p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">A friendly learning companion for school lessons, practice and review — shaped around the learner.</p><div className="mt-8 flex flex-wrap gap-3"><Link href="/login" className={`${actionClass} bg-primary text-primary-foreground`}>Continue learning</Link><a href="#schools" className={`${actionClass} border bg-card`}>Explore for your school</a></div><p className="mt-5 text-sm text-muted-foreground">Full redesign in development. Feature access depends on your school’s deployment.</p></div><div className="flex flex-1 justify-center"><CoCharacter band="kids" state="waving" size={320} decorative className="max-w-full" /></div></div>
-        <div className="mt-10 grid gap-4 md:grid-cols-3">{['Reviewed textbook material', 'Teacher-shared lessons', 'Curriculum-aligned practice'].map((title) => <div key={title} className="rounded-2xl border bg-card p-5"><p className="text-sm font-semibold text-muted-foreground">School learning direction</p><h2 className="mt-2 text-lg font-bold">{title}</h2></div>)}</div>
+    <main id="main-content"><LandingMotion>
+      <section className={styles.hero} aria-labelledby="hero-title">
+        <div className={styles.heroCopy}>
+          <p className={styles.heroBadge}><span />A little curiosity goes a long way</p>
+          <h1 id="hero-title">Less memorising.<br /><span>More understanding.</span></h1>
+          <p className={styles.heroDescription}>Meet Co, your AI study companion. Turn school material into clear lessons, thoughtful questions and practice that helps you understand.</p>
+          <div className={styles.actions}><Link href="/login" className={styles.primaryAction}>Continue learning <ArrowRight size={18} aria-hidden="true" /></Link><a href="#how-it-works" className={styles.secondaryAction}>See how it works <ChevronDown size={17} aria-hidden="true" /></a></div>
+          <p className={styles.rolloutNote}>School rollout in progress. Features vary by school.</p>
+          <div className={styles.heroProof}><span><BookOpen size={17} aria-hidden="true" />Your learning material</span><span><ShieldCheck size={17} aria-hidden="true" />Guided by school & family</span></div>
+        </div>
+        <LearningPreview />
       </section>
-      <section id="how-it-works" className="scroll-mt-6 space-y-7" aria-labelledby="loop-title"><div><p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">How it works</p><h2 id="loop-title" className="mt-3 font-[family-name:var(--font-display)] text-3xl font-extrabold sm:text-4xl">One loop. A little more understanding.</h2><p className="mt-3 text-muted-foreground">The learning journey the redesign is building.</p></div><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{steps.map((step, index) => <article key={step.title} className="rounded-3xl border bg-muted p-6"><div className="flex items-start justify-between"><span className="text-4xl font-extrabold text-primary">0{index + 1}</span><CoCharacter band="kids" state={step.state} size={80} decorative /></div><h3 className="mt-4 text-2xl font-bold">{step.title}</h3><p className="mt-3 text-muted-foreground">{step.text}</p></article>)}</div></section>
-      <section className="space-y-7" aria-labelledby="age-title"><div><p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">One Co, every age</p><h2 id="age-title" className="mt-3 font-[family-name:var(--font-display)] text-3xl font-extrabold sm:text-4xl">A different pace. The same curiosity.</h2><p className="mt-3 text-muted-foreground">Explore the visual direction. These examples contain no learner data.</p></div><AgePreviews /></section>
-      <section id="families" className="grid scroll-mt-6 gap-8 lg:grid-cols-2" aria-labelledby="family-title"><div><p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">For families</p><h2 id="family-title" className="mt-3 font-[family-name:var(--font-display)] text-3xl font-extrabold sm:text-4xl">A learning partner for your child.<br />A clear view for you.</h2><p className="mt-5 text-lg text-muted-foreground">Guardian consent and school learning policies are part of the school-first plan. Family setup will become available through the school rollout.</p><Link href="/privacy" className="mt-5 inline-flex min-h-12 items-center font-bold text-primary">Read the privacy and consent direction →</Link></div><div className="grid gap-4 sm:grid-cols-2">{[['Consent before child learning', 'Guardian-approved access is planned before protected child learning begins.'], ['Age-aware parent visibility', 'Full authorized chats under 14; summaries and safety alerts for teens.'], ['School and family controls', 'The stricter setting applies when preferences differ.'], ['Guidance, then practice', 'The design encourages questions, hints and independent understanding.']].map(([title, text]) => <article key={title} className="rounded-3xl border p-6"><h3 className="text-lg font-bold">{title}</h3><p className="mt-3 text-sm text-muted-foreground">{text}</p></article>)}</div></section>
-      <section id="schools" className="scroll-mt-6 rounded-[2rem] bg-muted p-7 sm:p-10" aria-labelledby="school-title"><p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">For schools</p><h2 id="school-title" className="mt-3 font-[family-name:var(--font-display)] text-3xl font-extrabold sm:text-4xl">One school. Connected learning roles.</h2><p className="mt-5 max-w-3xl text-lg text-muted-foreground">Student, parent, teacher and school administrator experiences are planned around each school’s workspace. A central curriculum library and reviewed teacher uploads will support CBSE and ICSE Classes 1–10.</p><p className="mt-4 text-muted-foreground">School pricing and commercial plans will follow product development.</p><Link href="/contact" className={`${actionClass} mt-6 bg-primary text-primary-foreground`}>School access and support</Link></section>
-      <section id="research" className="grid scroll-mt-6 gap-7 rounded-[2rem] border p-7 sm:p-10 md:grid-cols-[1fr_auto]" aria-labelledby="research-title"><div><p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Researchers & self-learners · later track</p><h2 id="research-title" className="mt-3 font-[family-name:var(--font-display)] text-3xl font-extrabold">Read deeply. Keep what matters.</h2><p className="mt-5 max-w-2xl text-muted-foreground">Source-grounded paper summaries, questions with citations and spaced review remain in the product roadmap. The current rollout prioritizes the school experience.</p></div><CoCharacter band="kids" state="reading" size={160} decorative /></section>
-      <section className="space-y-6" aria-labelledby="faq-title"><h2 id="faq-title" className="font-[family-name:var(--font-display)] text-3xl font-extrabold sm:text-4xl">A few good questions.</h2><div className="divide-y rounded-3xl border px-6">{faq.map((item) => <details key={item.question} className="group py-5"><summary className="min-h-11 cursor-pointer py-2 text-lg font-semibold">{item.question}</summary><p className="mt-3 max-w-4xl pb-2 leading-relaxed text-muted-foreground">{item.answer}</p></details>)}</div></section>
-    </main><PublicFooter />
+      <div className={styles.curriculumStrip}><p>Built around the school day.<br /><strong>Ready for the questions after it.</strong></p><div><span>CBSE & ICSE focus</span><span>Classes 1–10</span><span>Students, families & teachers</span></div></div>
+      <section data-reveal="visible" id="how-it-works" className={styles.section} aria-labelledby="loop-title">
+        <div className={styles.sectionHeading}><p className={styles.eyebrow}>FROM “I DON’T GET IT” TO “I’VE GOT THIS”</p><h2 id="loop-title">Small steps.<br />Real moments of understanding.</h2><p>A clear path through a topic, with Co beside you when you need a little help.</p></div>
+        <div className={styles.steps}>{steps.map(({ title, icon: Icon, text }, i) => <article key={title}><div className={styles.stepTop}><span className={styles.iconTile}><Icon size={22} strokeWidth={1.7} aria-hidden="true" /></span><span className={styles.stepNumber}>0{i + 1}</span></div><h3>{title}</h3><p>{text}</p></article>)}</div>
+      </section>
+      <section data-reveal="visible" id="for-you" className={`${styles.section} ${styles.audienceSection}`} aria-labelledby="audience-title">
+        <div className={styles.sectionHeading}><p className={styles.eyebrow}>BETTER TOGETHER</p><h2 id="audience-title">One learning journey.<br />Everyone has a part.</h2><p>For the questions students ask, the care parents give, and the lessons teachers bring to life.</p></div>
+        <AudienceTabs />
+      </section>
+      <section data-reveal="visible" className={`${styles.section} ${styles.ageSection}`} aria-labelledby="age-title">
+        <div className={styles.sectionHeading}><p className={styles.eyebrow}>ROOM TO GROW</p><h2 id="age-title">Same companion.<br />A different pace for every age.</h2><p>More guidance when they’re starting. More independence as they grow.</p></div>
+        <AgePreviews />
+      </section>
+      <section data-reveal="visible" id="families" className={`${styles.section} ${styles.familySection}`} aria-labelledby="family-title">
+        <div className={styles.familyIntro}><p className={styles.eyebrow}>FOR FAMILIES</p><h2 id="family-title">Their curiosity.<br />Your guiding hand.</h2><p>Give your child space to explore while staying involved in how they learn. Co supports the conversation between learners, parents and teachers.</p><Link href="/privacy" className={styles.textLink}>Explore privacy & consent <ArrowRight size={17} aria-hidden="true" /></Link><CoCharacter state="encouraging" size={112} decorative /></div>
+        <div className={styles.familyBenefits}>
+          {[{ icon: ShieldCheck, title: 'You’re part of the learning journey', text: 'Guardian consent and school policies shape access to protected child learning.' }, { icon: MessageCircle, title: 'Visibility that grows with them', text: 'Age-aware chat visibility helps parents stay involved while giving teens more independence.' }, { icon: Lightbulb, title: 'Help that builds understanding', text: 'Explanations, hints and teach-back encourage learners to work through an idea, not just copy an answer.' }].map(({ icon: Icon, title, text }) => <article key={title}><span className={styles.iconTile}><Icon size={21} strokeWidth={1.7} aria-hidden="true" /></span><div><h3>{title}</h3><p>{text}</p></div></article>)}
+        </div>
+      </section>
+      <section data-reveal="visible" id="schools" className={styles.schoolSection} aria-labelledby="school-title">
+        <div><p className={styles.eyebrow}>FOR SCHOOLS</p><h2 id="school-title">Keep the whole<br />learning team connected.</h2><p>Give teacher-shared plans and lessons a place in every student’s learning journey, with parent approvals and a shared school workspace.</p><Link href="/contact" className={styles.schoolAction}>School access & support <ArrowRight size={18} aria-hidden="true" /></Link></div>
+        <div className={styles.schoolRoles}>
+          {[{ icon: GraduationCap, title: 'Students', text: 'A clear next step in their learning.' }, { icon: BookOpen, title: 'Teachers', text: 'Plans and lessons to share with their class.' }, { icon: Users, title: 'Parents', text: 'Approvals and visibility appropriate to their child.' }].map(({ icon: Icon, title, text }) => <div key={title}><Icon size={23} strokeWidth={1.6} aria-hidden="true" /><div><h3>{title}</h3><p>{text}</p></div><Check size={17} aria-hidden="true" /></div>)}
+          <p className={styles.schoolNote}>Access and capabilities depend on your school’s rollout.</p>
+        </div>
+      </section>
+      <section data-reveal="visible" className={`${styles.section} ${styles.faqSection}`} aria-labelledby="faq-title"><div className={styles.sectionHeading}><p className={styles.eyebrow}>GOOD QUESTIONS</p><h2 id="faq-title">A little more<br />before you begin.</h2><p>Here’s what to know about learning with Co.</p></div><div className={styles.faq}>{faq.map(item => <details key={item.question}><summary>{item.question}<ChevronDown size={18} aria-hidden="true" /></summary><p>{item.answer}</p></details>)}</div></section>
+      <section data-reveal="visible" className={styles.closing} aria-labelledby="closing-title"><CoCharacter state="waving" size={88} decorative /><div><h2 id="closing-title">Bring your next question.</h2><p>There’s always a little more to discover.</p></div><Link href="/login" className={styles.primaryAction}>Learn with Co <ArrowRight size={18} aria-hidden="true" /></Link></section>
+    </LandingMotion></main><PublicFooter />
   </div>
 }

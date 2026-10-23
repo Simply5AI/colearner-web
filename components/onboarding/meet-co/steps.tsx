@@ -178,15 +178,16 @@ export function PersonaliseStep({ band, draft, patch, errors }: StepProps) {
   const theme = themeOf(draft.coTheme)
   const nickname = draft.coNickname?.trim()
   return <div className="space-y-6">
-    {band === 'kids' ? <StepHeading band={band} step="PERSONALISE" lines={kidsLines.personalise} /> : <StepHeading band={band} step="PERSONALISE" description="Choose Co’s colour and, if you like, a nickname." />}
+    {band === 'kids' ? <StepHeading band={band} step="PERSONALISE" lines={kidsLines.personalise} /> : <StepHeading band={band} step="PERSONALISE" description="Choose Co’s look and, if you like, a nickname." />}
     <div className="flex flex-wrap items-center gap-8">
-      <div style={{ filter: theme.filter }} data-testid="co-preview" data-co-theme={theme.key}><CoCharacter band={band} state="idle" size={band === 'kids' ? 180 : 130} label={`Co in ${theme.label}`} /></div>
+      <div data-testid="co-preview" data-co-theme={theme.key}><CoCharacter band={band} state="idle" variant={theme.variant} size={band === 'kids' ? 180 : 130} label={`Co in ${theme.label}`} /></div>
       <div className="min-w-0 flex-1 space-y-5">
         <fieldset className="space-y-3">
-          <legend className="sr-only">Co colour</legend>
-          <div role="radiogroup" aria-label="Co colour" className="flex flex-wrap gap-4">
-            {coThemes.map(item => <label key={item.key} title={item.label} className={`relative flex size-16 cursor-pointer items-center justify-center rounded-full has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-4 has-[:focus-visible]:outline-ring ${theme.key === item.key ? 'ring-4 ring-foreground ring-offset-4 ring-offset-background' : ''}`} style={{ background: item.swatch }}>
+          <legend className="sr-only">Co look</legend>
+          <div role="radiogroup" aria-label="Co look" className="flex flex-wrap gap-4">
+            {coThemes.map(item => <label key={item.key} title={item.label} className={`relative flex size-16 cursor-pointer items-center justify-center rounded-full has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-4 has-[:focus-visible]:outline-ring ${theme.key === item.key ? 'ring-4 ring-foreground ring-offset-4 ring-offset-background' : ''}`} style={{ background: `${item.swatch}20` }}>
               <input className="sr-only" type="radio" name="co-theme" checked={theme.key === item.key && draft.coTheme === item.key} onChange={() => patch({ coTheme: item.key })} aria-label={item.label} />
+              <CoCharacter variant={item.variant} size={52} decorative />
             </label>)}
           </div>
         </fieldset>

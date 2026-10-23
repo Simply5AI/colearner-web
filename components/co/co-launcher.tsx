@@ -1,7 +1,7 @@
 'use client'
 
 import { useId, useRef, useState, type RefObject } from 'react'
-import { MessageCircle } from 'lucide-react'
+import { CoAvatar } from '@/components/design-system'
 import { useLearnIdentity } from '@/components/learn/learn-common'
 import type { LearnBand } from '@/lib/api/learn'
 import { cn } from '@/lib/utils'
@@ -14,7 +14,7 @@ type Tuning = Pick<AskCoPanelProps, 'pollBaseMs' | 'slowAfterMs' | 'storage' | '
   defaultOpen?: boolean
 }
 
-const controlClass = (band: LearnBand) => cn('ds-button ds-button-secondary', band === 'kids' && 'min-h-[4.5rem] min-w-[4.5rem] rounded-full px-6 text-[length:var(--ds-h3)]')
+const controlClass = (band: LearnBand) => cn('ds-button ds-button-secondary co-launcher', band === 'kids' && 'min-h-[4.5rem] min-w-[4.5rem] rounded-full px-6 text-[length:var(--ds-h3)]')
 
 export interface AskCoLauncherProps extends Tuning {
   band: LearnBand
@@ -42,7 +42,7 @@ export function AskCoLauncher({ band, context, controlRef, onOpenChange, actor: 
   const change = (next: boolean) => { setOpen(next); onOpenChange?.(next) }
   return <>
     <button ref={ref} type="button" aria-haspopup="dialog" aria-expanded={open} data-testid="ask-co-open" onClick={() => change(true)} className={cn(controlClass(band), className)}>
-      <MessageCircle size={band === 'kids' ? 32 : 18} aria-hidden="true" />{label}
+      <CoAvatar band={band} size={band === 'kids' ? 40 : 28} />{label}
     </button>
     <AskCoPanel open={open} onOpenChange={change} context={context} band={band} actor={actor} {...tuning} />
   </>
@@ -53,7 +53,7 @@ export function AskCoDisabled({ band, reason }: { band: LearnBand; reason: strin
   const reasonId = useId()
   return <div className={cn('grid gap-1', band === 'kids' && 'justify-items-center')} data-testid="ask-co-unavailable">
     <button type="button" aria-disabled="true" aria-describedby={reasonId} onClick={event => event.preventDefault()} className={cn(controlClass(band), 'cursor-not-allowed opacity-70')}>
-      <MessageCircle size={band === 'kids' ? 32 : 18} aria-hidden="true" />Ask Co
+      <CoAvatar band={band} size={band === 'kids' ? 40 : 28} />Ask Co
     </button>
     <p id={reasonId} className="text-[length:var(--ds-small)] text-muted-foreground">{reason}</p>
   </div>

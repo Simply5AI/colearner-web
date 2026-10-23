@@ -1,6 +1,7 @@
 export { ageBands, ageTokens, designTokens, type AgeBand } from './tokens'
 export { AgeBandScope } from './age-band-scope'
-export { CoCharacter, coStates, type CoState } from './co-character'
+export { CoCharacter, coStates, coVariants, coVariantForState, type CoState, type CoVariant } from './co-character'
+export { CoAvatar } from './co-avatar'
 export { BrandMark } from './brand-mark'
 export { Button, Card, Input, Select, Checkbox, Toggle, ProgressBar, MasteryPill, ParentLockBadge, EmptyState, ErrorState, LoadingState, Skeleton } from './primitives'
 export { ThemeToggle } from './theme-toggle'

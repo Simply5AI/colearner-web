@@ -1,0 +1,77 @@
+.layout { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); min-height: 100dvh; color: var(--foreground); background: var(--background); }
+.brandPanel { position: sticky; top: 0; height: 100dvh; min-height: 740px; display: flex; flex-direction: column; justify-content: space-between; padding: 32px 42px; background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--primary) 13%, var(--co-surface)), transparent 60%), var(--co-surface); border-inline-end: 1px solid var(--co-border); overflow: hidden; }
+.brandLink { width: fit-content; border-radius: 10px; }
+.brandContent { width: 100%; max-width: 460px; align-self: center; }
+.scene { height: 310px; position: relative; display: grid; place-items: center; }
+.orbit, .orbitInner { position: absolute; width: 290px; height: 290px; border: 1px dashed color-mix(in srgb, var(--primary) 23%, transparent); border-radius: 50%; transform: rotate(-18deg); }
+.orbitInner { width: 225px; height: 225px; border-style: solid; border-color: color-mix(in srgb, var(--primary) 10%, transparent); background: color-mix(in srgb, var(--card) 40%, transparent); }
+.coStage { position: relative; z-index: 1; filter: drop-shadow(0 20px 18px rgb(147 66 12 / 12%)); }
+.helloBubble { position: absolute; top: 14px; inset-inline-end: 8px; padding: 13px 18px; background: var(--card); border: 1px solid var(--co-border); border-radius: 18px 18px 18px 3px; font-family: var(--font-display); font-size: 14px; font-weight: 600; transform: rotate(5deg); z-index: 2; }
+.ideaBubble { position: absolute; bottom: 12px; inset-inline-start: 3px; display: flex; gap: 8px; align-items: center; padding: 12px 16px; background: var(--card); border: 1px solid var(--co-border); border-radius: 14px; font-size: 12px; transform: rotate(-4deg); z-index: 2; }
+.ideaBubble svg, .sceneSpark, .sceneStar, .sceneBook { color: var(--primary); }
+.sceneSpark { position: absolute; top: 30px; inset-inline-start: 46px; transform: rotate(-12deg); }
+.sceneStar { position: absolute; bottom: 46px; inset-inline-end: 38px; transform: rotate(16deg); }
+.sceneBook { position: absolute; top: 114px; inset-inline-start: 0; display: grid; place-items: center; width: 58px; height: 58px; border-radius: 18px; background: var(--card); border: 1px solid var(--co-border); transform: rotate(-12deg); }
+.brandCopy { margin-top: 26px; text-align: center; }
+.eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .14em; color: var(--primary); }
+.brandCopy h2 { font-family: var(--font-display); font-size: clamp(36px, 3.5vw, 51px); font-weight: 600; letter-spacing: -.05em; line-height: 1.14; margin: 14px 0 18px; }
+.brandCopy h2 span { color: var(--primary); }
+.brandCopy > p:last-child { font-size: 14px; line-height: 1.8; color: var(--muted-foreground); }
+.journey { display: flex; justify-content: center; gap: 18px; margin-top: 28px; font-size: 11px; color: var(--secondary-foreground); }
+.journey span { display: flex; align-items: center; gap: 6px; }
+.journey i { display: grid; place-items: center; width: 21px; height: 21px; border-radius: 50%; background: var(--card); border: 1px solid var(--co-border); font-size: 10px; font-style: normal; }
+.brandFoot { text-align: center; margin-top: 24px; font-size: 11px; color: var(--muted-foreground); }
+.formSide { min-width: 0; display: flex; flex-direction: column; }
+.topBar { display: flex; justify-content: space-between; align-items: center; padding: 20px 32px 0; }
+.topBar > a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 12px; color: var(--muted-foreground); }
+.topBar > a:hover { color: var(--primary); }
+.main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px 32px; }
+.formContent { width: 100%; max-width: 430px; padding-block: 24px; }
+.formHeading { position: relative; padding-top: 2px; }
+.formHeading > :global(.ds-co-avatar) { margin-bottom: 20px; }
+.formHeading h1 { font-family: var(--font-display); font-size: clamp(26px, 2.5vw, 33px); line-height: 1.25; font-weight: 600; letter-spacing: -.045em; margin: 10px 0; }
+.formHeading > p:last-child { font-size: 14px; line-height: 1.75; color: var(--muted-foreground); }
+.formContent input:not([type='checkbox']) { min-height: 50px; border-radius: 13px; background: var(--background); box-shadow: none; font-size: 16px; }
+.formContent button[type='submit'] { border-radius: 14px; min-height: 50px; box-shadow: 0 4px 0 color-mix(in srgb, var(--primary) 70%, var(--foreground)); transition: transform 160ms ease, box-shadow 160ms ease; }
+.formContent button[type='submit']:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 var(--primary); }
+.formContent label { line-height: 1.5; }
+.guardianNote { display: flex; gap: 10px; padding-block: 4px; }
+.guardianNote > svg { flex: none; color: var(--primary); margin-top: 2px; }
+.guardianNote p { font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+.guardianNote span { display: block; font-size: 11px; line-height: 1.65; color: var(--muted-foreground); }
+.schoolHelp > summary { padding: 8px 0; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--foreground); }
+.schoolHelp > div { margin-top: 14px; }
+.footer { padding: 0 24px 24px; text-align: center; font-size: 11px; color: var(--muted-foreground); }
+.footer nav { display: flex; justify-content: center; gap: 24px; margin-top: 10px; }
+.footer a { display: inline-flex; align-items: center; min-height: 44px; }
+@media (prefers-reduced-motion: no-preference) {
+  .coStage { animation: coHello 1.5s ease-out both; }
+  .helloBubble { animation: bubbleHello .8s .2s ease-out backwards; }
+  .ideaBubble { animation: bubbleHello .8s .4s ease-out backwards; }
+  @keyframes coHello { from { opacity: 0; translate: 0 16px; rotate: -6deg; } to { opacity: 1; translate: 0 0; rotate: 0deg; } }
+  @keyframes bubbleHello { from { opacity: 0; translate: 0 10px; } to { opacity: 1; translate: 0 0; } }
+}
+@media (max-width: 1023px) {
+  .layout { grid-template-columns: 1fr; }
+  .brandPanel { position: relative; height: auto; min-height: 0; padding: 22px 28px; border-inline-end: 0; border-bottom: 1px solid var(--co-border); }
+  .brandContent { max-width: none; display: flex; align-items: center; gap: 24px; margin-top: 20px; }
+  .scene { flex: none; width: 100px; height: 100px; }
+  .coStage > :global(.ds-co) { width: 100px; height: 100px; }
+  .orbit, .orbitInner, .helloBubble, .ideaBubble, .sceneSpark, .sceneStar, .sceneBook, .journey, .brandFoot { display: none; }
+  .brandCopy { margin: 0; text-align: start; }
+  .brandCopy h2 { margin: 0; font-size: 27px; }
+  .brandCopy > p { display: none; }
+  .formHeading > :global(.ds-co-avatar) { display: none; }
+  .main { padding-top: 18px; }
+}
+@media (max-width: 480px) {
+  .brandPanel { padding: 20px; }
+  .brandLink :global(.ds-brand) { font-size: 24px; }
+  .brandContent { margin-top: 12px; gap: 14px; }
+  .brandCopy h2 { font-size: 24px; }
+  .scene, .coStage > :global(.ds-co) { width: 72px; height: 72px; }
+  .topBar { padding: 12px 20px 0; }
+  .main { padding: 14px 24px 24px; }
+  .formContent { padding-block: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .formContent button[type='submit'] { transition: none; } }

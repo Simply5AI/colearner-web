@@ -1,5 +1,7 @@
 'use client'
 
+import { ShieldCheck } from 'lucide-react'
+import styles from './auth.module.css'
 import { useRef, useState } from 'react'
 import { useForm, useWatch, Controller } from 'react-hook-form'
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
@@ -48,11 +50,11 @@ export function SignupForm({ googleEnabled = false }: { googleEnabled?: boolean 
   }
   return (
     <div className="space-y-6">
-      <p className="rounded-2xl bg-muted p-4 text-sm text-muted-foreground">Create a minimal account with email and password. Your birthday is checked next. No child name or school details are collected until verified guardian consent. A school invitation is required to link a learner profile.</p>
+      <div className={styles.guardianNote}><ShieldCheck size={21} aria-hidden="true" /><div><p>A grown-up can help you get started.</p><span>We check your birthday next. Child names and school details wait until verified guardian consent. You’ll need a school invitation to link a learner profile.</span></div></div>
       {error && <div ref={alertRef} role="alert" tabIndex={-1} className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm focus:outline-2 focus:outline-ring">{error}</div>}
       <form method="post" onSubmit={handleSubmit(onSubmit)} className="space-y-5" aria-busy={isLoading} noValidate>
         {googleEnabled && <><SocialButtons isLoading={!clientReady || isLoading || !acceptedTerms} enabled callbackUrl={isSafeCallbackUrl(callbackUrl) ? callbackUrl : "/age"} /><p className="text-sm text-muted-foreground">Read and accept the notices below before continuing with Google.</p><AuthDivider /></>}
-        <div className="space-y-2"><Label htmlFor="email">Email</Label><Input {...register('email')} id="email" type="email" autoComplete="email" autoCapitalize="none" className="h-12" disabled={!clientReady || isLoading} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} />{errors.email && <p id="email-error" className="text-sm text-destructive">{errors.email.message}</p>}</div>
+        <div className="space-y-2"><Label htmlFor="email">Email</Label><Input {...register('email')} id="email" type="email" placeholder="you@example.com" autoComplete="email" autoCapitalize="none" className="h-12" disabled={!clientReady || isLoading} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} />{errors.email && <p id="email-error" className="text-sm text-destructive">{errors.email.message}</p>}</div>
         <PasswordField {...register('password')} id="password" label="Password" autoComplete="new-password" disabled={!clientReady || isLoading} error={errors.password?.message} aria-describedby="password-requirements" />
         <p id="password-requirements" className="text-sm text-muted-foreground">At least 8 characters, with uppercase and lowercase letters and a number.</p>
         <PasswordStrengthMeter strength={getPasswordStrength(passwordValue)} />

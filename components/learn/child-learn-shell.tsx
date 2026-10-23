@@ -19,7 +19,7 @@ export function ChildLearnShell({ children, band, nickname }: { children: ReactN
     { href: '/learn/library', label: kids ? 'My pages' : 'Library', icon: Library, match: (path: string) => path.startsWith('/learn/library') || path === '/learn/import' || path === '/learn/snap' },
     { href: '/learn/practice', label: kids ? 'Play' : 'Practice', icon: Clock, match: (path: string) => path === '/learn/practice' || path.startsWith('/learn/practice/') },
   ]
-  return <RoleShell role="student" band={band} identity={nickname} homeHref="/learn/home" navigation={[{ title: kids ? 'Your adventures' : 'Learn', items }]} bottomNavigation={items}
+  return <RoleShell role="student" band={band} navigationStyle={kids ? 'header' : 'sidebar'} identity={nickname} homeHref="/learn/home" navigation={[{ title: kids ? 'Your adventures' : 'Learn', items }]} bottomNavigation={items}
     accountActions={<Button variant="secondary" onClick={() => leave.mutate()} loading={leave.isPending}>Switch learner</Button>}>
     <>{leave.error && <p role="alert" className="p-4">{leave.error.message}</p>}{children}</>
   </RoleShell>

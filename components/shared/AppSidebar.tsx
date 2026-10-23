@@ -47,7 +47,7 @@ export function StudentShell({ children, sourceProgress, recallDueCount = 0 }: A
   const band = knownBand ?? 'teens'
   const navigation = studentNavigation(band, !!knownBand, recallDueCount)
   return <RoleShell
-    role="student" band={band} homeHref="/learn/home" navigation={navigation}
+    role="student" band={band} navigationStyle={band === 'kids' ? 'header' : 'sidebar'} homeHref="/learn/home" navigation={navigation}
     bottomNavigation={navigation[0]?.items} identity={profile?.name}
     sidebarFooter={sourceProgress && band !== 'kids' ? <SourceProgressSummary progress={sourceProgress} /> : undefined}
     accountActions={<button type="button" onClick={() => void signOut({ redirectTo: '/login' })} aria-label="Sign out" className="flex min-h-[var(--ds-tap,44px)] min-w-[var(--ds-tap,44px)] items-center justify-center rounded-xl border border-border bg-card focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"><LogOut aria-hidden="true" className="size-5" /></button>}

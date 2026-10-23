@@ -6,7 +6,7 @@ import { LandingPage } from '@/components/landing/landing-page'
 import { schoolRequest, type CursorList, type Workspace } from '@/lib/api/school'
 import {accountFamilyAccess,familyAccessRedirect} from '@/lib/auth/family-access'
 import {FamilyAccessUnavailable} from '@/components/family/family-common'
-export const metadata: Metadata = { title: 'CoLearner — Learning with Co', description: 'Explore CoLearner’s school-first learning redesign for CBSE and ICSE.' }
+export const metadata: Metadata = { title: 'CoLearner — Learning with Co', description: 'Meet Co, your AI study companion. Clear lessons, thoughtful questions and practice, with school and family guidance. Built around CBSE and ICSE learning.' }
 export default async function HomePage() {
   const session = await auth()
   if (session?.accessToken && session.user?.id) {

@@ -1,20 +1,24 @@
 import Link from 'next/link'
+import { BookOpen, Lightbulb, Sparkles, Star } from 'lucide-react'
 import { BrandMark, CoCharacter } from '@/components/design-system'
+import styles from './auth.module.css'
 
 export function BrandPanel() {
-  return (
-    <aside className="relative flex flex-col justify-between gap-6 rounded-b-[2rem] bg-secondary p-6 lg:rounded-none lg:p-12">
-      <Link href="/" className="w-fit rounded-lg" aria-label="CoLearner home"><BrandMark /></Link>
-      <div className="mx-auto flex max-w-md items-center gap-5 lg:flex-col lg:items-start">
-        <CoCharacter band="kids" state="waving" size={72} decorative className="shrink-0 lg:hidden" />
-        <CoCharacter band="kids" state="waving" size={220} decorative className="hidden lg:block" />
-        <div>
-          <p className="mb-3 text-sm font-semibold text-primary">A little curiosity goes a long way.</p>
-          <h2 className="font-[family-name:var(--font-display)] text-2xl font-extrabold leading-tight sm:text-3xl lg:text-5xl">Learning feels better with a friend.</h2>
-          <p className="mt-4 hidden text-muted-foreground lg:block">Bring your questions. Take one step at a time. Build understanding with Co.</p>
-        </div>
+  return <aside className={styles.brandPanel}>
+    <Link href="/" className={styles.brandLink} aria-label="CoLearner home"><BrandMark /></Link>
+    <div className={styles.brandContent}>
+      <div className={styles.scene} aria-hidden="true">
+        <div className={styles.orbit} /><div className={styles.orbitInner} />
+        <span className={styles.sceneSpark}><Sparkles size={26} /></span>
+        <span className={styles.sceneStar}><Star size={22} /></span>
+        <span className={styles.sceneBook}><BookOpen size={27} strokeWidth={1.7} /></span>
+        <div className={styles.coStage}><CoCharacter band="kids" state="waving" size={230} decorative /></div>
+        <span className={styles.helloBubble}>Hey, curious mind!</span>
+        <span className={styles.ideaBubble}><Lightbulb size={18} />Every question is a good start.</span>
       </div>
-      <p className="hidden text-sm text-muted-foreground lg:block">School-first learning · CBSE and ICSE · English</p>
-    </aside>
-  )
+      <div className={styles.brandCopy}><p className={styles.eyebrow}>YOUR CURIOSITY HAS A COMPANION</p><h2>Big wonders.<br /><span>Little steps.</span></h2><p>Ask a question. Try an idea. Make a discovery.<br />Co is here to help you work it out.</p></div>
+      <div className={styles.journey} aria-label="Learning with Co"><span><i>1</i>Explore</span><span><i>2</i>Practice</span><span><i>3</i>Understand</span></div>
+    </div>
+    <p className={styles.brandFoot}>Made for students. Guided by families & teachers.</p>
+  </aside>
 }

@@ -2,11 +2,12 @@
 
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { BookOpen, Camera, CalendarClock, Gamepad2, ListChecks, PencilLine, RefreshCw } from 'lucide-react'
-import { Card, CoCharacter, EmptyState, ProgressBar, RewardBadge, SpeechBubble } from '@/components/design-system'
+import { ArrowUpRight, BookOpen, Camera, CalendarClock, ChartNoAxesColumnIncreasing, FileText, Gamepad2, Library, ListChecks, MessageCircle, Mic, PencilLine, Plus, RefreshCw } from 'lucide-react'
+import { Card, CoAvatar, CoCharacter, EmptyState, ProgressBar, RewardBadge, SpeechBubble } from '@/components/design-system'
 import { bandFromApi, linkHref, type HomeAssignment, type LearnBand, type LearnHome, type NextAction, type Recommendation, type SubjectProgress, type TodayItem } from '@/lib/api/learn'
 import { cn } from '@/lib/utils'
 import { ActionControl, CoSuggestionTag, LearnFrame, LearnLoadError, LearnSkeleton, MeasuredTag, StepDots, TimePill, useLearnHome, useLearnIdentity } from './learn-common'
+import styles from './learn-home.module.css'
 import { daysLabel, dueLabel, materialStatusText, minutesLabel } from './learn-format'
 
 /* ---------- next action (F-L1-01) ---------- */
@@ -37,9 +38,10 @@ export function NextActionCard({ action, band, limited }: { action: NextAction; 
   const minutes = minutesLabel(action.estimatedMinutes)
   const importing = action.kind === 'IMPORT_MATERIAL'
   const label = kids && importing ? 'Snap a page from your book!' : kindLabel[action.kind]
-  return <Card aria-labelledby="next-step-title" data-testid="next-action" data-kind={action.kind} className={cn('space-y-4 border-2 border-primary', kids && 'p-7')}>
-    <p className="text-xs font-bold uppercase tracking-widest text-primary">{kindEyebrow[action.kind]}</p>
-    <div className="space-y-2">
+  return <Card aria-labelledby="next-step-title" data-testid="next-action" data-kind={action.kind} className={cn('learn-next-action space-y-4', styles.nextAction, kids && 'p-7')}>
+    <div className={styles.nextEyebrow}><span><BookOpen size={16} aria-hidden="true" />{kindEyebrow[action.kind]}</span><span className={styles.nextLabel}>Your next step</span></div>
+    {!kids && <CoCharacter band={band} state="idle" size={100} decorative className={styles.nextCo} />}
+    <div className={styles.nextTitle}>
       <h2 id="next-step-title" className={cn('break-words font-extrabold', kids && 'text-[length:var(--ds-h1)]')}>{action.title}</h2>
       {action.subtitle && <p className="text-muted-foreground">{action.subtitle}</p>}
     </div>
@@ -77,13 +79,13 @@ const itemWord = { REVIEW: 'Review', LESSON: 'Lesson', QUIZ: 'Quiz' } as const
 function TodayPlan({ plan, band, limited }: { plan: NonNullable<LearnHome['todayPlan']>; band: LearnBand; limited?: boolean }) {
   const minutes = minutesLabel(plan.estimatedMinutes)
   if (plan.items.length === 0) return null
-  return <section aria-labelledby="today-plan" className="space-y-3">
+  return <section aria-labelledby="today-plan" className={styles.plan}>
     <h2 id="today-plan">Today&rsquo;s plan{minutes && <span className="text-muted-foreground"> · about {minutes}</span>}</h2>
-    <ol className="space-y-3">{plan.items.map((item: TodayItem, index) => {
+    <ol className={styles.planList}>{plan.items.map((item: TodayItem, index) => {
       const Icon = itemIcons[item.kind]
       const itemMinutes = minutesLabel(item.estimatedMinutes)
-      return <li key={`${item.kind}:${index}`} className="ds-card flex flex-wrap items-center gap-4">
-        <Icon size={band === 'kids' ? 32 : 22} aria-hidden="true" className="text-primary" />
+      return <li key={`${item.kind}:${index}`} className={styles.planItem}>
+        <span className={styles.iconTile}><Icon size={band === 'kids' ? 32 : 20} strokeWidth={1.8} aria-hidden="true" /></span>
         <div className="min-w-0 flex-1"><p className="break-words font-bold">{item.title}</p><p className="text-[length:var(--ds-small)] text-muted-foreground">{itemWord[item.kind]}{itemMinutes ? ` · ${itemMinutes}` : ''}</p></div>
         <ActionControl action={limited ? { ...item, enabled: false, disabledReason: item.disabledReason ?? 'Today’s learning time is used up.' } : item} label="Start" variant="secondary" />
       </li>
@@ -93,7 +95,7 @@ function TodayPlan({ plan, band, limited }: { plan: NonNullable<LearnHome['today
 
 function Assignments({ items, band }: { items: HomeAssignment[]; band: LearnBand }) {
   if (items.length === 0) return null
-  return <section aria-labelledby="assignments" className="space-y-3">
+  return <section aria-labelledby="assignments" className={styles.assignments}>
     <h2 id="assignments">{band === 'kids' ? 'From your teacher' : 'Assigned to you'}</h2>
     <ul className="grid gap-3 md:grid-cols-2">{items.map(item => {
       const due = dueLabel(item.dueAt, band)
@@ -111,9 +113,9 @@ function Assignments({ items, band }: { items: HomeAssignment[]; band: LearnBand
 
 function SubjectProgressList({ subjects }: { subjects: SubjectProgress[] }) {
   if (subjects.length === 0) return null
-  return <section aria-labelledby="subjects" className="space-y-3">
+  return <section aria-labelledby="subjects" className={styles.subjects}>
     <div className="flex flex-wrap items-center gap-3"><h2 id="subjects">Your subjects</h2><MeasuredTag>Measured progress</MeasuredTag></div>
-    <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(11rem,1fr))]">{subjects.map(subject => <li key={subject.subjectId} className="ds-card space-y-3" data-testid="subject-progress">
+    <ul className={styles.subjectList}>{subjects.map(subject => <li key={subject.subjectId} className={styles.subjectItem} data-testid="subject-progress">
       <h3 className="break-words font-bold">{subject.name}</h3>
       {subject.itemsTotal > 0 ? <ProgressBar label="Items done" value={subject.itemsDone} max={subject.itemsTotal} /> : <p className="text-muted-foreground">Nothing planned yet</p>}
       {subject.masteryPercent !== null && <p className="text-[length:var(--ds-small)] font-bold" data-testid="mastery">Mastery {Math.round(subject.masteryPercent)}%</p>}
@@ -122,18 +124,19 @@ function SubjectProgressList({ subjects }: { subjects: SubjectProgress[] }) {
 }
 
 function Countdown({ exam }: { exam: NonNullable<LearnHome['examCountdown']> }) {
-  return <section aria-labelledby="exam" data-testid="exam-countdown" className="ds-card flex flex-wrap items-center gap-4 border-2 border-primary">
-    <CalendarClock size={40} aria-hidden="true" className="text-primary" />
+  return <section aria-labelledby="exam" data-testid="exam-countdown" className={styles.countdown}>
+    <span className={styles.iconTile}><CalendarClock size={22} aria-hidden="true" className="text-primary" /></span>
     <div className="min-w-0"><h2 id="exam" className="break-words">{exam.label} {daysLabel(exam.daysLeft)}</h2><p className="text-[length:var(--ds-small)] text-muted-foreground">Your plan&rsquo;s exam date</p></div>
   </section>
 }
 
-function Suggestion({ state }: { state: LearnHome['recommendation'] }) {
+function Suggestion({ state, band }: { state: LearnHome['recommendation']; band: LearnBand }) {
   if (state.status !== 'AVAILABLE' || state.items.length === 0) return null
   const item: Recommendation = state.items[0]!
   const href = linkHref(item.link)
-  return <section aria-labelledby="co-suggestion" data-testid="recommendation" className="ds-card space-y-3 border-dashed">
-    <div className="flex flex-wrap items-center gap-3"><h2 id="co-suggestion">{item.title}</h2><CoSuggestionTag /></div>
+  return <section aria-labelledby="co-suggestion" data-testid="recommendation" className={styles.suggestion}>
+    <div className={styles.coByline}><CoAvatar band={band} size={32} /><CoSuggestionTag /></div>
+    <h2 id="co-suggestion">{item.title}</h2>
     <p className="text-muted-foreground">{item.reason}</p>
     <p className="text-[length:var(--ds-caption)] text-muted-foreground">A suggestion from Co, not a score. Your measured progress is shown separately.</p>
     {href && <Link href={href} className="ds-button ds-button-secondary">See it</Link>}
@@ -142,11 +145,11 @@ function Suggestion({ state }: { state: LearnHome['recommendation'] }) {
 
 function Recent({ items }: { items: LearnHome['recentMaterials'] }) {
   if (items.length === 0) return null
-  return <section aria-labelledby="recent" className="space-y-3">
+  return <section aria-labelledby="recent" className={styles.recent}>
     <h2 id="recent">Recent material</h2>
-    <ul className="grid gap-3 sm:grid-cols-2">{items.map(item => {
+    <ul className={styles.materialList}>{items.map(item => {
       const status = materialStatusText(item.status)
-      return <li key={item.id} className="ds-card"><Link href={`/learn/import?material=${encodeURIComponent(item.id)}`} className="break-words font-bold hover:underline">{item.title}</Link>{status && <p className="text-[length:var(--ds-small)] text-muted-foreground">{status}</p>}</li>
+      return <li key={item.id}><FileText size={20} strokeWidth={1.8} aria-hidden="true" className="text-primary" /><div><Link href={`/learn/import?material=${encodeURIComponent(item.id)}`} className="break-words font-bold hover:underline">{item.title}</Link>{status && <p className="text-[length:var(--ds-small)] text-muted-foreground">{status}</p>}</div><ArrowUpRight size={16} aria-hidden="true" className="text-muted-foreground" /></li>
     })}</ul>
   </section>
 }
@@ -170,9 +173,10 @@ const homeworkWords: Record<LearnBand, { title: string; line: string }> = {
 export function HomeworkHelpCard({ band }: { band: LearnBand }) {
   const words = homeworkWords[band]
   const kids = band === 'kids'
-  return <Link href="/learn/homework" data-testid="homework-help-card" className={cn('ds-card flex items-center gap-4', kids ? 'min-h-32 text-[length:var(--ds-h3)] font-extrabold' : 'min-h-16')}>
+  return <Link href="/learn/homework" data-testid="homework-help-card" className={cn('ds-card flex items-center gap-4', styles.homework, kids ? 'min-h-32 text-[length:var(--ds-h3)] font-extrabold' : 'min-h-16')}>
     <PencilLine size={kids ? 44 : 28} aria-hidden="true" className="flex-none text-primary" />
     <span className="min-w-0"><span className="block font-extrabold">{words.title}</span><span className={cn('block break-words font-normal text-muted-foreground', 'text-[length:var(--ds-small)]')}>{words.line}</span></span>
+    <ArrowUpRight size={20} aria-hidden="true" className={styles.helpArrow} />
   </Link>
 }
 
@@ -192,45 +196,50 @@ function KidsHome({ data, limited }: { data: LearnHome; limited: boolean }) {
       <HomeworkHelpCard band="kids" />
     </div>
     <Assignments items={data.assignments} band="kids" />
-    <Suggestion state={data.recommendation} />
+    <Suggestion state={data.recommendation} band="kids" />
   </>
 }
 
-function TweensHome({ data, limited }: { data: LearnHome; limited: boolean }) {
+function OlderHome({ data, limited, band }: { data: LearnHome; limited: boolean; band: 'tweens' | 'teens' }) {
   return <>
-    <div className="flex flex-wrap items-center gap-5">
-      <CoCharacter band="tweens" state={limited ? 'sleepy' : 'idle'} decorative />
-      <SpeechBubble className="min-w-[14rem] max-w-xl flex-1">{greeting('tweens', data.learner.displayName, data.nextAction)}</SpeechBubble>
+    <div className={styles.overviewLine}>
+      <p>A little focus. A little curiosity. Your next step starts here.</p>
+      <div className="flex flex-wrap items-center gap-3">{data.timeBudget && <TimePill minutes={data.timeBudget.minutesLeftToday} />}<Chips data={data} band={band} /></div>
     </div>
-    <div className="flex flex-wrap items-center gap-3">{data.timeBudget && <TimePill minutes={data.timeBudget.minutesLeftToday} />}<Chips data={data} band="tweens" /></div>
-    {data.nextAction && <NextActionCard action={data.nextAction} band="tweens" limited={limited} />}
-    {data.todayPlan && <TodayPlan plan={data.todayPlan} band="tweens" limited={limited} />}
-    <HomeworkHelpCard band="tweens" />
-    <Assignments items={data.assignments} band="tweens" />
-    <Suggestion state={data.recommendation} />
-    <Recent items={data.recentMaterials} />
-  </>
-}
-
-function TeensHome({ data, limited }: { data: LearnHome; limited: boolean }) {
-  return <>
-    <div className="flex flex-wrap items-center gap-3">{data.timeBudget && <TimePill minutes={data.timeBudget.minutesLeftToday} />}<Chips data={data} band="teens" /></div>
-    {data.examCountdown && <Countdown exam={data.examCountdown} />}
-    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-      <div className="space-y-6">
-        {data.nextAction && <NextActionCard action={data.nextAction} band="teens" limited={limited} />}
-        {data.todayPlan && <TodayPlan plan={data.todayPlan} band="teens" limited={limited} />}
-        <HomeworkHelpCard band="teens" />
-        <Assignments items={data.assignments} band="teens" />
-      </div>
-      <div className="space-y-6">
-        <div className="flex items-center gap-3"><CoCharacter band="teens" state="idle" decorative /><p className="font-bold">Hi {data.learner.displayName}.</p></div>
-        <Suggestion state={data.recommendation} />
-        <SubjectProgressList subjects={data.subjectProgress} />
+    <div className={styles.columns}>
+      <div className={styles.mainColumn}>
+        {data.nextAction && <NextActionCard action={data.nextAction} band={band} limited={limited} />}
+        {data.todayPlan && <TodayPlan plan={data.todayPlan} band={band} limited={limited} />}
+        <Assignments items={data.assignments} band={band} />
         <Recent items={data.recentMaterials} />
       </div>
+      <div className={styles.sideColumn}>
+        {band === 'teens' && data.examCountdown && <Countdown exam={data.examCountdown} />}
+        <HomeworkHelpCard band={band} />
+        <Suggestion state={data.recommendation} band={band} />
+        {band === 'teens' && <SubjectProgressList subjects={data.subjectProgress} />}
+      </div>
     </div>
   </>
+}
+
+function TweensHome(props: { data: LearnHome; limited: boolean }) { return <OlderHome {...props} band="tweens" /> }
+function TeensHome(props: { data: LearnHome; limited: boolean }) { return <OlderHome {...props} band="teens" /> }
+
+/** Every learner surface in one place, so a learner who just signed in is never left with a single button. */
+const learnerSurfaces = [
+  { href: '/learn', label: 'My plans', icon: BookOpen },
+  { href: '/learn/library', label: 'Library', icon: Library },
+  { href: '/learn/practice', label: 'Practice', icon: RefreshCw },
+  { href: '/learn/teach', label: 'Teach it back', icon: Mic },
+  { href: '/learn/progress', label: 'My progress', icon: ChartNoAxesColumnIncreasing },
+  { href: '/learn/homework', label: 'Ask Co', icon: MessageCircle },
+]
+export function LearnerSurfaceLinks() {
+  return <nav aria-label="More ways to learn" data-testid="learner-surfaces" className={styles.tools}>
+    <h2 className="font-bold">More ways to learn</h2>
+    <ul>{learnerSurfaces.map(({ icon: Icon, ...item }) => <li key={item.href}><Link href={item.href}><Icon size={21} strokeWidth={1.8} aria-hidden="true" /><span>{item.label}</span><ArrowUpRight size={14} aria-hidden="true" /></Link></li>)}</ul>
+  </nav>
 }
 
 /** Pure presentation of one /learn/home response. No fetching, no canned data. */
@@ -238,12 +247,15 @@ export function LearnHomeView({ data }: { data: LearnHome }) {
   const band = bandFromApi(data.band)
   const limited = data.state === 'LIMIT_REACHED'
   const Body = band === 'kids' ? KidsHome : band === 'tweens' ? TweensHome : TeensHome
-  return <LearnFrame band={band} label="Home">
-    <h1 className="sr-only">Home for {data.learner.displayName}</h1>
+  return <LearnFrame band={band} label="Home" className={styles.dashboard}>
+    {band === 'kids' ? <h1 className="sr-only">Home for {data.learner.displayName}</h1> : <header className={styles.welcome}>
+      <div><p className={styles.eyebrow}>YOUR LEARNING SPACE</p><h1>Hi {data.learner.displayName}. <span>Let’s make it click.</span></h1></div>
+      <Link href="/learn/import" className="ds-button ds-button-secondary"><Plus size={18} aria-hidden="true" />Add material</Link>
+    </header>}
     {data.state === 'FIRST_TIME' ? <>
       {data.timeBudget && <TimePill minutes={data.timeBudget.minutesLeftToday} />}
       <FirstTime band={band} />
-    </> : <>{limited && <LimitBanner band={band} />}<Body data={data} limited={limited} /></>}
+    </> : <>{limited && <LimitBanner band={band} />}<Body data={data} limited={limited} />{band !== 'kids' && <LearnerSurfaceLinks />}</>}
   </LearnFrame>
 }
 
