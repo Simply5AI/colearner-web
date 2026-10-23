@@ -9,7 +9,7 @@ import { bandFromApi, learnApi, linkHref, type JoinResult, type LearnBand, type 
 import { cn } from '@/lib/utils'
 import { LearnFrame, LearnLoadError, LearnSkeleton, LockedTag, StepDots, learnKeys, useLearnIdentity, useLearnOverview } from './learn-common'
 import { dateLabel, dueLabel } from './learn-format'
-import { JoinWithCodeDialog, approvalCopy } from './learn-join-dialog'
+import { JoinWithCodeDialog, approvalCopy, declinedCopy } from './learn-join-dialog'
 
 const modeLabel = { TOPIC: 'Topic', SYLLABUS: 'Syllabus', EXAM_PREP: 'Exam prep' } as const
 
@@ -38,13 +38,22 @@ export function PlanCardView({ plan, band }: { plan: PlanCard; band: LearnBand }
 
 function PendingApprovals({ items, band }: { items: LearnOverview['pendingEnrollments']; band: LearnBand }) {
   if (items.length === 0) return null
-  return <section aria-labelledby="pending-approvals" data-state="approval-pending" className="space-y-3">
-    <h2 id="pending-approvals">{approvalCopy(band)}</h2>
-    <ul className="grid gap-3 md:grid-cols-2">{items.map(item => <li key={item.id} className="ds-card flex items-center gap-4" data-testid="pending-enrollment">
-      <CoCharacter band={band} state="idle" decorative />
-      <div className="min-w-0"><p className="break-words font-bold">{item.planTitle}</p><p className="text-[length:var(--ds-small)] text-muted-foreground">{item.teacherName ? `From ${item.teacherName} · ` : ''}Asked {dateLabel(item.requestedAt) ?? 'recently'}</p><p className="text-[length:var(--ds-small)]">You can start after your parent or guardian says yes.</p></div>
-    </li>)}</ul>
-  </section>
+  const waiting = items.filter(item => item.status !== 'DECLINED')
+  const declined = items.filter(item => item.status === 'DECLINED')
+  const card = (item: LearnOverview['pendingEnrollments'][number], isDeclined: boolean) => <li key={item.id} className="ds-card flex items-center gap-4" data-testid={isDeclined ? 'declined-enrollment' : 'pending-enrollment'}>
+    <CoCharacter band={band} state="idle" decorative />
+    <div className="min-w-0"><p className="break-words font-bold">{item.planTitle}</p><p className="text-[length:var(--ds-small)] text-muted-foreground">{item.teacherName ? `From ${item.teacherName} · ` : ''}Asked {dateLabel(item.requestedAt) ?? 'recently'}</p><p className="text-[length:var(--ds-small)]">{isDeclined ? 'This plan is not open to you.' : 'You can start after your parent or guardian says yes.'}</p></div>
+  </li>
+  return <>
+    {waiting.length > 0 && <section aria-labelledby="pending-approvals" data-state="approval-pending" className="space-y-3">
+      <h2 id="pending-approvals">{approvalCopy(band)}</h2>
+      <ul className="grid gap-3 md:grid-cols-2">{waiting.map(item => card(item, false))}</ul>
+    </section>}
+    {declined.length > 0 && <section aria-labelledby="declined-approvals" data-state="approval-declined" className="space-y-3">
+      <h2 id="declined-approvals">{declinedCopy(band)}</h2>
+      <ul className="grid gap-3 md:grid-cols-2">{declined.map(item => card(item, true))}</ul>
+    </section>}
+  </>
 }
 
 const hasFilters = (filters: OverviewFilters) => Boolean(filters.q?.trim() || filters.subjectId || filters.kind || filters.status)

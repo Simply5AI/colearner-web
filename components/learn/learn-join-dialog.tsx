@@ -8,6 +8,7 @@ import { Button, CoCharacter, Input } from '@/components/design-system'
 import { linkHref, type JoinResult, type LearnBand } from '@/lib/api/learn'
 
 export const approvalCopy = (band: LearnBand) => band === 'teens' ? 'Waiting for your parent or guardian to approve' : 'Waiting for your parent to say yes'
+export const declinedCopy = (band: LearnBand) => band === 'teens' ? 'Your parent or guardian said no to this plan' : 'Your parent said no to this plan'
 
 interface JoinDialogProps {
   open: boolean

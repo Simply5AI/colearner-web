@@ -1,5 +1,7 @@
 'use client'
 
+import { RoleShell } from '@/components/roles/role-shell'
+import { studentNavigation } from '@/components/roles/role-config'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { JoinResult, LearnBand, OverviewFilters } from '@/lib/api/learn'
@@ -24,9 +26,10 @@ export function LearnBrowserHarness() {
   // Fixture dates use the browser locale, so render the views after mount to keep server and client markup identical.
   const [ready, setReady] = useState(false)
   useEffect(() => setReady(true), [])
+  const content = !ready ? null : screen === 'home' ? <HomeScreen band={band} state={state} /> : screen === 'learn' ? <OverviewScreen band={band} state={state} /> : <PlanScreen band={band} state={state} />
   return <div className="min-h-screen bg-background text-foreground">
     <p role="note" className="border-b border-border bg-muted p-3 text-center text-sm font-bold">B07 development UI qualification · synthetic fixtures only · no real learner, AI or API</p>
-    {!ready ? null : screen === 'home' ? <HomeScreen band={band} state={state} /> : screen === 'learn' ? <OverviewScreen band={band} state={state} /> : <PlanScreen band={band} state={state} />}
+    {params.get('shell') === '1' ? <RoleShell role="student" band={band} navigationStyle={band === 'kids' ? 'header' : 'sidebar'} homeHref="/learn/home" navigation={studentNavigation(band, true)} identity={homeFixture(band).learner.displayName}>{content}</RoleShell> : content}
   </div>
 }
 
