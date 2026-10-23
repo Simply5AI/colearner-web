@@ -89,6 +89,12 @@ const byCode: Record<string, string> = {
   HOMEWORK_CONVERSATION: 'Continue this one from Homework help.',
   MATERIAL_NOT_FOUND: 'We could not find that material. It may have been removed.',
   DAILY_HOMEWORK_LIMIT: 'You have used all your homework help for today. Come back tomorrow.',
+  // B11 teach-back and progress. Server text is never shown for these; only POLICY_BLOCKED carries a reason that is contractually safe.
+  TEACH_BACK_UNAVAILABLE: 'Teaching it back is not available right now. Please try again a little later.',
+  TEACH_BACK_DISABLED_BY_POLICY: 'Your school or family has switched teaching it back off for now. Ask a grown-up if you have a question.',
+  CONCEPT_NOT_FOUND: 'We could not find that idea to teach. It may have been removed.',
+  EXPORT_NOT_ALLOWED: 'A progress download is not available for this learner.',
+  PROGRESS_UNAVAILABLE: 'Progress is not available right now. Please try again a little later.',
 }
 const codePattern = /^[A-Z][A-Z0-9_]{2,63}$/
 

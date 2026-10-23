@@ -12,17 +12,20 @@ import { cn } from '@/lib/utils'
 import { durationLabel } from './hub-model'
 import { ModeTag, PracticeReadAloud, StarRow } from './states-parts'
 
-const TEACH_BACK_REASON = 'Teach it back to Co opens in a later release.'
+const TEACH_BACK_REASON = 'Teach it back to Co is unavailable right now.'
 
 function Stat({ label, value, id }: { label: string; value: ReactNode; id: string }) {
   return <div data-stat={id} className="ds-card flex flex-col gap-1"><span className="text-[length:var(--ds-h2)] font-extrabold">{value}</span><span className="text-[length:var(--ds-small)] text-muted-foreground">{label}</span></div>
 }
 
-/** Teach-back is B11: shown, disabled, with the server's own reason (a fixed line when the server gives none). */
+/** Teach-back is a link only when the server enables it and the route resolves. Otherwise the control stays disabled with the server's reason. */
 function TeachBack({ action }: { action: Actionable }) {
+  const href = action.enabled && action.link?.route === 'TEACH' ? linkHref(action.link) : null
   return <div className="flex flex-wrap items-start gap-3" data-testid="teach-back">
     <GraduationCap size={22} aria-hidden="true" className="mt-3 text-primary" />
-    <ActionControl action={{ ...action, enabled: false, disabledReason: action.disabledReason ?? TEACH_BACK_REASON }} label="Teach it back to Co" variant="secondary" />
+    {href
+      ? <Link href={href} className="ds-button ds-button-secondary">Teach it back to Co</Link>
+      : <ActionControl action={{ ...action, enabled: false, disabledReason: action.disabledReason ?? TEACH_BACK_REASON }} label="Teach it back to Co" variant="secondary" />}
   </div>
 }
 

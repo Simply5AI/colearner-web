@@ -409,7 +409,11 @@ describe('F-L11 band content', () => {
     expect(within(card).getByRole('button', { name: 'Teach it back to Co' })).toBeDisabled()
     expect(within(card).getByText('Teach it back to Co opens with the progress release.')).toBeInTheDocument()
     cleanup()
-    // Even if the server wrongly says enabled, there is no route, so it stays disabled.
+    const enabled = summaryFixture('teens', 'great')
+    enabled.next.teachBack = { link: { route: 'TEACH', id: 'session-1' }, enabled: true, disabledReason: null }
+    render(<SummaryView summary={enabled} band="teens" />)
+    expect(within(screen.getByTestId('teach-back')).getByRole('link', { name: 'Teach it back to Co' })).toHaveAttribute('href', '/learn/teach?practiceSessionId=session-1')
+    cleanup()
     const wrong = summaryFixture('teens', 'great')
     wrong.next.teachBack = { link: { route: 'PRACTICE', id: 'x', scope: 'SET' }, enabled: true, disabledReason: null }
     render(<SummaryView summary={wrong} band="teens" />)
