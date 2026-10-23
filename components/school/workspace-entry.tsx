@@ -18,8 +18,9 @@ import {
 import { schoolBrowserRequest } from '@/lib/api/school-browser'
 import { selectSchoolWorkspace } from '@/app/workspaces/actions'
 import { QueryState, ActionFeedback } from './school-common'
+import { SignedInAs } from '@/components/family/signed-in-as'
 
-export function WorkspaceEntry({ personalHref }: { personalHref: string }) {
+export function WorkspaceEntry({ personalHref, denied = false }: { personalHref: string; denied?: boolean }) {
   const { data: session } = useSession()
   const router = useRouter()
   const client = useQueryClient()
@@ -74,6 +75,8 @@ export function WorkspaceEntry({ personalHref }: { personalHref: string }) {
       <Link href="/" className="inline-flex min-h-11 items-center">
         <BrandMark />
       </Link>
+      <SignedInAs />
+      {denied && <p role="alert" data-testid="access-denied" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">That area is not available to your account in the selected workspace. Choose a workspace below that matches your role.</p>}
       <div className="space-y-3">
         <h1 className="font-[family-name:var(--font-display)] text-4xl font-extrabold">
           Choose your workspace

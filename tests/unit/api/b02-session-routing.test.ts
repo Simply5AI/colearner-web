@@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({
   refresh: vi.fn(),
 }))
 vi.mock('next-auth', () => ({
+  CredentialsSignin: class { code = 'credentials' },
   default: (config: NextAuthConfig) => {
     capture.config = config
     return { handlers: {}, auth: vi.fn(), signIn: vi.fn(), signOut: vi.fn() }

@@ -3,7 +3,8 @@
 import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
-import { getSession, signIn } from 'next-auth/react'
+import { getSession, signIn, signOut } from 'next-auth/react'
+import { clearWorkspaceSelection } from '@/app/workspaces/actions'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { loginSchema, type LoginInput } from '@/lib/validators/auth'
@@ -36,8 +37,15 @@ export function LoginForm({ googleEnabled = false }: { googleEnabled?: boolean }
     setIsLoading(true)
     setError(null)
     try {
+      await clearWorkspaceSelection().catch(() => undefined)
+      // A failed or throttled attempt must never leave the previous account signed in behind the error message.
+      try { if ((await getSession())?.user) await signOut({ redirect: false }) } catch { /* nothing to sign out */ }
       const result = await signIn('credentials', { email: data.email, password: data.password, rememberMe: data.rememberMe ? 'true' : 'false', redirect: false })
-      if (!result || result.error) setError('We could not sign you in. Check your email and password, or try again in a moment.')
+      if (result?.code?.startsWith('rate_limited')) {
+        const minutes = Number(result.code.split(':')[1])
+        setError(`Too many sign-in attempts. Please try again in ${minutes > 0 ? `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}` : 'a few minutes'}. You are not signed in.`)
+      }
+      else if (!result || result.error) setError('We could not sign you in. Check your email and password, or try again in a moment.')
       else {
         const session = await getSession()
         if (!session?.accessToken || !session.user.id) setError('Your session could not be established. Please try again.')

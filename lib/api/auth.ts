@@ -1,5 +1,6 @@
 import { ApiError } from '@/lib/api/client'
-import { platformClient } from './platform-client'
+import { CoLearnerClient } from '@colearner/api-client'
+import { platformApiBaseUrl } from './platform-client'
 import type { AuthTokens } from '@colearner/api-client'
 
 
@@ -42,7 +43,21 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthTokens
  * so it uses apiClient which resolves NEXT_PUBLIC_API_URL server-side.
  */
 export async function loginUser(payload: LoginPayload): Promise<AuthTokens> {
-  return platformClient().login(payload)
+  // A throttled login (HTTP 429) carries the wait in Retry-After; surface it so the form can say how many minutes remain.
+  let retryAfterSeconds: number | undefined
+  const client = new CoLearnerClient({
+    baseUrl: platformApiBaseUrl(),
+    transport: async (url, request) => {
+      const response = await fetch(url, { ...request, cache: 'no-store', signal: request.signal ?? AbortSignal.timeout(10000) })
+      const header = Number(response.headers.get('retry-after'))
+      if (response.status === 429 && Number.isFinite(header) && header > 0) retryAfterSeconds = header
+      return response
+    },
+  })
+  try { return await client.login(payload) } catch (error) {
+    if (retryAfterSeconds && error && typeof error === 'object') (error as { retryAfterSeconds?: number }).retryAfterSeconds = retryAfterSeconds
+    throw error
+  }
 }
 
 /**

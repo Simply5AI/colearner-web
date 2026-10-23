@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const capture = vi.hoisted(() => ({ config: undefined as NextAuthConfig | undefined }))
 const api = vi.hoisted(() => ({ validateSession: vi.fn(), exchangeGoogle: vi.fn(), refresh: vi.fn() }))
-vi.mock('next-auth', () => ({ default: (config: NextAuthConfig) => { capture.config = config; return { handlers: {}, auth: vi.fn(), signIn: vi.fn(), signOut: vi.fn() } } }))
+vi.mock('next-auth', () => ({ CredentialsSignin: class { code = 'credentials' }, default: (config: NextAuthConfig) => { capture.config = config; return { handlers: {}, auth: vi.fn(), signIn: vi.fn(), signOut: vi.fn() } } }))
 vi.mock('next-auth/providers/google', () => ({ default: (options: unknown) => ({ id: 'google', options }) }))
 vi.mock('next-auth/providers/credentials', () => ({ default: (options: unknown) => options }))
 vi.mock('@/lib/api/platform-client', () => ({ platformClient: () => api, platformApiBaseUrl: () => 'https://api.example.test/api/v1' }))

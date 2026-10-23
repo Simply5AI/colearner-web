@@ -7,8 +7,9 @@ import { SignupForm } from '@/components/auth/signup-form'
 import { ForgotPasswordForm, maskEmail } from '@/components/auth/forgot-password-form'
 import { ResetPasswordForm } from '@/components/auth/reset-password-form'
 import { AgePreviews } from '@/components/landing/age-previews'
-const mocks = vi.hoisted(() => ({ signIn: vi.fn(), getSession: vi.fn(), registerUser: vi.fn(), forgotPassword: vi.fn(), resetPassword: vi.fn(), search: new URLSearchParams(), push: vi.fn() }))
-vi.mock('next-auth/react', () => ({ signIn: mocks.signIn, getSession: mocks.getSession }))
+const mocks = vi.hoisted(() => ({ signIn: vi.fn(), signOut: vi.fn(), getSession: vi.fn(), registerUser: vi.fn(), forgotPassword: vi.fn(), resetPassword: vi.fn(), search: new URLSearchParams(), push: vi.fn() }))
+vi.mock('next-auth/react', () => ({ signIn: mocks.signIn, signOut: mocks.signOut, getSession: mocks.getSession }))
+vi.mock('@/app/workspaces/actions', () => ({ clearWorkspaceSelection: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push, refresh: vi.fn() }), useSearchParams: () => mocks.search }))
 vi.mock('@/lib/api/auth', () => ({ registerUser: mocks.registerUser, forgotPassword: mocks.forgotPassword, resetPassword: mocks.resetPassword }))
 vi.mock('react-google-recaptcha-v3', () => ({ useGoogleReCaptcha: () => ({ executeRecaptcha: undefined }), GoogleReCaptchaProvider: ({ children }: { children: React.ReactNode }) => children }))
@@ -28,6 +29,13 @@ describe('B01 authentication forms', () => {
     await user.click(screen.getByRole('button', { name: 'Log in' }))
     await waitFor(() => expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true'))
     expect(screen.getByLabelText('Email')).toHaveAttribute('aria-describedby', 'email-error'); expect(mocks.signIn).not.toHaveBeenCalled()
+  })
+  it('shows a clear wait time for a throttled login and signs the previous account out first', async () => {
+    mocks.getSession.mockResolvedValue({ user: { id: 'previous-user' } }); mocks.signIn.mockResolvedValue({ error: 'CredentialsSignin', code: 'rate_limited:13' })
+    const user = userEvent.setup(); render(<LoginForm />); await fillLogin(user)
+    await user.click(screen.getByRole('button', { name: 'Log in' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Too many sign-in attempts. Please try again in 13 minutes. You are not signed in.')
+    expect(mocks.signOut).toHaveBeenCalledWith({ redirect: false })
   })
   it('preserves details and permits real sign-in retry without invented lockout counts', async () => {
     mocks.signIn.mockResolvedValue({ error: 'CredentialsSignin' }); const user = userEvent.setup(); render(<LoginForm />); await fillLogin(user)
@@ -100,6 +108,6 @@ describe('B01 authentication forms', () => {
   it('switches all four visual age previews', async () => {
     const user = userEvent.setup(); render(<AgePreviews />)
     for (const label of ['Ages 6–9', 'Ages 10–13', 'Ages 14–17', 'Adult learners']) { await user.click(screen.getByRole('button', { name: label })); expect(screen.getByRole('button', { name: label })).toHaveAttribute('aria-pressed', 'true'); expect(screen.getByText(`Design preview · ${label}`)).toBeInTheDocument() }
-    expect(screen.getByText('Retained design direction; school learners come first.')).toBeInTheDocument()
+    expect(screen.getByText('A future learning track. The current rollout focuses on schools.')).toBeInTheDocument()
   })
 })

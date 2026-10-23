@@ -2,6 +2,7 @@ import NextAuth from 'next-auth'
 import Google from 'next-auth/providers/google'
 import Credentials from 'next-auth/providers/credentials'
 import type { NextAuthConfig } from 'next-auth'
+import { CredentialsSignin } from 'next-auth'
 import { loginUser } from '@/lib/api/auth'
 import { platformApiBaseUrl, platformClient } from '@/lib/api/platform-client'
 import { acceptSessionPair, clearSession, refreshSession } from './session-tokens'
@@ -49,6 +50,11 @@ async function refreshAccessToken(t: ExtendedJWT): Promise<ExtendedJWT> {
 }
 
 const googleProvider = getGoogleProviderConfiguration()
+class LoginRateLimited extends CredentialsSignin {
+  // The code reaches the browser as a plain string: "rate_limited" or "rate_limited:<minutes>".
+  constructor(minutes?: number) { super(); this.code = minutes ? `rate_limited:${minutes}` : 'rate_limited' }
+}
+
 const authConfig: NextAuthConfig = {
   providers: [
     ...(googleProvider ? [Google({...googleProvider,authorization:{params:{scope:'openid email'}},profile:googleIdentityOnly})] : []),
@@ -83,8 +89,13 @@ const authConfig: NextAuthConfig = {
             expiresIn: tokens.expiresIn,
             refreshRequestId: tokens.refreshRequestId,
           }
-        } catch {
+        } catch (error) {
           console.error('[auth] Sign-in failed')
+          // A throttled login is reported as such (the form shows a clear message) instead of as a wrong password.
+          if ((error as { status?: number } | null)?.status === 429) {
+            const seconds = (error as { retryAfterSeconds?: number }).retryAfterSeconds
+            throw new LoginRateLimited(seconds ? Math.max(1, Math.ceil(seconds / 60)) : undefined)
+          }
           return null
         }
       },
@@ -286,9 +297,8 @@ const authConfig: NextAuthConfig = {
       // account must not be redirected into an unrelated learning workspace.
       if (isTeacherPublicPath) return true
 
-      if (isTeacherPage && isLoggedIn && !isTeacher && !isTeacherPublicPath) {
-        return Response.redirect(new URL('/dashboard', nextUrl))
-      }
+      // Non-teachers are not bounced to the student app here: the teacher layout verifies the school workspace live and sends
+      // anyone without a teacher workspace to /workspaces?denied=1, which explains the denial instead of an unrelated age check.
 
       // Teachers use the teacher workspace only — not the student learning app.
       if (isProtectedApp && isLoggedIn && isTeacher) {

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { clearWorkspaceSelection } from '@/app/workspaces/actions'
 import { signOut, useSession } from 'next-auth/react'
 import { ChevronDown, LogOut, Settings, User } from 'lucide-react'
 import {
@@ -83,7 +84,7 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="flex items-center gap-2 px-2 py-2 text-destructive"
-          onClick={() => signOut({ redirectTo: '/login' })}
+          onClick={async () => { await clearWorkspaceSelection().catch(() => undefined); await signOut({ redirectTo: '/login' }) }}
         >
           <LogOut className="h-4 w-4" />
           Sign out

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { auth } from './config'
 import { FAMILY_CHILD_COOKIE } from './family-cookies'
 import { accountFamilyAccess, familyAccessRedirect } from './family-access'
+import { schoolRequest, type Workspace } from '@/lib/api/school'
 import { familyRequest, FamilyError, type ChildContext } from '@/lib/api/family'
 
 /**
@@ -24,10 +25,23 @@ export async function requireLearnerAccess(callbackUrl: '/learn/home' | '/learn'
   let status
   try { status = await accountFamilyAccess(session.accessToken) } catch { throw new Error('Your account access could not be checked. Please try again.') }
   const gate = familyAccessRedirect(status)
-  if (gate) redirect(gate)
+  // A 14-17 account that picked its school profile on /learner holds a STUDENT workspace cookie; only then may it pass the gate.
+  // The check below is live (never the cookie alone): the profile list is the B03 self-service rule and excludes under-14 accounts.
+  if (gate && !(gate === '/learner' && await selfServiceProfileSelected(session.accessToken, jar.get('colearner-school-membership')?.value))) redirect(gate)
   if (!session.user.onboardingCompleted) redirect('/onboarding/profile')
   const selected = jar.get('colearner-school-membership')?.value ?? 'unselected'
   return { kind: 'account' as const, scope: `account:${session.user.id}:${selected}` }
+}
+
+async function selfServiceProfileSelected(token: string, membershipId: string | undefined): Promise<boolean> {
+  if (!membershipId || !/^[a-f0-9-]{36}$/i.test(membershipId)) return false
+  try {
+    const [workspace, profiles] = await Promise.all([
+      schoolRequest<Workspace>(token, `/school-identity/workspaces/${encodeURIComponent(membershipId)}`),
+      familyRequest<{ items: { schoolId: string }[] }>(token, '/family/student/profiles'),
+    ])
+    return workspace.role === 'STUDENT' && workspace.status === 'ACTIVE' && profiles.items.some(item => item.schoolId === workspace.schoolId)
+  } catch { return false }
 }
 
 type ChildAccess = { kind: 'child'; scope: string; nickname: string; band: 'kids' | 'tweens' | 'teens' }
