@@ -15,7 +15,7 @@ function session(user: Partial<Session['user']>): Session { return { expires: '2
 describe('B01 public root and information routes', () => {
   it('renders school-first overview for anonymous visitors with all real information links', async () => {
     mocks.auth.mockResolvedValue(null); render(await HomePage())
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Learn it with Co.')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('More understanding.')
     expect(screen.getByRole('link', { name: 'Continue learning' })).toHaveAttribute('href', '/login')
     for (const [name, href] of [['Privacy', '/privacy'], ['Terms', '/terms'], ['Contact', '/contact']]) expect(screen.getByRole('link', { name })).toHaveAttribute('href', href)
     expect(screen.getByText(/commercial plans will follow product development/)).toBeInTheDocument()

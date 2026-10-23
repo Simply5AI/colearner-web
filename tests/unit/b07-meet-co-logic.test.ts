@@ -8,10 +8,10 @@ describe('kids copy', () => {
     const lines = [...kidsLines.hello('Aarav'), ...kidsLines.hello(null), ...kidsLines.context(2), ...kidsLines.context(null), ...kidsLines.subjects, ...kidsLines.noSubjects, ...kidsLines.personalise, ...kidsLines.firstImport, ...kidsLines.done]
     for (const line of lines) expect(wordCount(line), line).toBeLessThanOrEqual(8)
   })
-  it('has band-specific hello lines and four recoloured themes', () => {
+  it('has band-specific hello lines and four distinct character themes', () => {
     expect(hello('tweens', 'Mariam')).toContain('Mariam')
     expect(hello('teens', null)).not.toContain('null')
-    expect(coThemes).toHaveLength(4)
+    expect(coThemes.map(theme => theme.variant)).toEqual(['sprout', 'buddy', 'spark', 'comet'])
     expect(themeOf('unknown-theme').key).toBe('sunrise')
   })
   it('offers first-import routes only to the existing B06 pages', () => {

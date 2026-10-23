@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { useState } from 'react'
-import { AgeBandScope, Button, CoCharacter, coStates, Input, Select, Checkbox, Toggle, ProgressBar, MasteryPill, EmptyState, ErrorState, LoadingState, FoundationErrorBoundary } from '@/components/design-system'
+import { AgeBandScope, Button, CoCharacter, coStates, coVariants, Input, Select, Checkbox, Toggle, ProgressBar, MasteryPill, EmptyState, ErrorState, LoadingState, FoundationErrorBoundary } from '@/components/design-system'
 
 describe('accessible design foundations', () => {
   it('associates text input hints and errors without losing caller descriptions', () => {
@@ -89,19 +89,34 @@ describe('accessible design foundations', () => {
 })
 
 describe('Co character', () => {
-  it('has collision-free vector gradients when multiple characters render', () => {
-    const { container } = render(<><CoCharacter band="kids" /><CoCharacter band="kids" state="thinking" /></>)
-    const ids = Array.from(container.querySelectorAll('radialGradient'), (element) => element.id)
-    expect(new Set(ids).size).toBe(ids.length)
-    expect(ids).toHaveLength(4)
+  it('renders self-contained vectors without shared ids or raster images', () => {
+    const { container } = render(<>{coVariants.map(variant => <CoCharacter key={variant} variant={variant} />)}</>)
+    expect(container.querySelectorAll('svg')).toHaveLength(4)
+    expect(container.querySelector('image, defs, [id]')).toBeNull()
   })
 
-  it('provides source-driven band crops and a compact adult dot', () => {
-    render(<><CoCharacter band="kids" label="Full Co" /><CoCharacter band="tweens" label="Half Co" /><CoCharacter band="teens" label="Co avatar" /><CoCharacter band="adults" label="Co dot" /></>)
-    expect(screen.getByRole('img', { name: 'Full Co' })).toHaveAttribute('width', '220')
-    expect(screen.getByRole('img', { name: 'Half Co' })).toHaveAttribute('viewBox', '8 20 184 148')
-    expect(screen.getByRole('img', { name: 'Co avatar' })).toHaveAttribute('viewBox', '44 44 112 112')
-    expect(screen.getByRole('img', { name: 'Co dot' })).toHaveClass('ds-co-dot')
+  it('keeps the complete silhouette at each band size, including compact adults', () => {
+    render(<><CoCharacter band="kids" label="Full Co" /><CoCharacter band="tweens" label="Medium Co" /><CoCharacter band="teens" label="Co avatar" /><CoCharacter band="adults" label="Compact Co" /></>)
+    for (const [label, size] of [['Full Co', '220'], ['Medium Co', '120'], ['Co avatar', '56'], ['Compact Co', '24']]) {
+      const image = screen.getByRole('img', { name: label })
+      expect(image).toHaveAttribute('width', size)
+      expect(image).toHaveAttribute('viewBox', '0 0 200 200')
+    }
+  })
+
+  it.each([
+    ['idle', 'buddy'], ['listening', 'buddy'], ['hinting', 'spark'], ['thinking', 'spark'],
+    ['encouraging', 'sprout'], ['celebrating', 'sprout'], ['reading', 'comet'], ['explaining', 'comet'],
+  ] as const)('uses %s activity artwork from %s', (state, variant) => {
+    render(<CoCharacter state={state} />)
+    expect(screen.getByRole('img')).toHaveAttribute('data-co-variant', variant)
+  })
+
+  it('allows an explicit variant without losing state, size or accessible label', () => {
+    render(<CoCharacter variant="comet" state="waving" size={80} label="Co says hello" />)
+    expect(screen.getByRole('img', { name: 'Co says hello' })).toHaveAttribute('data-co-variant', 'comet')
+    expect(screen.getByRole('img')).toHaveAttribute('width', '80')
+    expect(screen.getByRole('img')).toHaveAttribute('data-co-state', 'waving')
   })
 
   it.each(coStates)('supports the %s pose without an interactive prototype control', (state) => {
