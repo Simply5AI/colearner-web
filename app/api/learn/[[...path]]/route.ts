@@ -17,7 +17,8 @@ const practiceWrites = `practice/(?:sets|sets/${resource}/(?:retry|cancel)|sessi
  * one PUT `homework/sessions/:id/problem`). Nothing else under `co/` or `homework/` exists: no worker or internal route, no DELETE.
  */
 const coReads = `co/(?:context|conversations|conversations/${resource}|conversations/${resource}/turns/${resource})`
-const coWrites = `co/(?:conversations|conversations/${resource}/turns|conversations/${resource}/turns/${resource}/(?:retry|cancel))`
+/** DEMO-C: `co/analogies` is one synchronous AI call ("Explain it with an analogy"). */
+const coWrites = `co/(?:analogies|conversations|conversations/${resource}/turns|conversations/${resource}/turns/${resource}/(?:retry|cancel))`
 const homeworkReads = `homework/sessions|homework/sessions/${resource}`
 const homeworkWrites = `homework/(?:sessions|sessions/${resource}/(?:restatement|steps|hint|final|final-phase|finish|abandon|retry))`
 /** B11 teach-back and progress. CSV is the one non-JSON read. No worker or internal route is forwarded. */
@@ -27,12 +28,14 @@ const progressReads = `progress|progress/export\\.csv`
 /** B12 teacher lessons: exactly these two routes (read a published teacher lesson, check one answer). */
 const teacherLessonRead = `plans/${resource}/topics/${resource}/teacher-lesson`
 const teacherLessonCheck = `plans/${resource}/topics/${resource}/teacher-lesson/check`
-const reads = new RegExp(`^(?:home|overview|link-status|plans/${resource}|${teacherLessonRead}|lessons/${resource}|${practiceReads}|${coReads}|${homeworkReads}|${teachReads}|${progressReads})$`)
-const writes = new RegExp(`^(?:enrollments/join|${teacherLessonCheck}|lessons|lessons/${resource}/(?:check|complete|retry|cancel|notes)|${practiceWrites}|${coWrites}|${homeworkWrites}|${teachWrites})$`)
+/** DEMO-B learner notes ("My pages"): list/create, then edit (PATCH) and delete (DELETE) one by id. */
+const reads = new RegExp(`^(?:home|overview|link-status|notes|plans/${resource}|${teacherLessonRead}|lessons/${resource}|${practiceReads}|${coReads}|${homeworkReads}|${teachReads}|${progressReads})$`)
+const writes = new RegExp(`^(?:notes|enrollments/join|${teacherLessonCheck}|lessons|lessons/${resource}/(?:check|complete|retry|cancel|notes)|${practiceWrites}|${coWrites}|${homeworkWrites}|${teachWrites})$`)
 /** PUTs: the B08 lesson progress and the B10 homework problem (replaced in CAPTURE). A lesson note is the only DELETE. */
 const puts = new RegExp(`^(?:lessons/${resource}/progress|homework/sessions/${resource}/problem)$`)
-const deletes = new RegExp(`^lessons/${resource}/notes/${resource}$`)
-const allowed: Record<string, RegExp | undefined> = { GET: reads, POST: writes, PUT: puts, DELETE: deletes }
+const deletes = new RegExp(`^(?:lessons/${resource}/notes/${resource}|notes/${resource})$`)
+const patches = new RegExp(`^notes/${resource}$`)
+const allowed: Record<string, RegExp | undefined> = { GET: reads, POST: writes, PUT: puts, PATCH: patches, DELETE: deletes }
 const overviewQuery = new Set(['q', 'subjectId', 'kind', 'status', 'cursor', 'limit'])
 /** The only query strings forwarded: overview filters, the hub filters and the session-history cursor. */
 const queryKeys: Record<string, Set<string> | undefined> = {
@@ -43,6 +46,7 @@ const queryKeys: Record<string, Set<string> | undefined> = {
   'co/conversations': new Set(['cursor', 'limit']),
   'homework/sessions': new Set(['cursor', 'limit']),
   'teach/context': new Set(['practiceSessionId', 'materialId']),
+  notes: new Set(['materialId', 'kind']),
 }
 
 /** Transport only. The product API rechecks membership, learner, plan ownership, age and policy. */
@@ -60,14 +64,14 @@ async function forward(request: NextRequest, context: Context) {
   if (membership && !/^[a-f0-9-]{36}$/i.test(membership)) return NextResponse.json({ message: 'Choose a current school membership again.' }, { status: 403, headers: { 'Cache-Control': 'no-store' } })
   const csv = path === 'progress/export.csv'
   const headers: Record<string, string> = { Authorization: `Bearer ${token}`, Accept: csv ? 'text/csv' : 'application/json' }
-  if (request.method === 'POST' || request.method === 'PUT') headers['Content-Type'] = request.headers.get('content-type') ?? 'application/json'
+  if (request.method === 'POST' || request.method === 'PUT' || request.method === 'PATCH') headers['Content-Type'] = request.headers.get('content-type') ?? 'application/json'
   if (membership) headers['X-School-Membership-Id'] = membership
   const query = new URLSearchParams()
   const keys = request.method === 'GET' ? queryKeys[path] : undefined
   if (keys) for (const [key, value] of request.nextUrl.searchParams) if (keys.has(key)) query.append(key, value)
   try {
-    const init: RequestInit = { method: request.method, headers, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(30000) }
-    if (request.method === 'POST' || request.method === 'PUT') init.body = await request.text()
+    const init: RequestInit = { method: request.method, headers, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(path === 'co/analogies' ? 90000 : 30000) }
+    if (request.method === 'POST' || request.method === 'PUT' || request.method === 'PATCH') init.body = await request.text()
     const response = await fetch(`${platformApiBaseUrl()}/learn/${path}${query.size > 0 ? `?${query}` : ''}`, init)
     const upstreamType = response.headers.get('content-type')
     const contentType = csv && response.ok ? (upstreamType?.includes('csv') ? upstreamType : 'text/csv; charset=utf-8') : 'application/json'
@@ -79,4 +83,5 @@ async function forward(request: NextRequest, context: Context) {
 export const GET = forward
 export const POST = forward
 export const PUT = forward
+export const PATCH = forward
 export const DELETE = forward

@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Activity, BarChart3, BookOpen, Building2, Camera, Clock, CreditCard, Gauge, GraduationCap, History, Home, Library, Settings, Shield, Sparkles, Trophy, Users } from 'lucide-react'
+import { Activity, BarChart3, BookOpen, Building2, Camera, Clock, CreditCard, Gauge, GraduationCap, History, Home, Library, NotebookPen, Settings, Shield, Sparkles, Trophy, Users } from 'lucide-react'
 import type { AgeBand } from '@/components/design-system'
 
 export type WorkspaceRole = 'student' | 'parent' | 'teacher' | 'school-admin' | 'platform-admin' | 'researcher'
@@ -45,7 +45,11 @@ export function ageBandFromDateOfBirth(dateOfBirth?: string | null, today = new 
 const isHomePath = (path: string) => path === '/learn/home' || path === '/dashboard'
 const isLearnPath = (path: string) => path === '/learn' || path.startsWith('/learn/plans/') || path === '/roadmaps' || path.startsWith('/roadmaps/')
 
-export function studentNavigation(band: AgeBand, ageKnown: boolean, recallDueCount = 0): RoleNavGroup[] {
+/**
+ * `profileSession` = an account that entered through its school learner profile (/learner). That session only works on the
+ * (learn)/(materials) screens, so entries that live in the account-only dashboard group are hidden instead of bouncing.
+ */
+export function studentNavigation(band: AgeBand, ageKnown: boolean, recallDueCount = 0, profileSession = false): RoleNavGroup[] {
   const kids = band === 'kids'
   const practice: RoleNavItem = {
     href: '/learn/practice', label: kids ? 'Play' : 'Practice', icon: Clock,
@@ -57,20 +61,21 @@ export function studentNavigation(band: AgeBand, ageKnown: boolean, recallDueCou
     { title: kids ? 'Your adventures' : 'Learn', items: kids ? [
       { href: '/learn', label: 'Adventures', icon: BookOpen, match: isLearnPath },
       { href: '/learn/library', label: 'My pages', icon: Camera, match: (path) => path.startsWith('/learn/library') || path === '/learn/import' || path === '/learn/snap' }, practice,
-      { href: '/trophies', label: 'My World', icon: Trophy },
+      ...(profileSession ? [] : [{ href: '/trophies', label: 'My World', icon: Trophy }]),
     ] : [
       { href: '/learn/home', label: 'Home', icon: Home, match: isHomePath },
       { href: '/learn', label: 'Learn', icon: BookOpen, match: isLearnPath },
       { href: '/learn/library', label: 'Library', icon: Library, match: (path) => path.startsWith('/learn/library') || path === '/learn/import' || path === '/learn/snap' }, practice,
-      { href: '/settings', label: 'Me', icon: Settings },
+      ...(profileSession ? [] : [{ href: '/settings', label: 'Me', icon: Settings }]),
     ] },
     { title: kids ? 'More' : 'Your learning', items: [
       ...(kids ? [{ href: '/learn/home', label: 'Home', icon: Home, match: isHomePath }] : []),
-      { href: '/learn/enrolled', label: kids ? 'School lessons' : 'Assigned learning', icon: GraduationCap },
-      { href: '/progress', label: 'Progress', icon: BarChart3 },
-      ...(!kids ? [{ href: '/trophies', label: 'Achievements', icon: Trophy }, { href: '/dashboard/history', label: 'History', icon: History }] : []),
-      ...(ageKnown && (band === 'teens' || band === 'adults') ? [{ href: '/pods', label: 'Study Groups', icon: Users }] : []),
-      ...(kids ? [{ href: '/settings', label: 'Settings', icon: Settings }] : []),
+      ...(profileSession ? [] : [{ href: '/learn/enrolled', label: kids ? 'School lessons' : 'Assigned learning', icon: GraduationCap }]),
+      ...(!kids ? [{ href: '/learn/notes', label: 'My pages', icon: NotebookPen, match: (path: string) => path === '/learn/notes' || path.startsWith('/learn/notes/') }] : []),
+      { href: '/learn/progress', label: 'Progress', icon: BarChart3 },
+      ...(!kids && !profileSession ? [{ href: '/trophies', label: 'Achievements', icon: Trophy }, { href: '/dashboard/history', label: 'History', icon: History }] : []),
+      ...(!profileSession && ageKnown && (band === 'teens' || band === 'adults') ? [{ href: '/pods', label: 'Study Groups', icon: Users }] : []),
+      ...(kids && !profileSession ? [{ href: '/settings', label: 'Settings', icon: Settings }] : []),
     ] },
   ]
 }

@@ -27,10 +27,22 @@ export async function requireLearnerAccess(callbackUrl: '/learn/home' | '/learn'
   const gate = familyAccessRedirect(status)
   // A 14-17 account that picked its school profile on /learner holds a STUDENT workspace cookie; only then may it pass the gate.
   // The check below is live (never the cookie alone): the profile list is the B03 self-service rule and excludes under-14 accounts.
-  if (gate && !(gate === '/learner' && await selfServiceProfileSelected(session.accessToken, jar.get('colearner-school-membership')?.value))) redirect(gate)
+  let profileSession = false
+  if (gate) {
+    profileSession = gate === '/learner' && await selfServiceProfileSelected(session.accessToken, jar.get('colearner-school-membership')?.value)
+    if (!profileSession) redirect(gate)
+  }
   if (!session.user.onboardingCompleted) redirect('/onboarding/profile')
   const selected = jar.get('colearner-school-membership')?.value ?? 'unselected'
-  return { kind: 'account' as const, scope: `account:${session.user.id}:${selected}` }
+  return { kind: 'account' as const, scope: `account:${session.user.id}:${selected}`, profileSession }
+}
+
+/** True when the signed-in account has no account-level family access yet but picked its school learner profile (see below). Never throws. */
+export async function isProfileSession(token: string, membershipId: string | undefined): Promise<boolean> {
+  try {
+    const gate = familyAccessRedirect(await accountFamilyAccess(token))
+    return gate === '/learner' && await selfServiceProfileSelected(token, membershipId)
+  } catch { return false }
 }
 
 async function selfServiceProfileSelected(token: string, membershipId: string | undefined): Promise<boolean> {
@@ -45,7 +57,8 @@ async function selfServiceProfileSelected(token: string, membershipId: string | 
 }
 
 type ChildAccess = { kind: 'child'; scope: string; nickname: string; band: 'kids' | 'tweens' | 'teens' }
-type AccountAccess = { kind: 'account'; scope: string; nickname?: undefined; band?: undefined }
+/** `profileSession`: the account entered through its school learner profile and has no account-level family access. */
+type AccountAccess = { kind: 'account'; scope: string; nickname?: undefined; band?: undefined; profileSession?: boolean }
 export type LearnerAccess = ChildAccess | AccountAccess
 
 /** Same verification for every learner route: an empty or revoked child selection is denied, never replaced by an adult session. */

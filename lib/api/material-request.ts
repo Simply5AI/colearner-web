@@ -35,7 +35,7 @@ export async function materialRequest<T>(path: string, schema: z.ZodType<T>, met
   const json: unknown = await response.json().catch(() => { throw new ApiError(502, 'The material service returned an unsupported response. Please refresh or try again later.') })
   const data = json !== null && typeof json === 'object' && 'data' in json ? json.data : json
   const result = schema.safeParse(data)
-  if (!result.success) throw new ApiError(502, 'The material service returned an unsupported response. Please refresh or try again later.')
+  if (!result.success) { if (process.env.NODE_ENV !== 'production') console.error('[material-request] schema mismatch', JSON.stringify(result.error.issues).slice(0, 600)); throw new ApiError(502, 'The material service returned an unsupported response. Please refresh or try again later.') }
   return result.data
 }
 

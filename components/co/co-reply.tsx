@@ -5,6 +5,7 @@ import { BookOpen, Compass, ShieldCheck, Square, Volume2 } from 'lucide-react'
 import { Button, CoAvatar, type CoState } from '@/components/design-system'
 import { AiOriginTag } from '@/components/lesson/lesson-parts'
 import { linkHref, type LearnBand } from '@/lib/api/learn'
+import { SaveToNotesButton } from '@/components/notes/save-to-notes-button'
 import { useLocalReadAloud } from '@/lib/hooks/use-read-aloud'
 import { cn } from '@/lib/utils'
 import { failureMessage, pendingLabel, replyView, SAFETY_LABEL, sourceChipText, speechRateFor, type ReplyView } from './co-model'
@@ -84,15 +85,27 @@ export interface ReplyCardProps {
   canAsk: boolean
   /** Follow-up chips belong to the newest reply only. */
   suggestions?: boolean
+  /** DEMO-B: the material this chat is about, for "Save to my pages". When absent it is read from `materialHref` (/learn/library/<id>). */
+  materialId?: string | null
+}
+
+const materialIdFromHref = (href: string | null) => /^\/learn\/library\/([a-zA-Z0-9_-]{1,128})(?:[/?#]|$)/.exec(href ?? '')?.[1] ?? null
+/** The learner's question becomes the page title; Co's words and key points become its body. */
+function savedAnswer(turn: CoTurnView, view: ReplyView): { title: string; body: string; sourceAnchorRef?: string } {
+  const title = turn.learnerText.replace(/\s+/g, ' ').trim().slice(0, 120) || 'Co’s answer'
+  const points = view.keyPoints.length > 0 ? `\n\nKey points\n${view.keyPoints.map(point => `- ${point}`).join('\n')}` : ''
+  const anchor = view.sources[0]?.anchorRef
+  return { title, body: `${view.text}${points}`, ...(anchor ? { sourceAnchorRef: anchor } : {}) }
 }
 
 /**
  * A finished Co reply. Everything shown is decided by `replyView`: the "Beyond your material" tag appears only when the
  * server set it; a safety redirect shows the code-owned guidance verbatim and nothing else.
  */
-export function CoReplyCard({ turn, band, materialHref, onSuggestion, canAsk, suggestions = true }: ReplyCardProps) {
+export function CoReplyCard({ turn, band, materialHref, onSuggestion, canAsk, suggestions = true, materialId }: ReplyCardProps) {
   if (!turn.reply) return null
   const view = replyView(turn.reply)
+  const saveTo = materialId ?? materialIdFromHref(materialHref)
   const kids = band === 'kids'
   const safety = view.kind === 'safety'
   return <ReplyReadAloud text={view.text} band={band}>{(listen, state) => <article aria-label={safety ? SAFETY_LABEL : 'Co’s answer'} data-testid={safety ? 'co-safety' : 'co-reply'} data-turn={turn.id} data-origin={view.origin}
@@ -111,6 +124,7 @@ export function CoReplyCard({ turn, band, materialHref, onSuggestion, canAsk, su
         <ul className="list-disc space-y-1 ps-6">{view.keyPoints.map(point => <li key={point}>{point}</li>)}</ul>
       </section>}
       {!safety && <ReplySources sources={view.sources} fallbackHref={materialHref} band={band} />}
+      {!safety && saveTo && <SaveToNotesButton materialId={saveTo} kind="CO_ANSWER" {...savedAnswer(turn, view)} />}
       {!safety && suggestions && <SuggestionChips suggestions={view.suggestions} band={band} onPick={onSuggestion} disabled={!canAsk} />}
       {view.origin === 'AI' && turn.reply?.generatedBy.kind === 'AI'
         ? <AiOriginTag band={band} variant="helper" packVersion={turn.reply.generatedBy.packVersion} promptRelease={turn.reply.generatedBy.promptRelease} />

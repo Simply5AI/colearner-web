@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { isProfileSession } from './learner-access'
 import { auth } from './config'
 import { FAMILY_CHILD_COOKIE } from './family-cookies'
 import { familyRequest, FamilyError, type ChildContext } from '@/lib/api/family'
@@ -22,5 +23,5 @@ export async function requireMaterialAccess() {
   if (session.user.roles?.includes('TEACHER')) redirect('/teacher/dashboard')
   if (!session.user.onboardingCompleted) redirect('/onboarding/profile')
   const selected = jar.get('colearner-school-membership')?.value ?? 'unselected'
-  return { kind: 'account' as const, scope: `account:${session.user.id}:${selected}` }
+  return { kind: 'account' as const, scope: `account:${session.user.id}:${selected}`, profileSession: await isProfileSession(session.accessToken, jar.get('colearner-school-membership')?.value) }
 }

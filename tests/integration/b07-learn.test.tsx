@@ -191,7 +191,7 @@ describe('L2 learn: subjects and plans', () => {
     const personal = cards.find(card => card.getAttribute('data-kind') === 'PERSONAL')!
     expect(assigned).toHaveTextContent('From Mr. Thomas · Class 6A')
     expect(assigned).toHaveTextContent('Set by your teacher')
-    expect(assigned).toHaveTextContent(/Due /)
+    expect(assigned).toHaveTextContent(/[Dd]ue /)
     expect(personal).toHaveTextContent('My plan')
     expect(personal).not.toHaveTextContent('Set by your teacher')
     expect(within(assigned).getByRole('link', { name: 'Open Fractions' })).toHaveAttribute('href', '/learn/plans/plan-assigned')
@@ -357,7 +357,7 @@ describe('L3 plan detail', () => {
     expect(screen.getByText('What is a fraction: lesson')).toBeInTheDocument()
     expect(screen.getByText('Fractions in real life: quiz')).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Fraction worksheet' }).length).toBeGreaterThan(0)
-    expect(document.body.textContent).toMatch(/Due /)
+    expect(document.body.textContent).toMatch(/[Dd]ue /)
   })
   it('locked assignment shows who controls it and offers no edit, attach, reorder or remove affordance', () => {
     show('tweens')

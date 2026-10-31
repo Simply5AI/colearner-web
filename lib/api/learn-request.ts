@@ -95,6 +95,11 @@ const byCode: Record<string, string> = {
   CONCEPT_NOT_FOUND: 'We could not find that idea to teach. It may have been removed.',
   EXPORT_NOT_ALLOWED: 'A progress download is not available for this learner.',
   PROGRESS_UNAVAILABLE: 'Progress is not available right now. Please try again a little later.',
+  // DEMO-B learner notes ("My pages").
+  NOTES_NOT_AVAILABLE: 'My pages are for ages 10 and up. Ask a grown-up to help you keep notes.',
+  NOTES_ACCESS_REQUIRED: 'Your school or grown-up needs to allow this before you can use My pages.',
+  NOT_YOURS: 'That page belongs to someone else.',
+  NOTE_LIMIT_REACHED: 'My pages is full. Delete a page to make room.',
 }
 const codePattern = /^[A-Z][A-Z0-9_]{2,63}$/
 
@@ -119,7 +124,7 @@ export function learnErrorMessage(status: number, code: string | undefined, body
 }
 
 /** The same-origin BFF checks the current account or opaque child cookie on every dispatch. */
-export async function learnRequest<T>(path: string, schema: z.ZodType<T>, method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET', body?: unknown): Promise<T> {
+export async function learnRequest<T>(path: string, schema: z.ZodType<T>, method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'GET', body?: unknown): Promise<T> {
   let response: Response
   try {
     response = await fetch(`/api/learn${path}`, {

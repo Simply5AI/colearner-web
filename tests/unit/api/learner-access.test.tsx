@@ -46,9 +46,9 @@ describe('learner route entry', () => {
   })
   it('keeps every account gate and membership cache isolation', async () => {
     mocks.cookie.mockImplementation(name => name === 'colearner-school-membership' ? { value: 'membership-a' } : undefined)
-    expect(await requireLearnerAccess()).toEqual({ kind: 'account', scope: 'account:learner-a:membership-a' })
+    expect(await requireLearnerAccess()).toEqual({ kind: 'account', scope: 'account:learner-a:membership-a', profileSession: false })
     mocks.cookie.mockReturnValue(undefined)
-    expect(await requireLearnerAccess()).toEqual({ kind: 'account', scope: 'account:learner-a:unselected' })
+    expect(await requireLearnerAccess()).toEqual({ kind: 'account', scope: 'account:learner-a:unselected', profileSession: false })
     mocks.auth.mockResolvedValue(null)
     await expect(requireLearnerAccess()).rejects.toThrow('REDIRECT:/login?callbackUrl=/learn/home')
     mocks.auth.mockResolvedValue({ ...session(), accessToken: undefined })

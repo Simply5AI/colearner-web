@@ -14,8 +14,8 @@ vi.mock('next/navigation', () => ({ usePathname: pathnameMock }))
 vi.mock('@/lib/hooks/use-profile', () => ({ useProfile: () => ({ data: profileMock }) }))
 vi.mock('next-auth/react', () => ({ signOut: signOutMock }))
 
-function renderShell(role: WorkspaceRole = 'teacher') {
-  return render(<RoleShell role={role} homeHref="/teacher/dashboard" navigation={teacherNavigation} identity="School teacher">
+function renderShell(role: WorkspaceRole = 'teacher', navigationStyle?: 'header' | 'sidebar') {
+  return render(<RoleShell role={role} navigationStyle={navigationStyle} homeHref="/teacher/dashboard" navigation={teacherNavigation} identity="School teacher">
     <h1>Classes</h1><button>Page action</button>
   </RoleShell>)
 }
@@ -24,7 +24,7 @@ describe('Shared role shell', () => {
   it('keeps nested plan routes active and provides skip-to-content focus', async () => {
     const user = userEvent.setup()
     renderShell()
-    const nav = within(screen.getByRole('navigation', { name: 'Primary navigation' }))
+    const nav = within(screen.getByRole('navigation', { name: 'Main' }))
     expect(nav.getByRole('link', { name: 'Classes & plans' })).toHaveAttribute('aria-current', 'page')
     expect(nav.getByRole('link', { name: 'Dashboard' })).not.toHaveAttribute('aria-current')
     await user.click(screen.getByRole('link', { name: 'Skip to content' }))
@@ -32,9 +32,18 @@ describe('Shared role shell', () => {
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
   })
 
+  it('renders a sticky top header (no sidebar, no drawer) with every teacher destination and its href', () => {
+    renderShell()
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Open navigation' })).not.toBeInTheDocument()
+    expect(screen.getByTestId('top-header')).toHaveClass('sticky', 'top-0')
+    const nav = within(screen.getByRole('navigation', { name: 'Main' }))
+    expect(nav.getAllByRole('link').map((l) => [l.textContent, l.getAttribute('href')])).toEqual(teacherNavigation[0]!.items.map((i) => [i.label, i.href]))
+  })
+
   it('opens an accessible drawer, traps keyboard focus, closes with Escape and restores focus', async () => {
     const user = userEvent.setup()
-    renderShell()
+    renderShell('school-admin')
     const trigger = screen.getByRole('button', { name: 'Open navigation' })
     await user.click(trigger)
     const drawer = await screen.findByRole('dialog', { name: 'Navigation' })
@@ -49,7 +58,7 @@ describe('Shared role shell', () => {
 
   it('closes the drawer on navigation and keeps all existing destinations reachable', async () => {
     const user = userEvent.setup()
-    renderShell()
+    renderShell('school-admin')
     await user.click(screen.getByRole('button', { name: 'Open navigation' }))
     const drawer = await screen.findByRole('dialog', { name: 'Navigation' })
     const nav = within(drawer).getByRole('navigation', { name: 'Drawer navigation' })
@@ -85,6 +94,16 @@ describe('Age presentation and navigation boundaries', () => {
     expect(groups[0]?.items[1]?.label).toBe('My pages')
     expect(groups[0]?.items[1]?.href).toBe('/learn/library')
   })
+  it('points Progress at the learner screen and hides account-only entries for a learner profile session', () => {
+    for (const band of ['kids', 'tweens', 'teens'] as const) {
+      const account = studentNavigation(band, true).flatMap((g) => g.items)
+      expect(account.find((i) => i.label === 'Progress')?.href).toBe('/learn/progress')
+      const hrefs = studentNavigation(band, true, 0, true).flatMap((g) => g.items).map((i) => i.href)
+      for (const gone of ['/progress', '/trophies', '/settings', '/pods', '/dashboard/history', '/learn/enrolled']) expect(hrefs).not.toContain(gone)
+      expect(hrefs).toContain('/learn/progress')
+      expect(hrefs).toContain('/learn/practice')
+    }
+  })
   it('does not expose group navigation before an eligible known band', () => {
     for (const [band, known] of [['teens', false], ['tweens', true], ['kids', true]] as const) {
       expect(studentNavigation(band, known).flatMap((g) => g.items).some((i) => i.href === '/pods')).toBe(false)
@@ -102,7 +121,8 @@ describe('Mounted role adapters', () => {
     profileMock.dateOfBirth = '2018-01-01'
     const { container } = render(<StudentShell><h1>Home</h1></StudentShell>)
     expect(container.querySelector('[data-role="student"]')).toHaveAttribute('data-age-band', 'kids')
-    expect(within(screen.getByRole('navigation', { name: 'Quick navigation' })).getAllByRole('link')).toHaveLength(4)
+    expect(within(screen.getByRole('navigation', { name: 'Main' })).getAllByRole('link')).toHaveLength(4)
+    expect(screen.queryByRole('navigation', { name: 'Quick navigation' })).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
   })
 
@@ -114,6 +134,30 @@ describe('Mounted role adapters', () => {
     expect(screen.queryByRole('link', { name: 'Study Groups' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Sign out' }))
     expect(signOutMock).toHaveBeenCalledWith({ redirectTo: '/login' })
+  })
+
+  it('keeps the learner top bar complete: primary items inline, the rest under More, with active state and profile-session hiding', async () => {
+    profileMock.dateOfBirth = '2009-06-01'
+    pathnameMock.mockReturnValue('/learn/progress')
+    const user = userEvent.setup()
+    const { unmount } = render(<StudentShell><h1>Home</h1></StudentShell>)
+    const main = within(screen.getByRole('navigation', { name: 'Main' }))
+    expect(main.getAllByRole('link').map((l) => l.textContent)).toEqual(['Home', 'Learn', 'Library', 'Practice', 'Me'])
+    expect(main.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/learn/home')
+    await user.click(main.getByRole('button', { name: /More/ }))
+    const more = within(await screen.findByLabelText('More destinations'))
+    expect(more.getAllByRole('link').map((l) => l.textContent)).toEqual(['Assigned learning', 'My pages', 'Progress', 'Achievements', 'History', 'Study Groups'])
+    expect(more.getByRole('link', { name: 'Progress' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('button', { name: 'Use dark theme' })).toBeInTheDocument()
+    unmount()
+    render(<StudentShell profileSession><h1>Home</h1></StudentShell>)
+    const profile = within(screen.getByRole('navigation', { name: 'Main' }))
+    expect(profile.queryByRole('link', { name: 'Me' })).not.toBeInTheDocument()
+    await user.click(profile.getByRole('button', { name: /More/ }))
+    const profileMore = within(await screen.findByLabelText('More destinations'))
+    expect(profileMore.queryByRole('link', { name: /Achievements|History|Assigned learning|Study Groups/ })).not.toBeInTheDocument()
+    expect(profileMore.getByRole('link', { name: 'Progress' })).toHaveAttribute('href', '/learn/progress')
+    pathnameMock.mockReturnValue('/teacher/plans/plan-1')
   })
 
   it('uses the consumer session sign-out in the teacher adapter', async () => {

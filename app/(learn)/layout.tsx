@@ -7,6 +7,6 @@ import { StudentShell } from '@/components/shared/AppSidebar'
 export default async function LearnLayout({ children }: { children: React.ReactNode }) {
   const access = await requireLearnerAccess()
   return <LearnIdentityProvider scope={access.scope} band={access.kind === 'child' ? access.band : null}>
-    {access.kind === 'child' ? <ChildLearnShell band={access.band} nickname={access.nickname}>{children}</ChildLearnShell> : <StudentShell>{children}</StudentShell>}
+    {access.kind === 'child' ? <ChildLearnShell band={access.band} nickname={access.nickname}>{children}</ChildLearnShell> : <StudentShell profileSession={access.profileSession}>{children}</StudentShell>}
   </LearnIdentityProvider>
 }

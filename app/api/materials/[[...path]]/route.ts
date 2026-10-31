@@ -7,7 +7,7 @@ import { FAMILY_CHILD_COOKIE } from '@/lib/auth/family-cookies'
 export const runtime = 'nodejs'
 type Context = { params: Promise<{ path?: string[] }> }
 const resource = '[a-zA-Z0-9_-]{1,128}'
-const reads = new RegExp(`^(?:|config|${resource})$`)
+const reads = new RegExp(`^(?:|config|${resource}|${resource}/original)$`)
 const writes = new RegExp(`^(?:import|bulk|${resource}/(?:retry|cancel))$`)
 
 /** Transport only. The product API rechecks membership, learner, source, quota and action. */
@@ -31,6 +31,13 @@ async function forward(request: NextRequest, context: Context) {
     const init: RequestInit & { duplex?: 'half' } = { method: request.method, headers, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(60000) }
     if (request.method !== 'GET') { init.body = request.body; init.duplex = 'half' }
     const response = await fetch(`${platformApiBaseUrl()}/materials${path ? `/${path}` : ''}${request.nextUrl.search}`, init)
+    if (request.method === 'GET' && path.endsWith('/original') && response.ok) {
+      // Original file bytes: pass through only the safe, fixed set of file headers.
+      const out: Record<string, string> = { 'Content-Type': response.headers.get('content-type') ?? 'application/octet-stream', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' }
+      const disposition = response.headers.get('content-disposition')
+      if (disposition) out['Content-Disposition'] = disposition
+      return new Response(response.body, { status: 200, headers: out })
+    }
     return new Response(response.body, { status: response.status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } })
   } catch { return NextResponse.json({ message: 'Material services are unavailable. Your draft is still here.' }, { status: 503, headers: { 'Cache-Control': 'no-store' } }) }
 }

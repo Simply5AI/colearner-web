@@ -74,32 +74,37 @@ function ConceptCell({ concept }: { concept: ProgressConcept }) {
   </li>
 }
 
-function TeenSubjects({ subjects }: { subjects: ProgressSubject[] }) {
+function TeenSubjects({ subjects, week, focus, band }: { subjects: ProgressSubject[]; week: LearnProgress['week']; focus: LearnProgress['focusNext']; band: LearnBand }) {
   const weak = subjects.flatMap(subject => subject.concepts.filter(concept => concept.mastery === 'PRACTICING').map(concept => ({ concept, subject }))).sort((a, b) => (a.concept.rate ?? 1) - (b.concept.rate ?? 1)).slice(0, 6)
-  return <>
-    <ul className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(16rem,1fr))]">
-      {subjects.map(subject => <li key={subject.subjectId} className="ds-card space-y-3" data-testid="subject-card">
-        <h2>{subject.name}</h2>
-        <MeasuredTag>Measured readiness</MeasuredTag>
+  return <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+    <ul className="space-y-4">
+      {subjects.map(subject => <li key={subject.subjectId} className="ds-card space-y-4" data-testid="subject-card">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-2"><h2>{subject.name}</h2><MeasuredTag>Measured readiness</MeasuredTag></div>
+          <MasteryMark mastery={subject.mastery} text={masteryFace[subject.mastery].label} />
+        </div>
         {typeof subject.readiness === 'number'
           ? <p data-testid="readiness" className="text-[length:var(--ds-h2)] font-extrabold">{subject.readiness}% ready</p>
-          : <p data-testid="readiness-pending">Not enough practice yet for a readiness number.</p>}
-        <MasteryMark mastery={subject.mastery} text={masteryFace[subject.mastery].label} />
-        <ul aria-label={`${subject.name} concepts`} className="space-y-2">{subject.concepts.map(concept => <ConceptCell key={concept.conceptRef} concept={concept} />)}</ul>
+          : <p data-testid="readiness-pending" className="text-muted-foreground">Not enough practice yet for a readiness number. A few more rounds on each idea and it will appear here.</p>}
+        <ul aria-label={`${subject.name} concepts`} className="grid gap-2 sm:grid-cols-2">{subject.concepts.map(concept => <ConceptCell key={concept.conceptRef} concept={concept} />)}</ul>
       </li>)}
     </ul>
-    <section aria-labelledby="weak-title" data-testid="weak-spots" className="space-y-3">
-      <h2 id="weak-title">Weak spots</h2>
-      {weak.length === 0 ? <p>No concept is in practicing right now.</p> : <ul className="space-y-2">{weak.map(({ concept, subject }) => {
-        const href = linkHref(concept.practice)
-        return <li key={concept.conceptRef} className="ds-card flex flex-wrap items-center gap-3">
-          <span className="font-bold">{concept.label}</span><span className="text-muted-foreground">{subject.name}</span>
-          <MasteryMark mastery={concept.mastery} text={masteryFace[concept.mastery].label} />
-          {href && <Link href={href} className="ds-button ds-button-secondary">Practice</Link>}
-        </li>
-      })}</ul>}
-    </section>
-  </>
+    <div className="space-y-4">
+      <Week week={week} />
+      <section aria-labelledby="weak-title" data-testid="weak-spots" className="ds-card space-y-3">
+        <h2 id="weak-title">Weak spots</h2>
+        {weak.length === 0 ? <p className="text-muted-foreground">No concept is in practicing right now.</p> : <ul className="space-y-2">{weak.map(({ concept, subject }) => {
+          const href = linkHref(concept.practice)
+          return <li key={concept.conceptRef} className="flex flex-wrap items-center gap-3 rounded-[var(--radius)] border border-border p-3">
+            <span className="font-bold">{concept.label}</span><span className="text-muted-foreground">{subject.name}</span>
+            <MasteryMark mastery={concept.mastery} text={masteryFace[concept.mastery].label} />
+            {href && <Link href={href} className="ds-button ds-button-secondary">Practice</Link>}
+          </li>
+        })}</ul>}
+      </section>
+      <FocusCard focus={focus} band={band} />
+    </div>
+  </div>
 }
 
 function FocusCard({ focus, band }: { focus: LearnProgress['focusNext']; band: LearnBand }) {
@@ -133,6 +138,25 @@ function ProgressBody({ progress }: { progress: LearnProgress }) {
       setExportError(caught instanceof Error ? caught.message : 'A progress download is not available for this learner.')
     } finally { setExporting(false) }
   }
+  const hasWeekActivity = progress.week.some(day => day.completedSessions > 0)
+  if (progress.subjects.length === 0 && hasWeekActivity) {
+    // Practice happened but no idea has enough measured evidence yet: still show the week, never the empty state.
+    return <LearnFrame band={band} label={band === 'kids' ? 'My learning garden' : 'Progress'} className={cn(band === 'kids' && 'max-w-3xl')}>
+      <header className="space-y-2">
+        <h1>{band === 'kids' ? 'My learning garden' : 'Progress'}</h1>
+        {band !== 'kids' && <MeasuredTag>Measured from your practice</MeasuredTag>}
+      </header>
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <Week week={progress.week} />
+        <section data-testid="subjects-pending" className="ds-card space-y-3" aria-labelledby="pending-title">
+          <h2 id="pending-title">Your ideas</h2>
+          <p className="text-muted-foreground">{band === 'kids' ? 'Keep playing and your garden will start to grow.' : 'Keep practising. Once there is enough evidence, each idea shows up here with how well you know it.'}</p>
+          <Link href={progressRoutes.library} className="ds-button ds-button-secondary">{band === 'kids' ? 'Go to my pages' : 'Go to the library'}</Link>
+        </section>
+      </div>
+      {band !== 'kids' && <FocusCard focus={progress.focusNext} band={band} />}
+    </LearnFrame>
+  }
   if (progress.subjects.length === 0) {
     return <LearnFrame band={band} label="Progress">
       <div className="ds-state" data-state="empty">
@@ -155,8 +179,9 @@ function ProgressBody({ progress }: { progress: LearnProgress }) {
         <h2 id="rewards-title">Levels and badges</h2>
         <p><Sparkles aria-hidden="true" className="me-2 inline" />{REWARDS_LATER}</p>
       </section>
-    </> : <TeenSubjects subjects={progress.subjects} />}
-    <FocusCard focus={progress.focusNext} band={band} />
+    </> : null}
+    {band === 'teens' && <TeenSubjects subjects={progress.subjects} week={progress.week} focus={progress.focusNext} band={band} />}
+    {band !== 'teens' && <FocusCard focus={progress.focusNext} band={band} />}
     {band === 'teens' && progress.export.available && <button type="button" className="ds-button ds-button-secondary" data-testid="export-csv" onClick={() => void download()} disabled={exporting}>{exporting ? 'Preparing the CSV' : 'Download CSV'}</button>}
     {exportError && <p role="alert">{exportError}</p>}
   </LearnFrame>

@@ -27,6 +27,7 @@ const allowed: [string, string, string?][] = [
   ['GET', 'co/context'], ['GET', 'co/conversations'], ['GET', 'co/conversations/conv-1'], ['GET', 'co/conversations/conv-1/turns/turn-1'],
   ['POST', 'co/conversations', '{"context":{"kind":"MATERIAL","materialId":"m1"}}'], ['POST', 'co/conversations/conv-1/turns', '{"clientTurnId":"c-12345678","text":"hi"}'],
   ['POST', 'co/conversations/conv-1/turns/turn-1/retry', '{}'], ['POST', 'co/conversations/conv-1/turns/turn-1/cancel', '{}'],
+  ['POST', 'co/analogies', '{"materialId":"m1","conceptRef":"c1","conceptLabel":"Chlorophyll"}'],
   ['GET', 'homework/sessions'], ['GET', 'homework/sessions/hw-1'],
   ['PUT', 'homework/sessions/hw-1/problem', '{"clientTurnId":"c-12345678","problem":"3/4 + 1/8"}'],
   ['POST', 'homework/sessions/hw-1/finish', '{}'],
@@ -52,7 +53,7 @@ describe('B10 co and homework BFF allowlist', () => {
 
   it.each([
     // wrong method for a known path
-    ['POST', 'co/context'], ['PUT', 'co/conversations'], ['DELETE', 'co/conversations/conv-1'], ['GET', 'co/conversations/conv-1/turns'], ['GET', 'co/conversations/conv-1/turns/turn-1/retry'],
+    ['POST', 'co/context'], ['GET', 'co/analogies'], ['PUT', 'co/analogies'], ['DELETE', 'co/analogies'], ['POST', 'co/analogies/extra'], ['PUT', 'co/conversations'], ['DELETE', 'co/conversations/conv-1'], ['GET', 'co/conversations/conv-1/turns'], ['GET', 'co/conversations/conv-1/turns/turn-1/retry'],
     ['GET', 'co/conversations/conv-1/turns/turn-1/cancel'], ['POST', 'co/conversations/conv-1'], ['POST', 'co/conversations/conv-1/turns/turn-1'], ['PUT', 'co/conversations/conv-1/turns/turn-1'],
     ['DELETE', 'co/conversations/conv-1/turns/turn-1'], ['PUT', 'homework/sessions'], ['PUT', 'homework/sessions/hw-1'], ['DELETE', 'homework/sessions/hw-1'], ['POST', 'homework/sessions/hw-1'],
     ['GET', 'homework/sessions/hw-1/steps'], ['GET', 'homework/sessions/hw-1/hint'], ['GET', 'homework/sessions/hw-1/final'], ['GET', 'homework/sessions/hw-1/restatement'], ['GET', 'homework/sessions/hw-1/abandon'],

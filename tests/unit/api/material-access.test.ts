@@ -27,7 +27,7 @@ describe('material route entry', () => {
   })
   it('keeps current account gates and membership cache isolation', async () => {
     mocks.cookie.mockImplementation(name => name === 'colearner-school-membership' ? { value: 'membership-a' } : undefined)
-    expect(await requireMaterialAccess()).toEqual({ kind: 'account', scope: 'account:learner-a:membership-a' })
+    expect(await requireMaterialAccess()).toEqual({ kind: 'account', scope: 'account:learner-a:membership-a', profileSession: false })
     mocks.auth.mockResolvedValue(null)
     await expect(requireMaterialAccess()).rejects.toThrow('REDIRECT:/login?callbackUrl=/learn/library')
   })

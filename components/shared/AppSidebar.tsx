@@ -41,14 +41,14 @@ export function AppSidebar({ sourceProgress, recallDueCount = 0 }: AppSidebarPro
   </aside>
 }
 
-export function StudentShell({ children, sourceProgress, recallDueCount = 0 }: AppSidebarProps & { children: React.ReactNode }) {
+export function StudentShell({ children, sourceProgress, recallDueCount = 0, profileSession = false }: AppSidebarProps & { children: React.ReactNode; profileSession?: boolean }) {
   const { data: profile } = useProfile()
   const knownBand = ageBandFromDateOfBirth(profile?.dateOfBirth)
   const band = knownBand ?? 'teens'
-  const navigation = studentNavigation(band, !!knownBand, recallDueCount)
+  const navigation = studentNavigation(band, !!knownBand, recallDueCount, profileSession)
   return <RoleShell
-    role="student" band={band} navigationStyle={band === 'kids' ? 'header' : 'sidebar'} homeHref="/learn/home" navigation={navigation}
-    bottomNavigation={navigation[0]?.items} identity={profile?.name}
+    role="student" band={band} homeHref="/learn/home" navigation={navigation}
+    identity={profile?.name}
     sidebarFooter={sourceProgress && band !== 'kids' ? <SourceProgressSummary progress={sourceProgress} /> : undefined}
     accountActions={<button type="button" onClick={() => void signOut({ redirectTo: '/login' })} aria-label="Sign out" className="flex min-h-[var(--ds-tap,44px)] min-w-[var(--ds-tap,44px)] items-center justify-center rounded-xl border border-border bg-card focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"><LogOut aria-hidden="true" className="size-5" /></button>}
   >{children}</RoleShell>

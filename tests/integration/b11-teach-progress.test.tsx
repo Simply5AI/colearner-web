@@ -127,3 +127,10 @@ it('shows source labels and quotes without inventing a link for unlinked evidenc
   expect(sources).toHaveTextContent('Warm water can become vapour.')
   expect(sources.querySelector('a')).toBeNull()
 })
+
+it('shows the week activity instead of the empty state when sessions exist but no subject has evidence yet', async () => {
+  mount('teens', 'progress', () => ({ ...progress('teens'), subjects: [], week: [{ date: '2026-10-27', completedSessions: 0 }, { date: '2026-10-28', completedSessions: 2 }] }))
+  expect(await screen.findByTestId('week-activity')).toBeInTheDocument()
+  expect(screen.getByTestId('subjects-pending')).toBeInTheDocument()
+  expect(screen.queryByText('Your progress grows here')).toBeNull()
+})

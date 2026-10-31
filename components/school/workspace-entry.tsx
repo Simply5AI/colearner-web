@@ -82,11 +82,10 @@ export function WorkspaceEntry({ personalHref, denied = false }: { personalHref:
           Choose your workspace
         </h1>
         <p className="text-muted-foreground">
-          Your school and role come from verified memberships. Switching changes
-          your workspace, not your account’s authority.
+          Pick the school you want to use today. You can come back here and switch whenever you like.
         </p>
       </div>
-      <div className="flex flex-wrap gap-3"><Link href="/family" className="ds-button ds-button-secondary">My verified family</Link><Link href="/age" className="ds-button ds-button-ghost">Learner age check</Link><Link href="/profiles" className="ds-button ds-button-ghost">Shared device</Link></div>
+      <div className="flex flex-wrap gap-3"><Link href="/family" className="ds-button ds-button-secondary">My verified family</Link><Link href="/age" className="ds-button ds-button-ghost">Check my age</Link><Link href="/profiles" className="ds-button ds-button-ghost">Shared device</Link></div>
       <QueryState
         pending={workspaces.isPending}
         error={workspaces.error}
@@ -115,7 +114,7 @@ export function WorkspaceEntry({ personalHref, denied = false }: { personalHref:
                   Open workspace
                 </Button>
               ) : (
-                <div className="space-y-3"><p className="text-sm text-muted-foreground">Membership recorded. This does not verify a guardian relationship or grant child access.</p><Link className="ds-button ds-button-secondary" href={workspace.role==='PARENT'?'/family':'/learner'}>{workspace.role==='PARENT'?'Review verified family access':'Open consent-checked learner entry'}</Link></div>
+                <div className="space-y-3"><p className="text-sm text-muted-foreground">{workspace.role==='PARENT'?'See and manage the children linked to this school.':'Your learning space at this school is ready.'}</p><Link className="ds-button ds-button-secondary" href={workspace.role==='PARENT'?'/family':'/learner'}>{workspace.role==='PARENT'?'See my family':'Start learning'}</Link></div>
               )}
             </Card>
           ))}

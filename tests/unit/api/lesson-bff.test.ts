@@ -60,8 +60,8 @@ describe('B08 lesson BFF allowlist', () => {
     expect(mocks.auth).not.toHaveBeenCalled(); expect(mocks.fetch).not.toHaveBeenCalled()
   })
 
-  it('exports only GET, POST, PUT and DELETE handlers', () => {
-    expect(Object.keys(route).filter(key => /^[A-Z]+$/.test(key)).sort()).toEqual(['DELETE', 'GET', 'POST', 'PUT'])
+  it('exports only GET, POST, PUT, PATCH (study notes) and DELETE handlers', () => {
+    expect(Object.keys(route).filter(key => /^[A-Z]+$/.test(key)).sort()).toEqual(['DELETE', 'GET', 'PATCH', 'POST', 'PUT'])
   })
 
   it.each([['POST', 'lessons'], ['PUT', 'lessons/lesson-1/progress'], ['DELETE', 'lessons/lesson-1/notes/n1']])('refuses a cross-origin or origin-less %s /%s before reading credentials', async (method, path) => {

@@ -42,7 +42,8 @@ describe('B08 material schema carries the lesson link and the server reason', ()
   it('accepts lessonsAvailable true when the server says lessons really work', () => {
     expect(materialConfigSchema.safeParse(config).success).toBe(true)
     expect(materialConfigSchema.safeParse({ ...config, lessonsAvailable: false }).success).toBe(true)
-    expect(materialConfigSchema.safeParse({ ...config, practiceAvailable: true }).success).toBe(false)
+    // B09 shipped: the server reports practiceAvailable true once practice is enabled for the school (the old literal-false schema broke the whole library).
+    expect(materialConfigSchema.safeParse({ ...config, practiceAvailable: true }).success).toBe(true)
   })
 })
 

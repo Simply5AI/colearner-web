@@ -191,7 +191,7 @@ describe('F-L8-01 Ask Co in the library item (reader)', () => {
   it('adds nothing when the context cannot be read, and asks nothing for a material that is still being read', async () => {
     const server = stubNetwork({ band: 'tweens', state: 'unreachable' })
     open()
-    await screen.findByRole('heading', { name: 'Original source' })
+    await screen.findByRole('tablist', { name: 'Material views' })
     await waitFor(() => expect(server.calls.length).toBeGreaterThan(0))
     await new Promise(resolve => setTimeout(resolve, 40))
     expect(screen.queryByTestId('ask-co-entry')).toBeNull()
@@ -199,7 +199,7 @@ describe('F-L8-01 Ask Co in the library item (reader)', () => {
     cleanup()
     const other = stubNetwork({ band: 'tweens' })
     open('processing')
-    await screen.findByRole('heading', { name: 'Original source' })
+    await screen.findByRole('tablist', { name: 'Material views' })
     await new Promise(resolve => setTimeout(resolve, 40))
     expect(other.calls).toHaveLength(0)
     expect(screen.queryByTestId('ask-co-entry')).toBeNull()
