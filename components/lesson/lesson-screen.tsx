@@ -6,14 +6,15 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { LearnLoadError, LearnSkeleton, useLearnIdentity } from '@/components/learn/learn-common'
 import type { LearnBand } from '@/lib/api/learn'
 import { LearnApiError } from '@/lib/api/learn-request'
-import { isAccessChanged, isLessonId, isPlanItemId, lessonApi, lessonBand, type LessonDetail } from '@/lib/api/lesson'
+import { isAccessChanged, isConceptId, isLessonId, isPlanItemId, lessonApi, lessonBand, type LessonDetail } from '@/lib/api/lesson'
 import { LessonCompleteCard } from './lesson-complete'
 import { lessonKeys, useLessonDetail, useRefreshLesson } from './lesson-hooks'
 import { LessonPlayer, type LessonPlayerProps } from './lesson-player'
+import type { LessonTabsSlot } from './lesson-tabs'
 import { LessonAccessChanged, LessonCancelled, LessonFailed, LessonGenerating, LessonNoMaterial, LessonStartError } from './lesson-states'
 
 const HOME = '/learn/home'
-const lessonStartHref = (materialId: string) => `/learn/lesson/new?materialId=${encodeURIComponent(materialId)}`
+const lessonStartHref = (materialId: string, conceptId?: string | null) => `/learn/lesson/new?materialId=${encodeURIComponent(materialId)}${conceptId ? `&conceptId=${encodeURIComponent(conceptId)}` : ''}`
 
 export interface LessonViewProps {
   detail: LessonDetail
@@ -21,27 +22,31 @@ export interface LessonViewProps {
   retry: { run: () => void; pending: boolean; error: Error | null }
   cancel: { run: () => void; pending: boolean; error: Error | null }
   timing?: LessonPlayerProps['timing']
+  /** Topic tabs (pack 0.1.11): shown above every state, and inside the focused player. */
+  tabs?: LessonTabsSlot
 }
 
 /** Chooses what the learner sees for a lesson record: generating, failed, hidden, the player, or the finished card. */
-export function LessonView({ detail, onExit, retry, cancel, timing }: LessonViewProps) {
+export function LessonView({ detail, onExit, retry, cancel, timing, tabs }: LessonViewProps) {
   const [reviewing, setReviewing] = useState(false)
   const band: LearnBand = lessonBand(detail.lesson.band)
-  const { status, failure, materialId } = detail.lesson
-  if (status === 'QUEUED' || status === 'RUNNING') return <LessonGenerating band={band} status={status} onCancel={cancel.run} cancelling={cancel.pending} error={cancel.error} />
-  if (status === 'FAILED') return failure?.code === 'LESSON_ACCESS_CHANGED'
+  const { status, failure, materialId, conceptId } = detail.lesson
+  // Every state except the focused player sits under the tab bar; the panel ties it to the selected tab.
+  const inTab = (node: React.ReactNode) => tabs ? <div><div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-7">{tabs.bar}</div><div role="tabpanel" id={tabs.panelId} aria-labelledby={tabs.tabId}>{node}</div></div> : node
+  if (status === 'QUEUED' || status === 'RUNNING') return inTab(<LessonGenerating band={band} status={status} onCancel={cancel.run} cancelling={cancel.pending} error={cancel.error} />)
+  if (status === 'FAILED') return inTab(failure?.code === 'LESSON_ACCESS_CHANGED'
     ? <LessonAccessChanged band={band} />
-    : <LessonFailed band={band} failure={failure} onRetry={retry.run} retrying={retry.pending} error={retry.error} startHref={lessonStartHref(materialId)} />
-  if (status === 'CANCELLED') return <LessonCancelled band={band} startHref={lessonStartHref(materialId)} />
+    : <LessonFailed band={band} failure={failure} onRetry={retry.run} retrying={retry.pending} error={retry.error} startHref={lessonStartHref(materialId, conceptId)} />)
+  if (status === 'CANCELLED') return inTab(<LessonCancelled band={band} startHref={lessonStartHref(materialId, conceptId)} />)
   // READY: the text is shown only while access is current. A hidden lesson shows nothing of its content.
-  if (isAccessChanged(detail) || detail.content === null) return <LessonAccessChanged band={band} />
+  if (isAccessChanged(detail) || detail.content === null) return inTab(<LessonAccessChanged band={band} />)
   const finished = detail.progress.completedAt !== null
-  if (finished && !reviewing) return <LessonCompleteCard detail={detail} content={detail.content} band={band} onReview={() => setReviewing(true)} />
-  return <LessonPlayer key={`${detail.lesson.id}:${reviewing}`} detail={detail} content={detail.content} band={band} onExit={onExit} review={finished} timing={timing} />
+  if (finished && !reviewing) return inTab(<LessonCompleteCard detail={detail} content={detail.content} band={band} onReview={() => setReviewing(true)} />)
+  return <LessonPlayer key={`${detail.lesson.id}:${reviewing}`} detail={detail} content={detail.content} band={band} onExit={onExit} review={finished} timing={timing} tabs={tabs} />
 }
 
 /** F-L7-01: the lesson page. Loads the lesson (and polls while it is being made), then shows the right view. */
-export function LessonScreen({ lessonId, pollBaseMs, timing, onLessonChanged }: { lessonId: string; pollBaseMs?: number; timing?: LessonPlayerProps['timing']; /** Replaces the default move to another lesson id (the dev harness stays on its own page). */ onLessonChanged?: (lessonId: string) => void }) {
+export function LessonScreen({ lessonId, pollBaseMs, timing, onLessonChanged, tabs }: { lessonId: string; pollBaseMs?: number; timing?: LessonPlayerProps['timing']; tabs?: LessonTabsSlot; /** Replaces the default move to another lesson id (the dev harness stays on its own page). */ onLessonChanged?: (lessonId: string) => void }) {
   const router = useRouter()
   const { band: identityBand } = useLearnIdentity()
   const query = useLessonDetail(lessonId, pollBaseMs)
@@ -67,7 +72,7 @@ export function LessonScreen({ lessonId, pollBaseMs, timing, onLessonChanged }: 
   if (query.error) return <LearnLoadError error={query.error} retry={() => void query.refetch()} band={fallbackBand} backHref="/learn/library" backLabel="Back to my library" />
   return <LessonView detail={query.data} onExit={() => router.push(HOME)}
     retry={{ run: once('retry', retry), pending: retry.isPending, error: retry.error }}
-    cancel={{ run: once('cancel', cancel), pending: cancel.isPending, error: cancel.error }} timing={timing} />
+    cancel={{ run: once('cancel', cancel), pending: cancel.isPending, error: cancel.error }} timing={timing} tabs={tabs} />
 }
 
 /**
@@ -76,20 +81,23 @@ export function LessonScreen({ lessonId, pollBaseMs, timing, onLessonChanged }: 
  * It is a query rather than a mutation run from an effect: a query is de-duplicated, so React's development
  * double-mount (and a fast refresh) cannot lose the answer or send the request twice.
  */
-export function LessonStartScreen({ materialId, planItemId, onStarted }: { materialId: string | null; planItemId?: string | null; /** Replaces the default move to the lesson page (the dev harness stays on its own page). */ onStarted?: (lessonId: string) => void }) {
+export function LessonStartScreen({ materialId, planItemId, conceptId, onStarted }: { materialId: string | null; planItemId?: string | null; /** Pack 0.1.11: teach only this key idea of the material. */ conceptId?: string | null; /** Replaces the default move to the lesson page (the dev harness stays on its own page). */ onStarted?: (lessonId: string) => void }) {
   const router = useRouter()
   const { actor, band: identityBand } = useLearnIdentity()
   const band: LearnBand = identityBand ?? 'teens'
   const valid = isLessonId(materialId) ? materialId : null
   // The platform accepts a plan item id only as a uuid (strict body); anything else is dropped rather than sent.
   const item = isPlanItemId(planItemId) ? planItemId : null
+  // Only a uuid is ever sent; the server rejects a concept that is not in this material (400 invalid_concept).
+  const focus = isConceptId(conceptId) ? conceptId : null
   const query = useQuery({
-    queryKey: lessonKeys.start(actor, valid ?? '', item),
+    queryKey: lessonKeys.start(actor, valid ?? '', item, focus),
     queryFn: async () => {
-      try { return await lessonApi.create({ materialId: valid!, ...(item ? { planItemId: item } : {}) }) }
+      const focusBody = focus ? { conceptId: focus } : {}
+      try { return await lessonApi.create({ materialId: valid!, ...(item ? { planItemId: item } : {}), ...focusBody }) }
       catch (error) {
         // A plan item that is not this learner's (404 "Plan item unavailable") must not block a lesson on the material itself.
-        if (item && error instanceof LearnApiError && error.status === 404) return lessonApi.create({ materialId: valid! })
+        if (item && error instanceof LearnApiError && error.status === 404) return lessonApi.create({ materialId: valid!, ...focusBody })
         throw error
       }
     },

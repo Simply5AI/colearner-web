@@ -13,7 +13,10 @@ export type LessonStepKind = 'INTRO' | 'EXPLAIN' | 'CHECK' | 'EXAMPLE' | 'RECAP'
 export const lessonStepKinds = ['INTRO', 'EXPLAIN', 'CHECK', 'EXAMPLE', 'RECAP'] as const satisfies readonly LessonStepKind[]
 
 export interface LessonSummary {
-  id: string; materialId: string; title: string | null; status: LessonStatus; version: number
+  id: string; materialId: string
+  /** Pack 0.1.11: the one key idea this lesson teaches (a material concept id); null/absent = the whole material. */
+  conceptId?: string | null
+  title: string | null; status: LessonStatus; version: number
   band: ApiBand; createdAt: string; readyAt: string | null
   failure: { code: string; retryable: boolean } | null
 }
@@ -22,8 +25,10 @@ export type LessonBlock =
   | { type: 'LIST'; items: string[] }
   | { type: 'TABLE'; headers: string[]; rows: string[][] }
   | { type: 'KEY_TERMS'; terms: { term: string; definition: string }[] }
+  /** Schema revision 4 (pack 0.1.11): `SOURCE` is from the learner's material, `CO` is Co's own practice example. */
+  | { type: 'WORKED_EXAMPLE'; origin: 'SOURCE' | 'CO'; problem: string; workSteps: string[]; answer: string }
 /** A citation as the learner sees it: a label derived from the anchor, never a raw reference to guess at. */
-export interface LessonSource { label: string; anchorRef: string; quote: string }
+export interface LessonSource { label: string; anchorRef: string; quote: string; /** Video sources only: where the quote starts, in ms. */ startMs?: number | null }
 /** The learner payload: NEVER correctOptionId or per-option feedback. The check endpoint reveals correctness. */
 export interface LessonCheckView { question: string; options: { id: string; text: string }[]; hint: string | null }
 export interface LessonStepView {
@@ -53,7 +58,7 @@ export interface LessonDetail {
   generatedBy: { kind: 'AI'; packVersion: string; promptRelease: string }
 }
 export interface LessonCheckResult { correct: boolean; feedback: string; correctOptionId: string | null; attempt: number }
-export interface CreateLessonBody { materialId: string; planItemId?: string }
+export interface CreateLessonBody { materialId: string; planItemId?: string; /** Teach only this key idea (a concept id of the material). */ conceptId?: string }
 export interface ProgressBody { currentStep: number; completedStep?: number; revision: number }
 export interface NoteBody { stepIndex: number; text?: string; termIndex?: number }
 
@@ -94,8 +99,9 @@ const block = z.discriminatedUnion('type', [
   z.object({ type: z.literal('LIST'), items: z.array(short).min(1).max(8) }),
   z.object({ type: z.literal('TABLE'), headers: z.array(short).min(1).max(6), rows: z.array(z.array(short).max(6)).max(8) }),
   z.object({ type: z.literal('KEY_TERMS'), terms: z.array(z.object({ term: short, definition: long })).min(1).max(6) }),
+  z.object({ type: z.literal('WORKED_EXAMPLE'), origin: z.enum(['SOURCE', 'CO']), problem: short, workSteps: z.array(short).min(1).max(6), answer: short }),
 ]) satisfies z.ZodType<LessonBlock>
-const source = z.object({ label: short, anchorRef: id, quote: z.string().max(2000) }) satisfies z.ZodType<LessonSource>
+const source = z.object({ label: short, anchorRef: id, quote: z.string().max(2000), startMs: z.number().int().nonnegative().nullish() }) satisfies z.ZodType<LessonSource>
 const stepView = z.object({
   kind: z.enum(lessonStepKinds), title: short, coLine: short,
   blocks: z.array(block).min(1).max(8), index: step,
@@ -114,7 +120,7 @@ const contentView = z.object({
 }) satisfies z.ZodType<LessonContentView, unknown>
 
 const summary = z.object({
-  id, materialId: id, title: short.nullable(), status: z.enum(['QUEUED', 'RUNNING', 'READY', 'FAILED', 'CANCELLED']),
+  id, materialId: id, conceptId: id.nullish(), title: short.nullable(), status: z.enum(['QUEUED', 'RUNNING', 'READY', 'FAILED', 'CANCELLED']),
   version: count, band: apiBand, createdAt: iso, readyAt: iso.nullable(),
   failure: z.object({ code: z.string().min(1).max(64), retryable: z.boolean() }).nullable(),
 }) satisfies z.ZodType<LessonSummary>
@@ -143,6 +149,8 @@ export const lessonDetailSchema = z.preprocess((value, context) => {
   return value
 }, detailBase) satisfies z.ZodType<LessonDetail, unknown>
 export const createLessonResponseSchema = z.object({ lesson: summary })
+/** Pack 0.1.11: the newest version of the overview and of each key-idea lesson of one material. */
+export const lessonListSchema = z.object({ lessons: z.array(summary).max(200) })
 export const checkResultSchema = z.object({
   correct: z.boolean(), feedback: long, correctOptionId: id.nullable(), attempt: count,
 }).superRefine((value, context) => {
@@ -154,6 +162,8 @@ export const progressResponseSchema = z.union([progressSchema, z.object({ progre
 
 const resourceId = /^[a-zA-Z0-9_-]{1,128}$/
 export const isLessonId = (value: string | null | undefined): value is string => !!value && resourceId.test(value)
+/** Concept ids are uuids too; anything else is never sent. */
+export const isConceptId = (value: string | null | undefined): value is string => isPlanItemId(value)
 /** The platform validates `planItemId` as a uuid (strict body), so any other value is never sent. */
 export const isPlanItemId = (value: string | null | undefined): value is string => !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
 const path = (lessonId: string) => `/lessons/${encodeURIComponent(lessonId)}`
@@ -161,6 +171,8 @@ const path = (lessonId: string) => `/lessons/${encodeURIComponent(lessonId)}`
 export const lessonApi = {
   /** Idempotent get-or-create: repeating the same request returns the same lesson. */
   create: (body: CreateLessonBody) => learnRequest('/lessons', createLessonResponseSchema, 'POST', body),
+  /** The learner's lessons of one material (topic tabs). `materialId` is a uuid. */
+  list: (materialId: string) => learnRequest(`/lessons?materialId=${encodeURIComponent(materialId)}`, lessonListSchema),
   detail: (lessonId: string) => learnRequest(path(lessonId), lessonDetailSchema),
   progress: (lessonId: string, body: ProgressBody) => learnRequest(`${path(lessonId)}/progress`, progressResponseSchema, 'PUT', body),
   check: (lessonId: string, body: { stepIndex: number; optionId: string }) => learnRequest(`${path(lessonId)}/check`, checkResultSchema, 'POST', body),

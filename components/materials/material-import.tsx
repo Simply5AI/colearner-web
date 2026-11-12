@@ -5,7 +5,9 @@ import { useRef, useState, type FormEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LockKeyhole } from 'lucide-react'
+import { AudioRecorder, AudioPreview } from './audio-recorder'
 import { Button, Card, Input } from '@/components/design-system'
+import { parsePageRange } from '@/lib/materials/page-range'
 import { materialApi, pendingMaterial, type MaterialConfig, type SourceType } from '@/lib/api/materials'
 import { MaterialFrame, MaterialLoadState, MaterialProgress, MaterialSelectors, materialKeys, sourceIcons, useMaterialConfig } from './material-common'
 
@@ -27,15 +29,20 @@ function ImportForm({ config }: { config: MaterialConfig }) {
   const router = useRouter()
   const cache = useQueryClient()
   const key = useRef<string | null>(null)
-  const [type, setType] = useState<SourceType>('text')
+  const params = useSearchParams()
+  const [type, setType] = useState<SourceType>(() => config.sources.find(source => source.type === params.get('source'))?.type ?? 'text')
   const [title, setTitle] = useState('')
   const [text, setText] = useState('')
   const [url, setUrl] = useState('')
   const [subjectId, setSubjectId] = useState('')
   const [planId, setPlanId] = useState('')
   const [files, setFiles] = useState<File[]>([])
+  const [pageFrom, setPageFrom] = useState('')
+  const [pageTo, setPageTo] = useState('')
   const [validation, setValidation] = useState('')
   const source = config.sources.find(item => item.type === type)
+  const paged = type === 'pdf' || type === 'paper'
+  const pages = parsePageRange(pageFrom, pageTo, Math.min(50, config.limits.maxPages))
   const quotaReached = config.limits.dailyLimit !== null && config.limits.usedToday >= config.limits.dailyLimit
   const edit = (action: () => void) => { action(); key.current = null; setValidation('') }
   const pickFiles = (next: File[]) => {
@@ -45,7 +52,7 @@ function ImportForm({ config }: { config: MaterialConfig }) {
   }
   const submit = useMutation({ mutationFn: async () => {
     const idempotencyKey = key.current ?? crypto.randomUUID(); key.current = idempotencyKey
-    return materialApi.import({ idempotencyKey, title: title.trim(), sourceType: type, ...(type === 'text' ? { text } : ['youtube', 'web', 'paper'].includes(type) ? { url } : {}), ...(subjectId ? { subjectId } : {}), ...(planId ? { planId } : {}) }, files)
+    return materialApi.import({ idempotencyKey, title: title.trim(), sourceType: type, ...(type === 'text' ? { text } : ['youtube', 'web', 'paper'].includes(type) ? { url } : {}), ...(subjectId ? { subjectId } : {}), ...(planId ? { planId } : {}), ...(paged && pages.range ? pages.range : {}) }, files)
   }, retry: false, onSuccess: result => {
     void cache.invalidateQueries({ queryKey: materialKeys.root })
     const ids = result.items.map(item => item.id)
@@ -54,12 +61,13 @@ function ImportForm({ config }: { config: MaterialConfig }) {
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
     if (!source?.available || !config.enabled || quotaReached) { setValidation(source?.reason ?? 'Importing is currently unavailable for this learner.'); return }
+    if (paged && pages.error) { setValidation(pages.error); return }
     if (type !== 'text' && !['youtube', 'web', 'paper'].includes(type) && files.length === 0) { setValidation('Choose a file before importing.'); return }
     submit.mutate()
   }
   const sources = [...config.sources].sort((a, b) => config.band === 'kids' ? Number(b.type === 'image') - Number(a.type === 'image') : 0)
   return <form onSubmit={onSubmit} className="space-y-5">
-    <div className="grid gap-3 sm:grid-cols-3">{sources.map(item => { const Icon = sourceIcons[item.type]; return <button type="button" key={item.type} aria-pressed={type === item.type} onClick={() => edit(() => { setType(item.type); setFiles([]) })} className={`flex min-h-24 min-w-0 flex-col items-start gap-2 rounded-2xl border p-4 text-start focus-visible:outline-2 focus-visible:outline-offset-2 ${type === item.type ? 'border-primary bg-primary/10' : 'border-border bg-card'}`}><span className="flex items-center gap-2 font-bold"><Icon size={22} aria-hidden="true" />{item.label}{!item.available && <LockKeyhole size={16} aria-label="Unavailable source" />}</span>{!item.available && <span className="text-xs text-muted-foreground">{item.reason ?? 'Ask your school or grown-up to enable this source.'}</span>}</button> })}</div>
+    <div className="grid gap-3 sm:grid-cols-3">{sources.map(item => { const Icon = sourceIcons[item.type]; return <button type="button" key={item.type} aria-pressed={type === item.type} onClick={() => edit(() => { setType(item.type); setFiles([]); setPageFrom(''); setPageTo('') })} className={`flex min-h-24 min-w-0 flex-col items-start gap-2 rounded-2xl border p-4 text-start focus-visible:outline-2 focus-visible:outline-offset-2 ${type === item.type ? 'border-primary bg-primary/10' : 'border-border bg-card'}`}><span className="flex items-center gap-2 font-bold"><Icon size={22} aria-hidden="true" />{item.label}{!item.available && <LockKeyhole size={16} aria-label="Unavailable source" />}</span>{!item.available && <span className="text-xs text-muted-foreground">{item.reason ?? 'Ask your school or grown-up to enable this source.'}</span>}</button> })}</div>
     <Card className="space-y-4 p-5">
       {!config.enabled && <p role="status">Imports are not enabled for the current learner. Your school and guardian permissions must be checked before sending.</p>}
       <p className="text-sm text-muted-foreground">{config.limits.dailyLimit === null ? 'School import quota: no daily cap configured.' : `Today: ${config.limits.usedToday} of ${config.limits.dailyLimit} imports used.`} Up to {config.limits.maxFiles} files, {Math.floor(config.limits.maxBytes / 1024 / 1024)} MB combined.</p>
@@ -68,7 +76,11 @@ function ImportForm({ config }: { config: MaterialConfig }) {
       <MaterialSelectors config={config} subjectId={subjectId} planId={planId} setSubjectId={value => edit(() => setSubjectId(value))} setPlanId={value => edit(() => setPlanId(value))} />
       {type === 'text' && <label className="ds-field"><span>Paste the source text</span><textarea required value={text} maxLength={config.limits.maxTextLength} onChange={event => edit(() => setText(event.target.value))} rows={10} className="ds-input resize-y" /><span className="text-xs text-muted-foreground">{text.length} / {config.limits.maxTextLength} characters. Only submit material you are permitted to use.</span></label>}
       {['youtube', 'web', 'paper'].includes(type) && <Input label="Source link" type="url" value={url} required onChange={event => edit(() => setUrl(event.target.value))} hint="Only public, permitted sources can be read. A login or paywall is never bypassed." />}
-      {fileAccept[type] && <div className="space-y-3"><label className="ds-field rounded-xl border-2 border-dashed border-border p-5" onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); pickFiles(Array.from(event.dataTransfer.files)) }}><span>Choose or drop {source?.label.toLowerCase()} files</span><input className="w-full min-w-0 max-w-full text-sm" type="file" accept={fileAccept[type]} multiple={config.limits.maxFiles > 1} onChange={event => pickFiles(Array.from(event.target.files ?? []))} /><span className="text-sm text-muted-foreground">Files are sent in this order. Scanned or unreadable documents need an available image processor; they are never treated as extracted text.</span></label>{files.length > 0 && <ol className="list-inside list-decimal text-sm">{files.map((file, index) => <li key={`${file.name}-${index}`} className="break-words">{file.name} · {Math.ceil(file.size / 1024)} KB</li>)}</ol>}{type === 'image' && <Link href="/learn/snap" className="ds-button ds-button-secondary max-w-full whitespace-normal text-center">Open camera and page editor</Link>}{type === 'audio' && <p className="text-sm text-muted-foreground">Audio transcription requires a qualified processor. Recording and audio imports remain locked while it is unavailable.</p>}</div>}
+      {type === 'youtube' && <p className="text-sm text-muted-foreground">Co reads public captions from videos up to 30 minutes long. If the captions are longer than Co can read at once, only the first part is imported and it is marked as partial.</p>}
+      {paged && <div className="space-y-2"><div className="grid max-w-sm grid-cols-2 gap-3"><Input label="Pages (optional): from" type="number" inputMode="numeric" min={1} value={pageFrom} onChange={event => edit(() => setPageFrom(event.target.value))} /><Input label="to" type="number" inputMode="numeric" min={1} value={pageTo} onChange={event => edit(() => setPageTo(event.target.value))} /></div><p className="text-sm text-muted-foreground">Leave empty to read from the start. Choose up to {Math.min(50, config.limits.maxPages)} pages at a time, for example 12 to 30 of a textbook; citations keep the real page numbers. A longer {type === 'pdf' ? 'document' : 'paper'} is imported in part and marked as partial.</p>{pages.error && (pageFrom || pageTo) && <p role="alert" className="text-sm">{pages.error}</p>}</div>}
+      {type === 'audio' && <p className="text-sm text-muted-foreground">Co listens to recordings up to about 30 minutes. A longer recording is imported in part (the first minutes) and marked as partial.</p>}
+      {fileAccept[type] && <div className="space-y-3"><label className="ds-field rounded-xl border-2 border-dashed border-border p-5" onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); pickFiles(Array.from(event.dataTransfer.files)) }}><span>Choose or drop {source?.label.toLowerCase()} files</span><input className="w-full min-w-0 max-w-full text-sm" type="file" accept={fileAccept[type]} multiple={config.limits.maxFiles > 1} onChange={event => pickFiles(Array.from(event.target.files ?? []))} /><span className="text-sm text-muted-foreground">Files are sent in this order. Scanned or unreadable documents need an available image processor; they are never treated as extracted text.</span></label>{files.length > 0 && <ol className="list-inside list-decimal text-sm">{files.map((file, index) => <li key={`${file.name}-${index}`} className="break-words">{file.name} · {Math.ceil(file.size / 1024)} KB</li>)}</ol>}{type === 'image' && <Link href="/learn/snap" className="ds-button ds-button-secondary max-w-full whitespace-normal text-center">Open camera and page editor</Link>}{type === 'audio' && <><AudioRecorder key={`${type}-${config.limits.maxBytes}`} maxBytes={config.limits.maxBytes} disabled={!source?.available || submit.isPending} onRecording={file => pickFiles([file])} />{files[0] && <AudioPreview file={files[0]} />}</>}</div>}
+      {submit.isPending && <p role="status">Co is reading your source. Photos and recordings may take a few minutes.</p>}
       {(validation || submit.error) && <p role="alert" className="rounded-xl border border-border p-3">{validation || submit.error?.message}</p>}
       <Button type="submit" loading={submit.isPending} disabled={!source?.available || !config.enabled || quotaReached}>Read this material</Button>
       <p className="text-xs text-muted-foreground">Your draft stays here if sending fails. It is not saved across a page reload until the server accepts the import.</p>

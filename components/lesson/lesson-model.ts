@@ -60,6 +60,7 @@ export function buildScript(step: Pick<LessonStepView, 'coLine' | 'blocks' | 'ch
   step.blocks.forEach((block, index) => {
     if (block.type === 'TEXT') raw.push({ id: `b${index}`, text: block.text })
     else if (block.type === 'LIST') block.items.forEach((item, item_) => raw.push({ id: `b${index}i${item_}`, text: item }))
+    else if (block.type === 'WORKED_EXAMPLE') raw.push({ id: `b${index}p`, text: block.problem }, ...block.workSteps.map((line, item_) => ({ id: `b${index}w${item_}`, text: line })))
     else if (block.type === 'KEY_TERMS') block.terms.forEach((term, item_) => { raw.push({ id: `b${index}t${item_}`, text: `${term.term}.` }, { id: `b${index}t${item_}d`, text: term.definition }) })
   })
   if (step.check) {
@@ -77,7 +78,7 @@ export function buildScript(step: Pick<LessonStepView, 'coLine' | 'blocks' | 'ch
   return { text: segments.flatMap(segment => segment.words).join(' '), segments, starts: Object.fromEntries(segments.map(segment => [segment.id, segment.start])) }
 }
 
-export const blockText = (block: LessonBlock): string => block.type === 'TEXT' ? block.text : block.type === 'LIST' ? block.items.join(' ') : block.type === 'KEY_TERMS' ? block.terms.map(term => `${term.term} ${term.definition}`).join(' ') : [...block.headers, ...block.rows.flat()].join(' ')
+export const blockText = (block: LessonBlock): string => block.type === 'TEXT' ? block.text : block.type === 'LIST' ? block.items.join(' ') : block.type === 'KEY_TERMS' ? block.terms.map(term => `${term.term} ${term.definition}`).join(' ') : block.type === 'WORKED_EXAMPLE' ? [block.problem, ...block.workSteps, block.answer].join(' ') : [...block.headers, ...block.rows.flat()].join(' ')
 
 /** Sentence lengths the band promises (words). Used by tests and the dev harness, never to rewrite server text. */
 export const sentenceLimit: Record<ApiBand, number> = { '6-9': 8, '10-13': 20, '14-17': 30 }

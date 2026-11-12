@@ -1,10 +1,12 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowRight, BookOpen, Check, ChevronDown, FileText, GraduationCap, Lightbulb, MessageCircle, ShieldCheck, Users } from 'lucide-react'
 import { BrandMark, CoCharacter, ThemeToggle } from '@/components/design-system'
 import { AudienceTabs } from './audience-tabs'
 import { LandingMotion } from './landing-motion'
 import { AgePreviews } from './age-previews'
 import { LearningPreview } from './learning-preview'
+import { LearningStory, LearningToolkit } from './learning-world'
 import styles from './landing.module.css'
 
 const steps = [
@@ -32,7 +34,7 @@ export function PublicHeader() {
 export function PublicFooter() {
   return <footer className={styles.footer}><div className={styles.footerInner}>
     <div><BrandMark /><p>Curiosity has a companion.</p></div>
-    <nav aria-label="Footer"><Link href="/#schools">About</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/contact">Contact</Link></nav>
+    <nav aria-label="Footer"><a href="/#about-colearner">About</a><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/contact">Contact</Link></nav>
     <p lang="en">Made for learning, together.<br /><span>English · Hindi planned</span></p>
   </div></footer>
 }
@@ -52,10 +54,12 @@ export function LandingPage() {
         <LearningPreview />
       </section>
       <div className={styles.curriculumStrip}><p>Built around the school day.<br /><strong>Ready for the questions after it.</strong></p><div><span>CBSE & ICSE focus</span><span>Classes 1–10</span><span>Students, families & teachers</span></div></div>
+      <LearningStory />
       <section data-reveal="visible" id="how-it-works" className={styles.section} aria-labelledby="loop-title">
         <div className={styles.sectionHeading}><p className={styles.eyebrow}>FROM “I DON’T GET IT” TO “I’VE GOT THIS”</p><h2 id="loop-title">Small steps.<br />Real moments of understanding.</h2><p>A clear path through a topic, with Co beside you when you need a little help.</p></div>
         <div className={styles.steps}>{steps.map(({ title, icon: Icon, text }, i) => <article key={title}><div className={styles.stepTop}><span className={styles.iconTile}><Icon size={22} strokeWidth={1.7} aria-hidden="true" /></span><span className={styles.stepNumber}>0{i + 1}</span></div><h3>{title}</h3><p>{text}</p></article>)}</div>
       </section>
+      <LearningToolkit />
       <section data-reveal="visible" id="for-you" className={`${styles.section} ${styles.audienceSection}`} aria-labelledby="audience-title">
         <div className={styles.sectionHeading}><p className={styles.eyebrow}>BETTER TOGETHER</p><h2 id="audience-title">One learning journey.<br />Everyone has a part.</h2><p>For the questions students ask, the care parents give, and the lessons teachers bring to life.</p></div>
         <AudienceTabs />
@@ -65,10 +69,12 @@ export function LandingPage() {
         <AgePreviews />
       </section>
       <section data-reveal="visible" id="families" className={`${styles.section} ${styles.familySection}`} aria-labelledby="family-title">
-        <div className={styles.familyIntro}><p className={styles.eyebrow}>FOR FAMILIES</p><h2 id="family-title">Their curiosity.<br />Your guiding hand.</h2><p>Give your child space to explore while staying involved in how they learn. Co supports the conversation between learners, parents and teachers.</p><Link href="/privacy" className={styles.textLink}>Explore privacy & consent <ArrowRight size={17} aria-hidden="true" /></Link><CoCharacter state="encouraging" size={112} decorative /></div>
+        <figure className={styles.familyArtwork}><Image src="/images/home/family-discovery.webp" alt="A child explaining an idea about a plant to his mother as they learn together at home." width={1536} height={1024} sizes="(max-width: 760px) 100vw, 50vw" /><figcaption><CoCharacter state="encouraging" size={64} decorative /><p>A small question.<br /><strong>A conversation worth having.</strong></p></figcaption></figure>
+        <div className={styles.familyIntro}><p className={styles.eyebrow}>FOR FAMILIES</p><h2 id="family-title">Their curiosity.<br />Your guiding hand.</h2><p>Give your child space to explore while staying involved in how they learn. Co supports the conversation between learners, parents and teachers.</p>
         <div className={styles.familyBenefits}>
           {[{ icon: ShieldCheck, title: 'You’re part of the learning journey', text: 'Guardian consent and school policies shape access to protected child learning.' }, { icon: MessageCircle, title: 'Visibility that grows with them', text: 'Age-aware chat visibility helps parents stay involved while giving teens more independence.' }, { icon: Lightbulb, title: 'Help that builds understanding', text: 'Explanations, hints and teach-back encourage learners to work through an idea, not just copy an answer.' }].map(({ icon: Icon, title, text }) => <article key={title}><span className={styles.iconTile}><Icon size={21} strokeWidth={1.7} aria-hidden="true" /></span><div><h3>{title}</h3><p>{text}</p></div></article>)}
         </div>
+        <Link href="/privacy" className={styles.textLink}>Explore privacy & consent <ArrowRight size={17} aria-hidden="true" /></Link></div>
       </section>
       <section data-reveal="visible" id="schools" className={styles.schoolSection} aria-labelledby="school-title">
         <div><p className={styles.eyebrow}>FOR SCHOOLS</p><h2 id="school-title">Keep the whole<br />learning team connected.</h2><p>Give teacher-shared plans and lessons a place in every student’s learning journey, with parent approvals and a shared school workspace.</p><Link href="/contact" className={styles.schoolAction}>School access & support <ArrowRight size={18} aria-hidden="true" /></Link></div>

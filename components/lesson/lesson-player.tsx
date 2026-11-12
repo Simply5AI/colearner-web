@@ -11,10 +11,11 @@ import { useLocalReadAloud } from '@/lib/hooks/use-read-aloud'
 import { cn } from '@/lib/utils'
 import { LessonCheck } from './lesson-check'
 import { LessonFocusFrame } from './lesson-focus-frame'
-import { useAdoptLessonDetail, useLessonProgress, useRefreshLesson } from './lesson-hooks'
+import { useAdoptLessonDetail, useLessonProgress, useMaterialSourceUrl, useRefreshLesson } from './lesson-hooks'
 import { buildScript, coPose, speechRate, stepName } from './lesson-model'
 import { NotesPanel, useLessonNotes } from './lesson-notes'
 import { AiOriginTag, CoPanel, LessonBlocks, SourceChips } from './lesson-parts'
+import type { LessonTabsSlot } from './lesson-tabs'
 import { ReadAloudControl, SpeechProvider } from './lesson-speech'
 
 const STEP_COUNT = 5
@@ -22,7 +23,7 @@ const STEP_COUNT = 5
 const isTyping = (target: EventTarget | null) => target instanceof HTMLElement && (target.isContentEditable || target instanceof HTMLTextAreaElement
   || (target instanceof HTMLInputElement && !['button', 'checkbox', 'radio', 'submit', 'reset'].includes(target.type)))
 /** Radio groups and selects use the arrow keys themselves, so they keep them. */
-const ownsArrows = (target: EventTarget | null) => isTyping(target) || (target instanceof HTMLInputElement && target.type === 'radio') || target instanceof HTMLSelectElement
+const ownsArrows = (target: EventTarget | null) => isTyping(target) || (target instanceof Element && target.closest('[role="tablist"]') !== null) || (target instanceof HTMLInputElement && target.type === 'radio') || target instanceof HTMLSelectElement
 
 /** Ask Co cannot answer here (the server said so). The control keeps the layout and the "/" shortcut real, but it never acts and always says why. */
 function AskCoControl({ band, reason, controlRef }: { band: LearnBand; reason: string; controlRef: React.RefObject<HTMLButtonElement | null> }) {
@@ -47,13 +48,15 @@ export interface LessonPlayerProps {
   review?: boolean
   /** Dev harness only: shorter timings. */
   timing?: { debounceMs?: number; retryBaseMs?: number }
+  /** Topic tabs (pack 0.1.11): the tab bar is shown inside the focused frame, and the step area is the tab's panel. */
+  tabs?: LessonTabsSlot
 }
 
 /**
  * F-L7-01/02/03: the five-step player. Focused mode, back/next/exit with persisted step completion, per-band layout,
  * embedded CHECK, citations on every sourced step, on-device read-aloud, notes for 10 to 17, and a disabled Ask Co.
  */
-export function LessonPlayer({ detail, content, band, onExit, review = false, timing }: LessonPlayerProps) {
+export function LessonPlayer({ detail, content, band, onExit, review = false, timing, tabs }: LessonPlayerProps) {
   const lessonId = detail.lesson.id
   const refresh = useRefreshLesson(lessonId)
   const adopt = useAdoptLessonDetail(lessonId)
@@ -65,6 +68,8 @@ export function LessonPlayer({ detail, content, band, onExit, review = false, ti
   const notes = useLessonNotes(lessonId, refresh)
   const noteBand = notesAllowed(detail.lesson.band)
   const materialHref = linkHref(detail.source.materialLink)
+  const hasVideoMoments = content.steps.some(item => item.sources.some(source => typeof source.startMs === 'number'))
+  const sourceUrl = useMaterialSourceUrl(detail.lesson.materialId, hasVideoMoments)
 
   const script = useMemo(() => buildScript(step), [step])
   const speech = useLocalReadAloud(script.text, { rate: speechRate(band) })
@@ -169,9 +174,10 @@ export function LessonPlayer({ detail, content, band, onExit, review = false, ti
           </div>
         </header>
 
+        {tabs?.bar}
         <div className="sr-only" role="status" aria-live="polite" aria-atomic="true" data-testid="lesson-announcer">{announcement}</div>
 
-        <div className={cn('grid flex-1 items-start gap-6', band !== 'teens' && 'lg:grid-cols-[minmax(12rem,17rem)_minmax(0,1fr)]')}>
+        <div role={tabs ? 'tabpanel' : undefined} id={tabs?.panelId} aria-labelledby={tabs?.tabId} className={cn('grid flex-1 items-start gap-6', band !== 'teens' && 'lg:grid-cols-[minmax(12rem,17rem)_minmax(0,1fr)]')}>
           {band !== 'teens' && <CoPanel band={band} pose={pose} line={step.coLine}>{ask}</CoPanel>}
           <article aria-labelledby={headingId} className="ds-card min-w-0 space-y-6 !p-5 sm:!p-7" data-testid="lesson-step">
             <div className="space-y-2">
@@ -198,7 +204,7 @@ export function LessonPlayer({ detail, content, band, onExit, review = false, ti
                 <ul className="list-disc space-y-1 ps-6">{content.unknowns.map(item => <li key={item}>{item}</li>)}</ul>
               </section>}
             </>}
-            <SourceChips sources={step.sources} materialHref={materialHref} band={band} />
+            <SourceChips sources={step.sources} materialHref={materialHref} band={band} sourceUrl={sourceUrl} />
             {noteBand && <NotesPanel band={band} stepIndex={stepIndex} notes={detail.notes} api={notes} />}
           </article>
         </div>

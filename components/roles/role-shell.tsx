@@ -10,6 +10,7 @@ import { ChevronDown, Menu, X } from 'lucide-react'
 import { BrandMark, CoCharacter, FoundationErrorBoundary, ThemeToggle } from '@/components/design-system'
 import type { AgeBand } from '@/components/design-system'
 import styles from './student-shell.module.css'
+import { CoWorkspaceAssistant } from '@/components/co/co-workspace-assistant'
 import { cn } from '@/lib/utils'
 import { matchesNavItem, workspaceLabels } from './role-config'
 import type { RoleNavGroup, RoleNavItem, WorkspaceRole } from './role-config'
@@ -132,6 +133,7 @@ export function RoleShell({ role, children, navigation, homeHref, band = 'adults
   const [quickNavigationHeight, setQuickNavigationHeight] = useState<number>()
   const workspaceLabel = workspaceName || workspaceLabels[role]
   const kids = band === 'kids'
+  const coAssistant = role === 'student' ? <CoWorkspaceAssistant band={band === 'adults' ? 'teens' : band} pathname={pathname} /> : null
   const sidebar = (navigationStyle ?? (role === 'platform-admin' || role === 'school-admin' ? 'sidebar' : 'header')) === 'sidebar'
   // Design: parent keeps a bottom tab bar on phones; learner/teacher scroll the top bar; sidebar roles keep their quick bar.
   const bottomItems = sidebar || role === 'parent' ? (bottomNavigation ?? navigation[0]?.items.slice(0, 5) ?? []) : []
@@ -197,7 +199,7 @@ export function RoleShell({ role, children, navigation, homeHref, band = 'adults
           </Dialog.Root>
           <Link href={homeHref} aria-label="CoLearner home" className={cn('inline-flex min-h-[var(--ds-target,44px)] min-w-[var(--ds-target,44px)] items-center justify-center rounded-lg lg:hidden', focusClasses)}><BrandMark compact={kids} /></Link>
           <div className="min-w-0 flex-1"><p className="break-words text-sm font-semibold">{workspaceLabel}</p>{identity && <p className="break-words text-xs text-muted-foreground">{identity}</p>}</div>
-          {role === 'student' && <ThemeToggle />}
+          {coAssistant}{role === 'student' && <ThemeToggle />}
           {accountActions && <div className="flex shrink-0 items-center gap-2">{accountActions}</div>}
         </header> : <header data-testid="top-header" className="sticky top-0 z-40 border-b border-border bg-background">
           <div className={cn('mx-auto flex w-full max-w-[1320px] flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 sm:px-6 lg:flex-nowrap lg:gap-x-5', styles.headerRow)}>
@@ -207,7 +209,7 @@ export function RoleShell({ role, children, navigation, homeHref, band = 'adults
             </Link>
             <span className="ms-auto flex shrink-0 items-center gap-2 lg:order-last lg:ms-0">
               {identity && <span className="hidden max-w-48 truncate text-xs font-semibold text-muted-foreground xl:inline" title={identity}>{identity}</span>}
-              <span className="hidden shrink-0 md:block" title="Your learning companion"><CoCharacter band={band} state="idle" size={kids ? 56 : 32} decorative /><span className="sr-only">Your learning companion</span></span>
+              {coAssistant ?? <span className="hidden shrink-0 md:block" title="Your learning companion"><CoCharacter band={band} state="idle" size={kids ? 56 : 32} decorative /><span className="sr-only">Your learning companion</span></span>}
               {role === 'student' && <ThemeToggle />}
               {accountActions && <div className="flex shrink-0 items-center gap-2">{accountActions}</div>}
             </span>

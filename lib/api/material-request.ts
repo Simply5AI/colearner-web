@@ -12,7 +12,7 @@ export async function materialRequest<T>(path: string, schema: z.ZodType<T>, met
       method,
       headers: !multipart ? { 'Content-Type': 'application/json' } : {},
       body: body === undefined ? undefined : multipart ? body : JSON.stringify(body),
-      cache: 'no-store', signal: AbortSignal.timeout(60000),
+      cache: 'no-store', signal: AbortSignal.timeout(180000),
     })
   } catch { throw new ApiError(503, 'Material services are unavailable. Your draft is still here; try again.') }
   if (!response.ok) {
@@ -30,7 +30,21 @@ export async function materialRequest<T>(path: string, schema: z.ZodType<T>, met
     }
     if (response.status === 401) throw new MaterialSessionError(messages[401]!)
     const failure: unknown = await response.json().catch(() => null)
-    throw new MaterialApiError(response.status, messages[response.status] ?? 'Material services are unavailable. Please try again.', failureCode(failure))
+    const code = failureCode(failure)
+    const mediaMessages: Record<string, string> = {
+      YOUTUBE_URL_INVALID: 'Use a public HTTPS YouTube video link.',
+      YOUTUBE_CAPTIONS_UNAVAILABLE: 'Captions could not be read for this video. Try a public video with captions, or paste a transcript you have permission to use.',
+      YOUTUBE_DURATION_LIMIT: 'Choose a video up to 30 minutes long.',
+      AUDIO_DURATION_LIMIT: 'Choose or record audio up to 5 minutes long.',
+      PHOTO_HAS_FACE: 'A face was detected. Crop the photo to show only the page, then try again.',
+      NO_READABLE_TEXT: 'No readable text was found. Try a sharper, well-lit photo of printed text.',
+      NO_SPEECH_DETECTED: 'No clear speech was found. Try a clearer recording.',
+      MEDIA_PROCESSOR_BUSY: 'Co is reading another media import. Try again shortly; your draft is still here.',
+      MEDIA_FORMAT_INVALID: 'Choose a supported photo or audio file. The file contents must match its format.',
+      MEDIA_SOURCE_LIMIT: 'This source exceeds the size or text limit. Use a smaller photo, a shorter recording or a shorter video.',
+      MEDIA_EXTRACTION_FAILED: 'The source could not be read. Try a clearer photo or recording, or paste the source text.',
+    }
+    throw new MaterialApiError(response.status, (code && mediaMessages[code]) || messages[response.status] || 'Material services are unavailable. Please try again.', code)
   }
   const json: unknown = await response.json().catch(() => { throw new ApiError(502, 'The material service returned an unsupported response. Please refresh or try again later.') })
   const data = json !== null && typeof json === 'object' && 'data' in json ? json.data : json

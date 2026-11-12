@@ -8,6 +8,21 @@ export type TeachingMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 export const teachingPath = (schoolId: string, suffix: string) =>
   `/schools/${encodeURIComponent(schoolId)}/teaching${suffix}`
 
+export interface TeachingErrorDetail { path: string; code: string }
+
+/** Reads `details: [{ path, code }]` from an error body (top level or under `data`), ignoring anything malformed. */
+export function readErrorDetails(...sources: unknown[]): TeachingErrorDetail[] {
+  for (const source of sources) {
+    const list = source && typeof source === 'object' ? (source as { details?: unknown }).details : undefined
+    if (!Array.isArray(list)) continue
+    return list.flatMap(entry => {
+      const item = entry as { path?: unknown; code?: unknown } | null
+      return item && typeof item.path === 'string' ? [{ path: item.path, code: typeof item.code === 'string' ? item.code : 'INVALID' }] : []
+    })
+  }
+  return []
+}
+
 /** Error carrying the platform error code (for example PLAN_NOT_READY) when the server sent one. */
 export class TeachingApiError extends ApiError {
   constructor(
@@ -15,6 +30,8 @@ export class TeachingApiError extends ApiError {
     message: string,
     public code: string | null = null,
     public currentRevision: number | null = null,
+    /** Field errors of a 422 QUESTION_INVALID / 400 VALIDATION: `[{ path, code }]`. Empty when the server sent none. */
+    public details: TeachingErrorDetail[] = [],
   ) {
     super(status, message)
     this.name = 'TeachingApiError'
@@ -75,6 +92,7 @@ export async function teachingRequest<T>(
   if (!response.ok) {
     let code: string | null = null
     let currentRevision: number | null = null
+    let details: TeachingErrorDetail[] = []
     try {
       const json = (await response.json()) as Record<string, unknown>
       const data = (json.data ?? json) as Record<string, unknown>
@@ -83,6 +101,7 @@ export async function teachingRequest<T>(
       code = typeof candidate === 'string' ? candidate : null
       const rev = err.currentRevision ?? data.currentRevision
       currentRevision = typeof rev === 'number' ? rev : null
+      details = readErrorDetails(json, data, err)
     } catch {
       /* body is optional */
     }
@@ -91,6 +110,7 @@ export async function teachingRequest<T>(
       statusMessage(response.status),
       code,
       currentRevision,
+      details,
     )
   }
   if (response.status === 204) return undefined as T

@@ -8,6 +8,7 @@ export const runtime = 'nodejs'
 type Context = { params: Promise<{ path?: string[] }> }
 const resource = '[a-zA-Z0-9_-]{1,128}'
 const reads = new RegExp(`^(?:|config|${resource}|${resource}/original)$`)
+// An audio import transcribes inside the request (up to ~4 min); stay under undici's 300 s response-header timeout.
 const writes = new RegExp(`^(?:import|bulk|${resource}/(?:retry|cancel))$`)
 
 /** Transport only. The product API rechecks membership, learner, source, quota and action. */
@@ -28,7 +29,7 @@ async function forward(request: NextRequest, context: Context) {
   if (contentType) headers['Content-Type'] = contentType
   if (membership && /^[a-f0-9-]{36}$/i.test(membership)) headers['X-School-Membership-Id'] = membership
   try {
-    const init: RequestInit & { duplex?: 'half' } = { method: request.method, headers, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(60000) }
+    const init: RequestInit & { duplex?: 'half' } = { method: request.method, headers, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(path === 'import' ? 280000 : 180000) }
     if (request.method !== 'GET') { init.body = request.body; init.duplex = 'half' }
     const response = await fetch(`${platformApiBaseUrl()}/materials${path ? `/${path}` : ''}${request.nextUrl.search}`, init)
     if (request.method === 'GET' && path.endsWith('/original') && response.ok) {

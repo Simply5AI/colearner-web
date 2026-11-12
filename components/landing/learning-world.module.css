@@ -1,0 +1,75 @@
+.story, .toolkit { max-width: 1240px; margin-inline: auto; padding: 80px 32px; scroll-margin-top: 24px; }
+.story { display: grid; grid-template-columns: 1.05fr 1fr; align-items: center; gap: clamp(36px, 6vw, 84px); }
+.eyebrow, .cardLabel { color: var(--primary); font-size: 10px; font-weight: 600; letter-spacing: .12em; }
+.story h2, .toolkit h2 { font-size: clamp(28px, 3.2vw, 40px); line-height: 1.25; letter-spacing: -.045em; font-weight: 600; margin-top: 16px; }
+.story h2 span { color: var(--primary); }
+.storyCopy > p:not(.eyebrow) { margin-top: 20px; color: var(--muted-foreground); font-size: 14px; line-height: 1.9; max-width: 49ch; }
+.storyArtwork { position: relative; min-width: 0; margin: 0; padding-bottom: 36px; }
+.storyImage { width: 100%; height: auto; aspect-ratio: 1.25; object-fit: cover; border-radius: 48% 48% 22px 22px; background: #fcf8f0; }
+.artworkTag { position: absolute; top: 36px; inset-inline-start: -12px; display: flex; gap: 8px; align-items: center; background: var(--card); border: 1px solid var(--co-border); border-radius: 10px; box-shadow: 0 4px 14px rgb(77 41 21 / 5%); padding: 10px 14px; font-size: 11px; font-weight: 500; color: var(--primary); rotate: -5deg; }
+.artworkCaption { position: absolute; bottom: 8px; inset-inline: 26px; display: flex; align-items: center; gap: 13px; padding: 18px 20px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 8px 24px rgb(77 41 21 / 6%); }
+.captionIcon { display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; flex: none; border-radius: 50%; background: var(--co-surface); color: var(--primary); }
+.artworkCaption div > span { color: var(--muted-foreground); font-size: 8px; font-weight: 600; letter-spacing: .12em; }
+.artworkCaption p { font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: -.025em; margin-top: 4px; }
+.storyPrinciple { display: flex; gap: 14px; align-items: center; margin-top: 24px; padding-block: 5px; }
+.storyPrinciple > span { font-size: 40px; line-height: 1; color: var(--primary); font-family: serif; }
+.storyPrinciple p { font-size: 13px; color: var(--muted-foreground); line-height: 1.8; }
+.storyPrinciple strong { font-weight: 500; color: var(--foreground); }
+.textLink { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-size: 13px; color: var(--primary); font-weight: 600; margin-top: 20px; }
+.textLink:hover { text-decoration: underline; text-underline-offset: 4px; }
+.toolkit { padding-top: 24px; }
+.toolkitHeading { display: flex; justify-content: space-between; align-items: flex-end; gap: 36px; margin-bottom: 36px; }
+.toolkitHeading > p { max-width: 30ch; color: var(--muted-foreground); font-size: 14px; line-height: 1.85; padding-bottom: 3px; }
+.toolkitGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.toolCard { min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 24px; }
+.cardCopy { padding: 30px 30px 0; }
+.cardLabel { display: flex; align-items: center; gap: 8px; font-size: 9px; }
+.toolCard h3 { margin-top: 15px; font-family: var(--font-display); font-weight: 600; font-size: clamp(21px, 2.3vw, 28px); letter-spacing: -.035em; line-height: 1.3; }
+.cardCopy > p { max-width: 47ch; font-size: 13px; line-height: 1.85; color: var(--muted-foreground); margin-top: 13px; }
+.materialCard { grid-row: span 2; background: var(--co-surface); border-color: var(--co-border); display: flex; flex-direction: column; }
+.materialCard .cardCopy { padding: 36px 36px 0; }
+.materialVisual { position: relative; isolation: isolate; margin: auto 38px 0; padding-top: 52px; }
+.notebookBack { z-index: -1; position: absolute; inset: 52px 2px -30px; border-radius: 16px; background: color-mix(in srgb, var(--primary) 15%, var(--card)); border: 1px solid var(--co-border); rotate: -6deg; }
+.notebook { border-radius: 16px 16px 0 0; padding: 24px; background: var(--card); border: 1px solid var(--border); border-bottom: 0; box-shadow: 0 -4px 30px rgb(77 41 21 / 4%); }
+.notebookHeader { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 18px; }
+.notebookHeader > span:first-child { display: flex; align-items: center; gap: 7px; font-weight: 600; font-size: 12px; }
+.notebookHeader > span:last-child { color: var(--muted-foreground); font-size: 9px; }
+.subjectLabel { display: block; color: var(--primary); font-size: 8px; letter-spacing: .08em; margin-top: 25px; font-weight: 600; }
+.notebook h4 { font-size: 20px; font-family: var(--font-display); letter-spacing: -.03em; font-weight: 600; margin-top: 9px; }
+.sourceRow { display: flex; gap: 10px; align-items: center; border: 1px solid var(--border); padding: 13px; border-radius: 10px; margin: 20px 0 14px; }
+.sourceRow > span { color: var(--primary); }
+.sourceRow strong { font-size: 11px; font-weight: 500; }
+.sourceRow p { font-size: 9px; margin-top: 3px; color: var(--muted-foreground); }
+.sourceRow > svg { margin-inline-start: auto; color: var(--primary); }
+.notebookStep { display: flex; align-items: center; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
+.notebookStep > span { color: var(--primary); font-size: 9px; }
+.notebookStep > svg { margin-inline-start: auto; color: var(--muted-foreground); }
+.questionCard { background: color-mix(in srgb, var(--background) 93%, #75917a); }
+.conversation { padding: 24px 30px; display: flex; flex-direction: column; gap: 12px; }
+.conversation > p { align-self: flex-end; padding: 10px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 14px 14px 3px 14px; font-size: 11px; }
+.conversation > div { display: flex; align-items: center; gap: 10px; }
+.conversation > div p { font-size: 11px; line-height: 1.7; max-width: 28ch; }
+.conversation > span { font-size: 9px; color: var(--muted-foreground); text-align: end; }
+.reviewCard { background: color-mix(in srgb, var(--background) 95%, #ac97b9); }
+.reviewVisual { padding: 24px 30px 30px; display: flex; align-items: center; gap: 12px; }
+.reviewVisual > span { display: flex; flex: 1; align-items: center; justify-content: center; flex-direction: column; gap: 8px; min-height: 75px; background: var(--card); border: 1px solid var(--border); border-radius: 13px; font-size: 10px; }
+.reviewVisual > span svg { color: var(--primary); }
+.reviewVisual > svg { flex: none; color: var(--muted-foreground); }
+.exampleNote { margin-top: 18px; font-size: 11px; color: var(--muted-foreground); text-align: end; line-height: 1.8; }
+@media (max-width: 1000px) { .story { gap: 36px; } .toolkitHeading { display: block; } .toolkitHeading > p { max-width: 55ch; margin-top: 18px; } .cardCopy, .materialCard .cardCopy { padding: 26px 24px 0; } .materialVisual { margin-inline: 26px; } .conversation, .reviewVisual { padding-inline: 24px; } .reviewVisual { gap: 8px; } }
+@media (max-width: 760px) {
+  .story, .toolkit { padding: 56px 24px; }
+  .story { grid-template-columns: 1fr; gap: 26px; }
+  .storyArtwork { max-width: 520px; width: 100%; justify-self: center; }
+  .storyImage { aspect-ratio: 1.4; }
+  .storyCopy > p:not(.eyebrow) { max-width: 60ch; }
+  .toolkit { padding-top: 0; }
+  .toolkitHeading { margin-bottom: 26px; }
+  .toolkitGrid { grid-template-columns: 1fr; gap: 18px; }
+  .materialCard { grid-row: auto; }
+  .materialVisual { margin: 0 auto; width: calc(100% - 64px); max-width: 420px; padding-top: 30px; }
+  .notebookBack { top: 30px; }
+  .reviewVisual { gap: 12px; }
+  .exampleNote { text-align: start; }
+}
+@media (max-width: 420px) { .artworkTag { font-size: 10px; top: 24px; inset-inline-start: -6px; padding: 8px 10px; } .artworkCaption { inset-inline: 12px; padding: 14px; gap: 10px; } .artworkCaption p { font-size: 14px; } .artworkCaption div > span { font-size: 7px; } .notebook { padding: 20px; } .reviewVisual { gap: 8px; } }

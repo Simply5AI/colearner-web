@@ -1,11 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { BookOpen, Bookmark, Sparkles } from 'lucide-react'
+import { BookOpen, Bookmark, ExternalLink, Sparkles } from 'lucide-react'
+import { useState } from 'react'
 import { Button, CoCharacter, type CoState } from '@/components/design-system'
 import type { LearnBand } from '@/lib/api/learn'
 import type { LessonBlock, LessonContentView, LessonSource } from '@/lib/api/lesson'
 import { cn } from '@/lib/utils'
+import { youtubeTimestampUrl } from '@/lib/materials/source-link'
 import { coSizeFor, sourceChipText, termIndexFor, uniqueSources } from './lesson-model'
 import { Spoken } from './lesson-speech'
 
@@ -21,16 +23,19 @@ export function AiOriginTag({ band, packVersion, promptRelease, variant = 'lesso
 }
 
 /** Source chips: where in the learner's own material this step comes from. They link back to the reader. */
-export function SourceChips({ sources, materialHref, band, showQuotes = band !== 'kids' }: { sources: readonly LessonSource[]; materialHref: string | null; band: LearnBand; showQuotes?: boolean }) {
+export function SourceChips({ sources, materialHref, band, showQuotes = band !== 'kids', sourceUrl = null }: { sources: readonly LessonSource[]; materialHref: string | null; band: LearnBand; showQuotes?: boolean; /** The material's original address: a YouTube source adds a link to the exact moment, in a new tab. */ sourceUrl?: string | null }) {
   const chips = uniqueSources(sources)
   if (chips.length === 0) return null
   return <section aria-label="Where this comes from" data-testid="source-chips" className="space-y-2">
     <ul className="flex flex-wrap gap-2">
-      {chips.map(source => <li key={`${source.anchorRef}:${source.label}`}>
+      {chips.map(source => {
+        const moment = typeof source.startMs === 'number' ? youtubeTimestampUrl(sourceUrl, source.startMs) : null
+        return <li key={`${source.anchorRef}:${source.label}`} className="inline-flex items-center gap-1">
         {materialHref
           ? <Link href={materialHref} className="ds-pill border border-border hover:bg-secondary focus-visible:outline-2 focus-visible:outline-ring"><BookOpen size={16} aria-hidden="true" />{sourceChipText(source)}</Link>
           : <span className="ds-pill border border-border"><BookOpen size={16} aria-hidden="true" />{sourceChipText(source)}</span>}
-      </li>)}
+        {moment && <a href={moment} target="_blank" rel="noopener noreferrer" data-testid="source-moment" aria-label={`Watch ${sourceChipText(source).toLowerCase()} on YouTube (opens a new tab)`} className="ds-pill border border-border hover:bg-secondary focus-visible:outline-2 focus-visible:outline-ring"><ExternalLink size={16} aria-hidden="true" />Watch</a>}
+      </li>})}
     </ul>
     {showQuotes && chips.some(source => source.quote.trim()) && <details className="text-[length:var(--ds-small)]">
       <summary className="cursor-pointer font-semibold text-muted-foreground">See the words from your material</summary>
@@ -49,7 +54,30 @@ export interface BlocksProps {
   savingTerm?: boolean
 }
 
-/** Renders only the blocks the lesson provides: text, list, table and key terms. No image is ever requested. */
+/**
+ * A worked example (lesson schema revision 4): the problem, the reasoning as an ordered list and the answer behind a
+ * "Show answer" button. The label says whose example it is: the learner's own material, or one Co made up to practise
+ * the same method (marked with the same sparkle as "Made by Co with AI").
+ */
+export function WorkedExampleCard({ block, band, id }: { block: Extract<LessonBlock, { type: 'WORKED_EXAMPLE' }>; band: LearnBand; id: string }) {
+  const [shown, setShown] = useState(false)
+  const kids = band === 'kids'
+  const co = block.origin === 'CO'
+  const answerId = `${id}-answer`
+  return <section aria-label={co ? "Co's own example" : 'Example from your material'} data-testid="worked-example" data-origin={block.origin} className={cn('space-y-3 rounded-[var(--radius)] border bg-card p-4', co ? 'border-primary/50' : 'border-border')}>
+    <p data-testid="worked-example-label" className="inline-flex items-center gap-2 text-[length:var(--ds-small)] font-bold text-muted-foreground">
+      {co ? <span className="ds-ai-tag ds-pill"><Sparkles size={16} aria-hidden="true" />Co&apos;s own example</span> : <span className="ds-pill border border-border"><BookOpen size={16} aria-hidden="true" />From your material</span>}
+    </p>
+    <p className={cn('font-extrabold', kids && 'text-[length:var(--ds-h3)]')}><span className="sr-only">Problem: </span><Spoken id={`${id}p`} text={block.problem} /></p>
+    <ol aria-label="Steps" className={cn('list-decimal space-y-2 ps-6', kids && 'text-[length:var(--ds-h3)] font-semibold')}>{block.workSteps.map((line, index) => <li key={index}><Spoken id={`${id}w${index}`} text={line} /></li>)}</ol>
+    <div>
+      <Button variant="secondary" aria-expanded={shown} aria-controls={answerId} onClick={() => setShown(value => !value)}>{shown ? 'Hide answer' : 'Show answer'}</Button>
+      <p id={answerId} hidden={!shown} data-testid="worked-example-answer" className="mt-2 font-extrabold text-primary"><span className="sr-only">Answer: </span>{block.answer}</p>
+    </div>
+  </section>
+}
+
+/** Renders only the blocks the lesson provides: text, list, table, key terms and worked examples. No image is ever requested. */
 export function LessonBlocks({ blocks, band, content, onSaveTerm, savingTerm }: BlocksProps) {
   const kids = band === 'kids'
   return <div className={cn('space-y-5', kids && 'space-y-6')}>{blocks.map((block, index) => {
@@ -57,6 +85,7 @@ export function LessonBlocks({ blocks, band, content, onSaveTerm, savingTerm }: 
     if (block.type === 'LIST') return kids
       ? <ul key={index} className="grid gap-3 sm:grid-cols-2">{block.items.map((item, item_) => <li key={item_} className="rounded-[var(--radius)] border-2 border-primary/40 bg-secondary p-4 text-[length:var(--ds-h3)] font-bold"><Spoken id={`b${index}i${item_}`} text={item} /></li>)}</ul>
       : <ul key={index} className="max-w-prose list-disc space-y-2 ps-6">{block.items.map((item, item_) => <li key={item_}><Spoken id={`b${index}i${item_}`} text={item} /></li>)}</ul>
+    if (block.type === 'WORKED_EXAMPLE') return <WorkedExampleCard key={index} block={block} band={band} id={`b${index}`} />
     if (block.type === 'TABLE') return <div key={index} role="region" aria-label="Table" tabIndex={0} className="overflow-x-auto rounded-[var(--radius)] border border-border focus-visible:outline-2 focus-visible:outline-ring">
       <table className="w-full min-w-max border-collapse text-start text-[length:var(--ds-small)]">
         <thead className="bg-muted"><tr>{block.headers.map((header, column) => <th key={column} scope="col" className="px-3 py-2 text-start font-bold">{header}</th>)}</tr></thead>

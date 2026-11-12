@@ -2,6 +2,7 @@
 
 import { z } from 'zod'
 import { materialRequest, MaterialApiError, MaterialSessionError } from './material-request'
+import { safeSourceUrl } from '@/lib/materials/source-link'
 import type { Material as PortableMaterial, MaterialConfig as PortableMaterialConfig, MaterialDetail as PortableMaterialDetail, MaterialImportRequest } from '@colearner/api-client'
 
 export const sourceTypes = ['text', 'pdf', 'docx', 'pptx', 'image', 'audio', 'youtube', 'web', 'paper'] as const
@@ -18,7 +19,7 @@ const lessonLink = z.union([localLink, z.object({ link: z.object({ route: z.lite
 export const materialSchema = z.object({
   id, title: z.string(), sourceType: z.enum(sourceTypes), subjectId: id.nullable(), subjectName: z.string(), planId: id.nullable(), planTitle: z.string().nullable(),
   createdAt: z.string(), updatedAt: z.string(), status: z.enum(materialStatuses), stage: z.enum(['reading', 'concepts', 'ready', 'failed', 'cancelled']), progress: z.number().min(0).max(100),
-  jobId: id, sourceVersionRef: z.string().nullable(), concepts: z.array(z.object({ id, label: z.string() })),
+  jobId: id, sourceVersionRef: z.string().nullable(), sourceUrl: z.string().nullish().transform(value => safeSourceUrl(value)), partial: z.boolean().nullish().transform(value => value === true), partialReason: z.string().nullish().transform(value => value ?? null), concepts: z.array(z.object({ id, label: z.string() })),
   error: z.object({ code: z.string(), message: z.string(), retryable: z.boolean() }).nullable(),
   links: z.object({ reader: localLink, lesson: lessonLink, practice: localLink, original: z.string().nullish() }).transform(links => {
     const lesson = links.lesson
@@ -38,7 +39,7 @@ export const materialConfigSchema = z.object({
 export const materialDetailSchema = materialSchema.extend({ source: z.object({ text: z.string(), anchors: z.array(z.unknown()) }).nullable(), analysis: z.unknown().nullable() }) satisfies z.ZodType<PortableMaterialDetail>
 const pageSchema = z.object({ items: z.array(materialSchema), total: z.number().int().nonnegative(), page: z.number().int().positive(), limit: z.number().int().positive() })
 const importedSchema = z.object({ items: z.array(materialSchema) })
-export type Material = PortableMaterial
+export type Material = PortableMaterial & { sourceUrl?: string | null; partial?: boolean; partialReason?: string | null }
 /** B08: `lessonsAvailable` is true only when the server says lessons truly work; the 0.4.0 contract type fixed it to false. */
 export type MaterialConfig = Omit<PortableMaterialConfig, 'lessonsAvailable' | 'practiceAvailable'> & { lessonsAvailable: boolean; practiceAvailable: boolean }
 /** The server's reason a lesson cannot start for this material, when it gave one. */
@@ -48,7 +49,7 @@ export const lessonDisabledReason = (material: Material): string | null => (mate
 export type MaterialDetail = PortableMaterialDetail
 export type SourceType = typeof sourceTypes[number]
 export interface MaterialFilters { search?: string; subjectId?: string; sourceType?: string; status?: string; page?: number }
-export type ImportMaterial = MaterialImportRequest
+export type ImportMaterial = MaterialImportRequest & { pageFrom?: number; pageTo?: number }
 export const materialApi = {
   config: () => materialRequest('/config', materialConfigSchema),
   list: (filters: MaterialFilters) => {

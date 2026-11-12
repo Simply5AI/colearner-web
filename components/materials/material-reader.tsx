@@ -7,7 +7,7 @@ import { AskCoEntry } from '@/components/co/co-launcher'
 import { Card } from '@/components/design-system'
 import { hasOriginal, lessonDisabledReason, materialApi, type MaterialDetail } from '@/lib/api/materials'
 import { cn } from '@/lib/utils'
-import { MaterialFrame, MaterialLoadState, MaterialProgress, materialKeys, useMaterialConfig } from './material-common'
+import { LearnThis, MaterialFrame, MaterialLoadState, MaterialProgress, materialKeys, useMaterialConfig } from './material-common'
 import { PdfViewer } from './pdf-viewer'
 import { AnalogyPanel, MaterialNotesPanel } from './reader-rail-panels'
 
@@ -49,7 +49,7 @@ function ReaderBody({ material, band, actor }: { material: MaterialDetail; band:
             : <p>The source is not ready to read. Return to processing for its current status.</p>)}
           {tab === 'ideas' && <div className="space-y-3" data-testid="reader-ideas">
             {typeof summary === 'string' && summary && <p className="max-w-prose leading-relaxed">{summary}</p>}
-            {material.concepts.length > 0 ? <ul className="flex flex-wrap gap-2">{material.concepts.map(concept => <li key={concept.id} className="ds-pill">{concept.label}</li>)}</ul> : <p className="text-sm text-muted-foreground">Key ideas appear here once Co has finished reading.</p>}
+            {material.concepts.length > 0 ? <ul className="flex flex-wrap gap-2">{material.concepts.map(concept => <li key={concept.id} className="ds-pill">{concept.label}<LearnThis lessonRoute={material.links.lesson} conceptId={concept.id} label={concept.label} /></li>)}</ul> : <p className="text-sm text-muted-foreground">Key ideas appear here once Co has finished reading.</p>}
           </div>}
         </Card>
         {material.links.lesson ? <div className="flex flex-wrap items-center gap-3"><Link href={material.links.lesson} className="ds-button ds-button-primary">Start lesson</Link><p className="text-sm text-muted-foreground">Co makes a short five-step lesson from this material.</p></div> : <p className="text-sm text-muted-foreground" data-testid="lesson-unavailable">{lessonDisabledReason(material) ?? 'This reader does not create a lesson or practice activity. Those controls open only when their validated artifacts are available.'}</p>}

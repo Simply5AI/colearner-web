@@ -14,8 +14,8 @@ import type { CoTurnView } from './co-types'
 /* ---------- small shared pieces ---------- */
 
 /** Co's words as plain text, or word by word with the spoken word marked while the device voice reads them. */
-function SpokenText({ text, words, active, kids }: { text: string; words: readonly string[]; active: number | null; kids: boolean }) {
-  return <p className={cn('max-w-prose whitespace-pre-line leading-relaxed', kids && 'text-[length:var(--ds-h3)] font-semibold leading-snug')} data-testid="co-reply-text">
+function SpokenText({ text, words, active, kids, study = false }: { text: string; words: readonly string[]; active: number | null; kids: boolean; study?: boolean }) {
+  return <p className={cn('max-w-prose whitespace-pre-line leading-relaxed', kids && 'text-[length:var(--ds-h3)] font-semibold leading-snug', study && 'text-[1.0625rem] leading-8 text-foreground')} data-testid="co-reply-text">
     {active === null ? text : words.map((word, index) => <span key={index}>{index > 0 && ' '}{index === active
       ? <mark aria-current="true" className="rounded-sm bg-secondary px-0.5 text-secondary-foreground outline outline-2 outline-primary">{word}</mark>
       : word}</span>)}
@@ -87,6 +87,8 @@ export interface ReplyCardProps {
   suggestions?: boolean
   /** DEMO-B: the material this chat is about, for "Save to my pages". When absent it is read from `materialHref` (/learn/library/<id>). */
   materialId?: string | null
+  /** Full-screen tutor layout: Co's explanation as open prose under the question, without a chat card. */
+  study?: boolean
 }
 
 const materialIdFromHref = (href: string | null) => /^\/learn\/library\/([a-zA-Z0-9_-]{1,128})(?:[/?#]|$)/.exec(href ?? '')?.[1] ?? null
@@ -102,22 +104,23 @@ function savedAnswer(turn: CoTurnView, view: ReplyView): { title: string; body: 
  * A finished Co reply. Everything shown is decided by `replyView`: the "Beyond your material" tag appears only when the
  * server set it; a safety redirect shows the code-owned guidance verbatim and nothing else.
  */
-export function CoReplyCard({ turn, band, materialHref, onSuggestion, canAsk, suggestions = true, materialId }: ReplyCardProps) {
+export function CoReplyCard({ turn, band, materialHref, onSuggestion, canAsk, suggestions = true, materialId, study = false }: ReplyCardProps) {
   if (!turn.reply) return null
   const view = replyView(turn.reply)
   const saveTo = materialId ?? materialIdFromHref(materialHref)
   const kids = band === 'kids'
   const safety = view.kind === 'safety'
   return <ReplyReadAloud text={view.text} band={band}>{(listen, state) => <article aria-label={safety ? SAFETY_LABEL : 'Co’s answer'} data-testid={safety ? 'co-safety' : 'co-reply'} data-turn={turn.id} data-origin={view.origin}
-    className={cn('co-reply flex gap-3 rounded-[var(--radius)] border p-3 sm:p-4', safety ? 'border-primary/50 bg-secondary' : 'border-border bg-card')}>
-    <CoAvatar band={band} state={replyPose(view)} size={avatarSize(band)} className="shrink-0" />
+    className={cn('co-reply flex gap-3', study && !safety ? 'gap-4' : 'rounded-[var(--radius)] border p-3 sm:p-4', !study || safety ? (safety ? 'border-primary/50 bg-secondary' : 'border-border bg-card') : undefined)}>
+    <CoAvatar band={band} state={replyPose(view)} size={study ? 36 : avatarSize(band)} className="shrink-0" />
     <div className="min-w-0 flex-1 space-y-3">
       {safety && <p className="flex items-center gap-2 font-extrabold text-primary" data-testid="co-safety-label"><ShieldCheck size={kids ? 28 : 22} aria-hidden="true" />{SAFETY_LABEL}</p>}
       {!safety && view.beyond && <p data-testid="co-beyond" className="inline-flex flex-wrap items-center gap-2 text-[length:var(--ds-small)]">
-        <span className="ds-pill border border-primary/60 text-primary"><Compass size={16} aria-hidden="true" />Beyond your material</span>
-        {view.beyondNote && <span className="text-muted-foreground" data-testid="co-beyond-note">{view.beyondNote}</span>}
+        {/* The tag is the label; the model's own note stays available to assistive tech and as a hover hint, not as visible text. */}
+        <span className="ds-pill border border-primary/60 text-primary" title={view.beyondNote ?? undefined}><Compass size={16} aria-hidden="true" />Beyond your material</span>
+        {view.beyondNote && <span className="sr-only" data-testid="co-beyond-note">{view.beyondNote}</span>}
       </p>}
-      <SpokenText text={view.text} words={state.words} active={state.speaking ? state.active : null} kids={kids} />
+      <SpokenText text={view.text} words={state.words} active={state.speaking ? state.active : null} kids={kids} study={study} />
       {listen}
       {!safety && view.keyPoints.length > 0 && <section aria-label="Key points" data-testid="co-key-points" className="space-y-1 rounded-[var(--radius)] bg-muted p-3">
         <h3 className="text-[length:var(--ds-h3)]">Key points</h3>
@@ -168,8 +171,11 @@ export function StoppedCard({ band }: { band: LearnBand }) {
   </div>
 }
 
-/** What the learner said, aligned to the inline end. */
-export function LearnerBubble({ text, band }: { text: string; band: LearnBand }) {
+/** What the learner said: a chat bubble at the inline end, or the question heading of a full-screen study page. */
+export function LearnerBubble({ text, band, study = false }: { text: string; band: LearnBand; study?: boolean }) {
+  if (study) return <p data-testid="co-learner" className="whitespace-pre-wrap break-words border-s-4 border-primary ps-4 text-[length:var(--ds-h3)] font-extrabold leading-snug text-foreground">
+    <span className="sr-only">You asked: </span>{text}
+  </p>
   return <p data-testid="co-learner" className={cn('ms-auto w-fit max-w-[88%] whitespace-pre-wrap break-words rounded-[var(--radius)] rounded-ee-md bg-primary px-4 py-2 text-primary-foreground', band === 'kids' && 'text-[length:var(--ds-h3)] font-semibold')}>
     <span className="sr-only">You asked: </span>{text}
   </p>

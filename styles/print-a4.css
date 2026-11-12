@@ -1,0 +1,69 @@
+/* B13 worksheets: A4 student page and teacher answer key. Imported by components/teacher/worksheets/worksheet-document.tsx. */
+@page {
+  size: A4;
+  margin: 15mm;
+  @bottom-center { content: counter(page) " / " counter(pages); font-size: 9pt; color: #555; }
+}
+
+.ws-sheet {
+  box-sizing: border-box;
+  width: 210mm;
+  max-width: 100%;
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: 15mm;
+  background: #fff;
+  color: #111;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 12pt;
+  line-height: 1.45;
+  border: 1px solid #d4d4d8;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 0.12);
+}
+.ws-sheet h1 { margin: 0 0 2mm; font-size: 20pt; line-height: 1.2; }
+.ws-sheet .ws-instructions { margin: 0 0 4mm; white-space: pre-wrap; }
+.ws-sheet .ws-meta { display: flex; flex-wrap: wrap; gap: 6mm; margin: 0 0 5mm; }
+.ws-sheet .ws-field { display: flex; flex: 1 1 60mm; align-items: flex-end; gap: 2mm; }
+.ws-sheet .ws-field-line { flex: 1; border-bottom: 0.4mm solid #111; min-height: 6mm; }
+.ws-sheet .ws-total { margin: 0 0 5mm; font-size: 10.5pt; color: #333; }
+.ws-sheet .ws-key-banner { margin: 0 0 5mm; padding: 3mm 4mm; border: 0.6mm solid #111; font-family: Arial, Helvetica, sans-serif; font-weight: 700; font-size: 13pt; letter-spacing: 0.02em; }
+.ws-sheet .ws-key-banner small { display: block; margin-top: 1mm; font-size: 9.5pt; font-weight: 400; }
+.ws-sheet ol.ws-questions { margin: 0; padding: 0; list-style: none; }
+.ws-sheet .ws-q { margin: 0 0 6mm; break-inside: avoid; page-break-inside: avoid; }
+.ws-sheet .ws-q-head { display: flex; gap: 3mm; align-items: baseline; }
+.ws-sheet .ws-num { min-width: 8mm; font-weight: 700; }
+.ws-sheet .ws-prompt { flex: 1; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ws-sheet .ws-pts { white-space: nowrap; font-size: 10pt; color: #333; }
+.ws-sheet .ws-note { margin: 1.5mm 0 0 11mm; font-size: 10pt; color: #333; font-style: italic; }
+.ws-sheet ul.ws-options { margin: 2mm 0 0 11mm; padding: 0; list-style: none; }
+.ws-sheet ul.ws-options li { display: flex; gap: 2.5mm; align-items: baseline; margin: 0 0 1.5mm; }
+.ws-sheet .ws-box { display: inline-block; flex: none; width: 4mm; height: 4mm; border: 0.4mm solid #111; border-radius: 50%; transform: translateY(0.6mm); }
+.ws-sheet .ws-box.ws-square { border-radius: 0.6mm; }
+.ws-sheet .ws-order-box { display: inline-block; flex: none; width: 8mm; height: 6mm; border: 0.4mm solid #111; transform: translateY(1mm); }
+.ws-sheet ul.ws-pictures { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4mm; margin: 2mm 0 0 11mm; padding: 0; list-style: none; }
+.ws-sheet ul.ws-pictures li { break-inside: avoid; }
+.ws-sheet .ws-pic { display: flex; flex-direction: column; gap: 1.5mm; }
+.ws-sheet .ws-pic img { display: block; max-width: 70mm; max-height: 40mm; object-fit: contain; border: 0.3mm solid #999; }
+.ws-sheet .ws-pic-fallback { display: flex; align-items: center; justify-content: center; min-height: 20mm; border: 0.3mm dashed #666; font-size: 9pt; color: #555; }
+.ws-sheet .ws-lines { margin: 2mm 0 0 11mm; }
+.ws-sheet .ws-line { height: 8mm; border-bottom: 0.3mm solid #777; }
+.ws-sheet pre.ws-code { margin: 2mm 0 0 11mm; padding: 2mm 3mm; border: 0.3mm solid #999; background: #f4f4f5; font-family: 'Courier New', monospace; font-size: 10pt; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ws-sheet .ws-answer { margin: 2mm 0 0 11mm; padding: 2mm 3mm; border-left: 1mm solid #111; background: #f4f4f5; font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; }
+.ws-sheet .ws-answer p { margin: 0 0 1mm; }
+.ws-sheet .ws-answer .ws-label { font-weight: 700; }
+
+.ws-sheet img { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+
+@media (max-width: 800px) {
+  .ws-sheet { padding: 6mm; min-height: 0; }
+  .ws-sheet ul.ws-pictures { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media print {
+  html, body { background: #fff !important; }
+  body * { visibility: hidden !important; }
+  .ws-sheet, .ws-sheet * { visibility: visible !important; }
+  .ws-sheet { position: absolute; inset: 0 auto auto 0; width: 100%; min-height: 0; margin: 0; padding: 0; border: 0; box-shadow: none; }
+  .ws-sheet ul.ws-pictures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ws-no-print { display: none !important; }
+}

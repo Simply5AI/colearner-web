@@ -127,6 +127,7 @@ export function PlanWorkspace({ planId, initialTopicId = null, assignOpen = fals
           </ul>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="lg"><Link href={`/teacher/plans/${encodeURIComponent(plan.id)}/worksheets`} data-testid="open-worksheets">Worksheets</Link></Button>
           <Button variant="outline" size="lg" onClick={() => setDetailsOpen(true)} data-testid="edit-details"><Pencil aria-hidden="true" />Details</Button>
           {plan.status === 'DRAFT' && <Button size="lg" onClick={() => setReviewOpen(true)} data-testid="review-publish"><Rocket aria-hidden="true" />Review and publish</Button>}
           {plan.status === 'PUBLISHED' && <Button size="lg" onClick={() => setAssigning(true)} data-testid="open-assign"><Users aria-hidden="true" />Assign to class</Button>}

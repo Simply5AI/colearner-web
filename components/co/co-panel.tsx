@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent, type MutableRefObject } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import Link from 'next/link'
-import { MicOff, Send, X } from 'lucide-react'
+import { Maximize2, MicOff, Minimize2, Send, X } from 'lucide-react'
 import { Button, CoAvatar } from '@/components/design-system'
 import { AiOriginTag } from '@/components/lesson/lesson-parts'
 import { linkHref, type LearnBand } from '@/lib/api/learn'
@@ -55,14 +55,18 @@ export function AskCoPanel(props: AskCoPanelProps) {
   }, [close, confirm, onOpenChange])
 
   const kids = band === 'kids'
+  // Tweens and teens study with Co full screen by default (a focused tutor page, not a side chat); they can dock it to the side.
+  const [expanded, setExpanded] = useState(!kids)
   return <Dialog.Root open={open} onOpenChange={handleOpenChange}>
     <Dialog.Portal>
       <Dialog.Backdrop className="fixed inset-0 z-[70] bg-foreground/25 backdrop-blur-[3px]" />
       <Dialog.Popup data-age-band={band} data-testid="ask-co-panel" initialFocus={() => (band !== 'kids' && input.current) || title.current || true} finalFocus={true}
+        data-layout={expanded ? 'full' : 'side'}
         className={cn('co-panel ds-age-scope fixed z-[70] flex min-h-0 flex-col overflow-hidden bg-background text-foreground shadow-xl outline-none [&_h2]:font-bold [&_h3]:font-bold',
           kids ? 'inset-0 sm:inset-6 sm:mx-auto sm:max-w-3xl sm:rounded-[var(--radius)] sm:border sm:border-border'
-            : 'inset-y-0 end-0 w-full border-s border-border sm:w-[28rem] lg:w-[32rem]')}>
-        <PanelBody {...props} titleRef={title} inputRef={input} draftRef={draftRef} confirm={confirm} onKeepWriting={() => setConfirm(false)} onCloseAnyway={close} onRequestClose={requestClose} />
+            : expanded ? 'inset-0' : 'inset-y-0 end-0 w-full border-s border-border sm:w-[28rem] lg:w-[32rem]')}>
+        <PanelBody {...props} titleRef={title} inputRef={input} draftRef={draftRef} confirm={confirm} onKeepWriting={() => setConfirm(false)} onCloseAnyway={close} onRequestClose={requestClose}
+          study={!kids && expanded} onToggleLayout={kids ? undefined : () => setExpanded(value => !value)} />
       </Dialog.Popup>
     </Dialog.Portal>
   </Dialog.Root>
@@ -76,10 +80,16 @@ interface BodyProps extends AskCoPanelProps {
   onKeepWriting: () => void
   onCloseAnyway: () => void
   onRequestClose: () => void
+  /** Full-screen tutor page: a centred reading column, questions as headings and Co's explanations as prose. */
+  study: boolean
+  onToggleLayout?: () => void
 }
 
+/** The centred reading column of the full-screen layout; the side panel uses its whole width. */
+const column = (study: boolean) => cn(study && 'mx-auto w-full max-w-3xl')
+
 function PanelBody(props: BodyProps) {
-  const { band, context, actor, titleRef, inputRef, onRequestClose } = props
+  const { band, context, actor, titleRef, inputRef, onRequestClose, study, onToggleLayout } = props
   const query = useCoContext(actor, context)
   const view = query.data
   const ready = view?.available === true
@@ -104,7 +114,8 @@ function PanelBody(props: BodyProps) {
 
   const libraryHref = view?.source ? linkHref(view.source.link) ?? linkHref({ route: 'LIBRARY_ITEM', id: view.source.materialId }) : null
   return <>
-    <header className="co-panel-header flex shrink-0 items-start gap-3 border-b border-border p-4 sm:p-5">
+    <header className="co-panel-header shrink-0 border-b border-border p-4 sm:p-5">
+      <div className={cn('flex items-start gap-3', column(study))}>
       <CoAvatar band={band} state="idle" size={band === 'kids' ? 64 : 44} className="shrink-0" />
       <div className="min-w-0 flex-1 space-y-1">
         <Dialog.Title ref={titleRef} tabIndex={-1} className="text-[length:var(--ds-h2)] font-extrabold leading-tight outline-none">Ask Co</Dialog.Title>
@@ -113,7 +124,10 @@ function PanelBody(props: BodyProps) {
         {view?.source && <p className="min-w-0 text-[length:var(--ds-small)] text-muted-foreground" data-testid="co-source">About <span className="font-bold text-foreground">{view.source.title}</span>
           {libraryHref && <> · <Link href={libraryHref} className="font-bold text-primary underline">Open in library</Link></>}</p>}
       </div>
+      {onToggleLayout && <Button variant="ghost" className="hidden sm:inline-flex" aria-label={study ? 'Dock Co to the side' : 'Open Co full screen'} aria-pressed={study} onClick={onToggleLayout} data-testid="co-layout-toggle">
+        {study ? <Minimize2 size={20} aria-hidden="true" /> : <Maximize2 size={20} aria-hidden="true" />}</Button>}
       <Button variant="ghost" aria-label="Close Ask Co" onClick={onRequestClose}><X size={22} aria-hidden="true" /></Button>
+      </div>
     </header>
     {query.isPending && <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4"><CoLoading band={band} /></div>}
     {query.error && !query.isPending && <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4"><CoProblemState problem={problemFor(query.error)} band={band} onRetry={() => void query.refetch()} backHref={LIBRARY} /></div>}
@@ -126,7 +140,7 @@ function PanelBody(props: BodyProps) {
 
 const STYLE_OPTIONS: { value: CoStyle; label: string }[] = [{ value: 'SIMPLE', label: 'Simple' }, { value: 'EXAM', label: 'Exam-style' }]
 
-function CoChatView({ band, context, actor, view, materialHref, inputRef: input, draftRef, confirm, onKeepWriting, onCloseAnyway, pollBaseMs, slowAfterMs, storage }: BodyProps & { view: CoContextView }) {
+function CoChatView({ band, context, actor, view, materialHref, inputRef: input, draftRef, confirm, onKeepWriting, onCloseAnyway, pollBaseMs, slowAfterMs, storage, study }: BodyProps & { view: CoContextView }) {
   const chat = useCoChat({ actor, context, view, pollBaseMs, slowAfterMs, storage })
   const [draft, setDraft] = useState('')
   const [style, setStyle] = useState<CoStyle>('SIMPLE')
@@ -176,7 +190,8 @@ function CoChatView({ band, context, actor, view, materialHref, inputRef: input,
 
   return <>
     <div className="sr-only" role="status" aria-live="polite" aria-atomic="true" data-testid="co-announcer">{announcement}</div>
-    <div ref={region} role="region" aria-label="Chat with Co" data-phase={phase} tabIndex={0} className="co-conversation min-h-0 flex-1 space-y-5 overflow-y-auto p-4 outline-none focus-visible:outline-2 focus-visible:outline-ring sm:p-5">
+    <div ref={region} role="region" aria-label="Chat with Co" data-phase={phase} tabIndex={0} className={cn('co-conversation min-h-0 flex-1 overflow-y-auto p-4 outline-none focus-visible:outline-2 focus-visible:outline-ring sm:p-5', study && 'sm:py-10')}>
+      <div className={cn('space-y-5', column(study))}>
       {chat.historyLoading && <p role="status" data-testid="co-history-loading" className="text-muted-foreground">Loading your earlier questions…</p>}
       {chat.historyProblem && <CoProblemState problem={chat.historyProblem} band={band} onRetry={chat.reloadHistory} />}
       {empty && !chat.historyProblem && <div className={cn('co-welcome space-y-5', kids && 'text-center')} data-testid="co-empty">
@@ -186,16 +201,16 @@ function CoChatView({ band, context, actor, view, materialHref, inputRef: input,
         </div>
         <SuggestionChips suggestions={contextSuggestions} band={band} onPick={ask} disabled={!canAsk} label="Things you could ask" />
       </div>}
-      {chat.turns.length > 0 && <ol aria-label="Your chat with Co" className="space-y-5">
-        {chat.turns.map(turn => <li key={turn.id} data-testid="co-turn" data-status={turn.status} className="space-y-3">
-          <LearnerBubble text={turn.learnerText} band={band} />
-          {turn.status === 'READY' && <CoReplyCard turn={turn} band={band} materialHref={materialHref ?? null} onSuggestion={ask} suggestions={turn.id === last?.id} canAsk={canAsk} />}
+      {chat.turns.length > 0 && <ol aria-label="Your chat with Co" className={study ? 'space-y-10' : 'space-y-5'}>
+        {chat.turns.map(turn => <li key={turn.id} data-testid="co-turn" data-status={turn.status} className={cn('space-y-3', study && 'space-y-5 border-b border-border pb-10 last:border-b-0')}>
+          <LearnerBubble text={turn.learnerText} band={band} study={study} />
+          {turn.status === 'READY' && <CoReplyCard turn={turn} band={band} materialHref={materialHref ?? null} onSuggestion={ask} suggestions={turn.id === last?.id} canAsk={canAsk} study={study} />}
           {(turn.status === 'QUEUED' || turn.status === 'RUNNING') && <PendingCard band={band} slow={chat.slow} onStop={() => void chat.stopTurn(turn)} stopping={false} />}
           {turn.status === 'FAILED' && <FailedCard turn={turn} band={band} onRetry={() => void chat.retryTurn(turn)} retrying={false} />}
           {turn.status === 'CANCELLED' && <StoppedCard band={band} />}
         </li>)}
         {chat.sending && chat.sendingText && <li data-testid="co-turn" data-status="SENDING" className="space-y-3">
-          <LearnerBubble text={chat.sendingText} band={band} />
+          <LearnerBubble text={chat.sendingText} band={band} study={study} />
           <PendingCard band={band} slow={false} onStop={() => undefined} stopping={false} />
         </li>}
       </ol>}
@@ -204,9 +219,11 @@ function CoChatView({ band, context, actor, view, materialHref, inputRef: input,
         <p className="text-muted-foreground">{chat.pollProblem.message}</p>
         {chat.pollProblem.kind !== 'denied' && chat.pollProblem.kind !== 'ended' && <Button variant="secondary" onClick={chat.resumePolling}>Check again</Button>}
       </div>}
+      </div>
     </div>
 
-    <footer className="co-panel-footer max-h-[55dvh] shrink-0 space-y-3 overflow-y-auto border-t border-border bg-card p-4 sm:p-5">
+    <footer className="co-panel-footer max-h-[55dvh] shrink-0 overflow-y-auto border-t border-border bg-card p-4 sm:p-5">
+      <div className={cn('space-y-3', column(study))}>
       {confirm && <div role="alert" data-testid="co-confirm-close" className="space-y-2 rounded-[var(--radius)] border border-primary/50 bg-secondary p-3">
         <p className="font-bold">Close without sending?</p>
         <p className="text-[length:var(--ds-small)]">Your question has not been sent yet.</p>
@@ -227,7 +244,7 @@ function CoChatView({ band, context, actor, view, materialHref, inputRef: input,
         <div className="ds-field min-w-0 flex-1">
           <label htmlFor={`${hintId}-input`} className="sr-only">{inputLabel(band)}</label>
           <textarea id={`${hintId}-input`} ref={input} rows={1} maxLength={limit} value={text} readOnly={locked} onChange={event => setDraft(event.target.value)} onKeyDown={onKeyDown}
-            placeholder={kids ? 'Type your question…' : 'Ask about your material…'} aria-describedby={chat.error || locked ? `${hintId} ${errorId}` : hintId}
+            placeholder={kids ? 'Type your question…' : study ? 'Ask Co anything about this topic…' : 'Ask about your material…'} aria-describedby={chat.error || locked ? `${hintId} ${errorId}` : hintId}
             className="ds-input field-sizing-content max-h-40 resize-none read-only:bg-muted" data-testid="co-input" />
         </div>
         <Button type="submit" disabled={!canSend} loading={chat.sending} aria-label={locked ? 'Send again' : sendLabel(band)} className={cn(kids && 'min-w-[4rem] text-[length:var(--ds-h3)]')}>
@@ -237,11 +254,12 @@ function CoChatView({ band, context, actor, view, materialHref, inputRef: input,
       <p id={hintId} className={cn('text-[length:var(--ds-caption)] text-muted-foreground', (kids || !chat.pending) && 'sr-only sm:not-sr-only', kids && 'sm:sr-only')} data-testid="co-hint">
         {chat.pending ? `${pendingLabel(band)}. You can write your next question while you wait.` : draft.length >= limit * 0.8 ? `${draft.length} of ${limit} letters` : `Press Enter to send. Shift and Enter makes a new line.`}
       </p>
-      <ul className="space-y-1.5 text-[length:var(--ds-caption)] leading-relaxed text-muted-foreground" data-testid="co-notes">
+      <ul className={cn('space-y-1.5 text-[length:var(--ds-caption)] leading-relaxed text-muted-foreground', study && 'flex flex-wrap gap-x-4 gap-y-1 space-y-0')} data-testid="co-notes">
         {voiceUnavailable && <li data-testid="co-voice-note" className="flex items-start gap-2"><MicOff size={16} aria-hidden="true" className="mt-0.5 shrink-0" /><span><span className="font-bold">{VOICE_NOTE_TITLE}</span>{view.voice.reason ? ` ${view.voice.reason}` : ''}</span></li>}
         <li data-testid="co-parent-note">{parentVisibilityNote(band, view.parentVisibility.mode)}</li>
         <li data-testid="co-grounding-note">{GROUNDING_FOOTER}</li>
       </ul>
+      </div>
     </footer>
   </>
 }

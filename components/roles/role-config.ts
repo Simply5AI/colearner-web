@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Activity, BarChart3, BookOpen, Building2, Camera, Clock, CreditCard, Gauge, GraduationCap, History, Home, Library, NotebookPen, Settings, Shield, Sparkles, Trophy, Users } from 'lucide-react'
+import { Activity, BarChart3, BookOpen, Building2, Camera, Clock, CreditCard, Gauge, GraduationCap, History, Home, Library, ListChecks, NotebookPen, Settings, Shield, Sparkles, Trophy, Users } from 'lucide-react'
 import type { AgeBand } from '@/components/design-system'
 
 export type WorkspaceRole = 'student' | 'parent' | 'teacher' | 'school-admin' | 'platform-admin' | 'researcher'
@@ -83,6 +83,7 @@ export function studentNavigation(band: AgeBand, ageKnown: boolean, recallDueCou
 export const teacherNavigation: RoleNavGroup[] = [{ title: 'Teach', items: [
   { href: '/teacher/dashboard', label: 'Dashboard', icon: Home },
   { href: '/teacher/plans', label: 'Classes & plans', icon: BookOpen },
+  { href: '/teacher/questions', label: 'Question bank', icon: ListChecks },
   { href: '/teacher/students', label: 'Students', icon: Users },
   { href: '/teacher/analytics', label: 'Insights', icon: BarChart3 },
 ] }]

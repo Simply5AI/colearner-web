@@ -5,11 +5,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLearnIdentity } from '@/components/learn/learn-common'
 import { isAccessChangedError, lessonApi, lessonDetailSchema, pollDelay, type LessonDetail, type LessonProgress, type ProgressBody } from '@/lib/api/lesson'
 import { LearnApiError } from '@/lib/api/learn-request'
+import { materialApi } from '@/lib/api/materials'
 
 export const lessonKeys = {
   root: ['learn'] as const,
   detail: (actor: string, lessonId: string) => ['learn', actor, 'lesson', lessonId] as const,
-  start: (actor: string, materialId: string, planItemId: string | null) => ['learn', actor, 'lesson-start', materialId, planItemId] as const,
+  topics: (actor: string, materialId: string) => ['learn', actor, 'lesson-topics', materialId] as const,
+  start: (actor: string, materialId: string, planItemId: string | null, conceptId: string | null = null) => ['learn', actor, 'lesson-start', materialId, planItemId, conceptId] as const,
 }
 
 /**
@@ -27,6 +29,34 @@ export function useLessonDetail(lessonId: string, pollBaseMs = 2000) {
       const status = query.state.data?.lesson.status
       return status === 'QUEUED' || status === 'RUNNING' ? pollDelay(query.state.dataUpdateCount, pollBaseMs) : false
     },
+  })
+}
+
+/**
+ * The original address of the lesson's material, only to link video citation chips to their moment. It is a
+ * convenience: any failure (or a non-video material) simply means no external link, never an error for the learner.
+ */
+export function useLessonMaterial(materialId: string, enabled: boolean) {
+  const { actor } = useLearnIdentity()
+  return useQuery({
+    queryKey: ['learn', actor, 'lesson-material', materialId] as const,
+    queryFn: () => materialApi.detail(materialId),
+    enabled: enabled && !!actor && !!materialId, retry: false, staleTime: 5 * 60_000,
+  })
+}
+export function useMaterialSourceUrl(materialId: string, enabled: boolean): string | null {
+  return useLessonMaterial(materialId, enabled).data?.sourceUrl ?? null
+}
+
+/** Topic tabs: the newest lesson of the overview and of every key idea of a material; polled while one is being made. */
+export function useTopicLessons(materialId: string, enabled: boolean) {
+  const { actor } = useLearnIdentity()
+  return useQuery({
+    queryKey: lessonKeys.topics(actor, materialId),
+    queryFn: () => lessonApi.list(materialId),
+    enabled: enabled && !!actor && !!materialId,
+    retry: false, staleTime: 0, refetchOnWindowFocus: false,
+    refetchInterval: query => query.state.data?.lessons.some(item => item.status === 'QUEUED' || item.status === 'RUNNING') ? pollDelay(query.state.dataUpdateCount, 2000) : false,
   })
 }
 
