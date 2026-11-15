@@ -137,6 +137,7 @@ function RoleShellInner({ role, children, navigation, homeHref, band: bandProp =
   const tutorOn = role === 'student' && tutor.state === 'enabled' && bandProp !== 'kids' && bandProp !== 'tweens'
   const band: AgeBand = tutorOn ? tutor.band : bandProp
   const pathname = usePathname()
+  const fullHeightChat = tutorOn && (pathname === '/learn/co' || pathname.startsWith('/learn/co/'))
   const id = useId().replace(/:/g, '')
   const mainId = `workspace-main-${id}`
   const [menuOpen, setMenuOpen] = useState(false)
@@ -176,9 +177,9 @@ function RoleShellInner({ role, children, navigation, homeHref, band: bandProp =
   const closeMenu = () => setMenuOpen(false)
   const skipToContent = () => document.getElementById(mainId)?.focus()
 
-  return <div data-role={role} data-age-band={band} className={cn("min-h-dvh bg-background text-foreground", role === 'student' && styles.student)} style={quickNavigationHeight === undefined ? undefined : { '--role-quick-nav-inset': `${quickNavigationHeight}px` } as CSSProperties}>
+  return <div data-role={role} data-age-band={band} className={cn("min-h-dvh bg-background text-foreground", role === 'student' && styles.student, fullHeightChat && 'flex h-dvh min-h-0 flex-col overflow-hidden')} style={quickNavigationHeight === undefined ? undefined : { '--role-quick-nav-inset': `${quickNavigationHeight}px` } as CSSProperties}>
     <a href={`#${mainId}`} onClick={skipToContent} className={cn('fixed start-4 top-3 z-[100] inline-flex min-h-[var(--ds-target,44px)] min-w-[var(--ds-target,44px)] -translate-y-24 items-center justify-center rounded-xl bg-foreground px-5 py-3 font-semibold text-background focus:translate-y-0', focusClasses)}>Skip to content</a>
-    <div className={cn(sidebar && 'flex min-h-dvh')}>
+    <div className={cn(sidebar && 'flex min-h-dvh', fullHeightChat && 'flex min-h-0 flex-1 flex-col')}>
       {sidebar && <aside aria-label={`${workspaceLabel} sidebar`} className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col overflow-y-auto border-e border-sidebar-border bg-sidebar lg:flex">
         <div className="border-b border-sidebar-border p-5">
           <Link href={homeHref} aria-label="CoLearner home" className={cn('inline-flex min-h-[var(--ds-target,44px)] min-w-[var(--ds-target,44px)] items-center justify-center rounded-lg', focusClasses)}><BrandMark /></Link>
@@ -189,7 +190,7 @@ function RoleShellInner({ role, children, navigation, homeHref, band: bandProp =
         {sidebarFooter && <div className="border-t border-sidebar-border p-4">{sidebarFooter}</div>}
         <div className="flex items-center gap-3 border-t border-sidebar-border p-4"><CoCharacter band={band} state="idle" size={kids ? 72 : 36} decorative /><span className="text-sm font-semibold">Your learning companion</span></div>
       </aside>}
-      <div className={cn('min-w-0', sidebar && 'flex-1')}>
+      <div className={cn('min-w-0', sidebar && 'flex-1', fullHeightChat && 'flex min-h-0 flex-1 flex-col')}>
         {sidebar ? <header className="flex min-h-18 flex-wrap items-center gap-3 border-b border-border bg-card px-4 py-3 sm:px-6">
           <Dialog.Root open={menuOpen} onOpenChange={setMenuOpen}>
             <Dialog.Trigger render={<button type="button" className={cn('flex min-h-[var(--ds-target,44px)] min-w-[var(--ds-target,44px)] items-center justify-center rounded-xl border border-border bg-background lg:hidden', focusClasses)} />} aria-label="Open navigation">
@@ -227,10 +228,10 @@ function RoleShellInner({ role, children, navigation, homeHref, band: bandProp =
             <TopNavigation groups={navigation} pathname={pathname} band={band} moreFooter={sidebarFooter} className="order-last w-full basis-full lg:order-none lg:w-auto lg:basis-0 lg:flex-1" />
           </div>
         </header>}
-        <main id={mainId} tabIndex={-1} className={cn('mx-auto min-w-0 outline-none', !sidebar && 'w-full max-w-[1320px]', (bottomItems.length > 0 || tutorOn) && 'pb-[var(--role-quick-nav-inset,calc(6rem+env(safe-area-inset-bottom)))] lg:pb-0')}><FoundationErrorBoundary>{children}</FoundationErrorBoundary></main>
+        <main id={mainId} tabIndex={-1} className={cn('mx-auto min-w-0 outline-none', !sidebar && 'w-full max-w-[1320px]', fullHeightChat ? 'flex min-h-0 flex-1 flex-col' : (bottomItems.length > 0 || tutorOn) && 'pb-[var(--role-quick-nav-inset,calc(6rem+env(safe-area-inset-bottom)))] lg:pb-0')}><FoundationErrorBoundary>{children}</FoundationErrorBoundary></main>
       </div>
     </div>
-    {tutorOn && <TutorBottomNav />}
+    {tutorOn && <TutorBottomNav inFlow={fullHeightChat} />}
     {bottomItems.length > 0 && <nav ref={quickNavigationRef} aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] lg:hidden">
       {bottomItems.map((item) => {
         const active = matchesNavItem(pathname, item)

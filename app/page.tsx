@@ -11,6 +11,8 @@ export default async function HomePage() {
   const session = await auth()
   if (session?.accessToken && session.user?.id) {
     const memberships = await schoolRequest<CursorList<Workspace>>(session.accessToken, '/school-identity/workspaces')
+    const active = memberships.items.filter((membership) => membership.status === 'ACTIVE')
+    if (!memberships.nextCursor && active.length > 0 && active.every((membership) => membership.role === 'STUDENT')) redirect('/learner')
     if (memberships.items.length > 0) redirect('/workspaces')
     if(session.user.systemRole==='SUPER_ADMIN'||session.user.roles?.includes('TEACHER'))redirect(resolvePostLoginPath(session))
     let status

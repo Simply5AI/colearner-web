@@ -5,7 +5,7 @@ import { BrandMark, CoAvatar } from '@/components/design-system'
 export default function DemoPage() {
   if (process.env.NODE_ENV !== 'development') notFound()
   const personas = [
-    { name: 'Student · age 15', email: 'teen@b03.example.test', path: '/learner', detail: 'Start here. Choose Teen · Review School A to open the real dashboard, library, lessons, practice and progress.' },
+    { name: 'Student · age 15', email: 'teen@b03.example.test', path: '/learner', detail: 'Sign in to open Review School A, with a sample study plan, practice history and a saved Ask Co conversation.' },
     { name: 'Parent or guardian', email: 'parent@b03.example.test', path: '/family', detail: 'Manage the linked child and teen profiles, consent, picture PINs and plan approvals.' },
     { name: 'Teacher', email: 'teacher@b03.example.test', path: '/workspaces', detail: 'Choose Review School A. Explore classes, published Mathematics and Science plans, questions and assignments.' },
     { name: 'School administrator', email: 'admin@b03.example.test', path: '/workspaces', detail: 'Choose Review School A to manage school membership, academics and learning policy.' },

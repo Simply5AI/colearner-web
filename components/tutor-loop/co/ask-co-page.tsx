@@ -74,6 +74,8 @@ export function AskCoPage({ initialSessionId = null, initialContext, initialMode
 
   const [treeOpen, setTreeOpen] = useState(false)
   const [panelOpen, setPanelOpen] = useState(false)
+  const transcript = useRef<HTMLDivElement>(null)
+  const followLatest = useRef(true)
   const [groupBy, setGroupBy] = useState<'SUBJECT' | 'PLAN'>('SUBJECT')
   const [search, setSearch] = useState('')
   const [topic, setTopic] = useState<TutorTreeTopicNode | null>(null)
@@ -259,6 +261,8 @@ export function AskCoPage({ initialSessionId = null, initialContext, initialMode
     void chat.openSession(id)
   }
   const newSession = () => {
+    followLatest.current = true
+    if (!window.matchMedia?.('(min-width: 1024px)')?.matches) setTreeOpen(false)
     chat.reset()
     setTopic(null)
     setCitation(null)
@@ -286,6 +290,7 @@ export function AskCoPage({ initialSessionId = null, initialContext, initialMode
     busy: chat.pending || resting,
     onOpenCitation: c => {
       setCitation(c)
+      if (!window.matchMedia?.('(min-width: 1024px)')?.matches) setTreeOpen(false)
       setPanelOpen(true)
     },
     onAnswerCheck: (exchange: Exchange, question: TutorCheckQuestion, answer: TutorObjectiveAnswer, label: string) => {
@@ -356,6 +361,11 @@ export function AskCoPage({ initialSessionId = null, initialContext, initialMode
   const returnTarget = resolvedReturn
     ? { href: resolvedReturn.href, label: `${resolvedReturn.categoryLabel} · ${resolvedReturn.detailLabel}` }
     : null
+  useEffect(() => {
+    const pane = transcript.current
+    if (pane && followLatest.current) pane.scrollTop = pane.scrollHeight
+  }, [chat.exchanges])
+
   const inSession = chat.sessionId !== null || chat.exchanges.length > 0
   const composerDisabled = resting || chat.pending || dailyLimit
   const examHref = ctx.data?.activeExamSessionId
@@ -388,7 +398,7 @@ export function AskCoPage({ initialSessionId = null, initialContext, initialMode
   }`
 
   return (
-    <div className="flex min-h-[calc(100vh-67px)] flex-col lg:flex-row" data-testid="ask-co-page">
+    <div className="grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden lg:flex" data-testid="ask-co-page">
       {treeOpen && (
         <TutorSessionTree
           groups={groups}
@@ -399,31 +409,50 @@ export function AskCoPage({ initialSessionId = null, initialContext, initialMode
           selectedTopicId={topic?.topicId ?? null}
           selectedSessionId={chat.sessionId}
           onSelectTopic={node => {
+            followLatest.current = true
             chat.reset()
             setTopic(node)
+            if (!window.matchMedia?.('(min-width: 1024px)')?.matches) setTreeOpen(false)
             if (typeof window !== 'undefined') window.history.pushState(null, '', '/learn/co')
           }}
-          onSelectSession={selectSession}
+          onSelectSession={(id, node) => {
+            followLatest.current = true
+            selectSession(id, node)
+            if (!window.matchMedia?.('(min-width: 1024px)')?.matches) setTreeOpen(false)
+          }}
           onNewSession={newSession}
           onDeleteSession={removeSession}
           deletingSessionId={deleting}
         />
       )}
 
-      <main className="flex min-w-0 flex-1 flex-col">
+      <div className="contents lg:flex lg:min-h-0 lg:min-w-0 lg:flex-1 lg:flex-col">
         <CameFromBar
           fromLabel={returnTarget?.label ?? null}
           fromHref={returnTarget?.href ?? null}
-          onToggleTree={() => setTreeOpen(v => !v)}
+          onToggleTree={() => {
+            if (!window.matchMedia?.('(min-width: 1024px)')?.matches) setPanelOpen(false)
+            setTreeOpen(v => !v)
+          }}
           treeOpen={treeOpen}
-          onTogglePanel={() => setPanelOpen(v => !v)}
+          onTogglePanel={() => {
+            if (!window.matchMedia?.('(min-width: 1024px)')?.matches) setTreeOpen(false)
+            setPanelOpen(v => !v)
+          }}
           panelOpen={panelOpen}
           crumb={chat.session?.title ?? topicTitle ?? coName}
           coName={coName}
           coIcon={coIcon}
         />
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6">
+        <div
+          ref={transcript}
+          onScroll={event => {
+            const pane = event.currentTarget
+            followLatest.current = pane.scrollHeight - pane.scrollTop - pane.clientHeight < 80
+          }}
+          className={`col-start-1 row-start-2 min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:py-6 ${treeOpen || panelOpen ? 'max-lg:invisible' : ''}`}
+        >
           <div className="mx-auto flex max-w-3xl flex-col gap-5">
             {resting && <RestingBanner coName={coName} coIcon={coIcon} />}
             {dailyLimit && (
@@ -499,23 +528,24 @@ export function AskCoPage({ initialSessionId = null, initialContext, initialMode
           </div>
         </div>
 
-        {!resting || inSession ? (
-          <TutorComposer
-            coName={coName}
-            placeholder={placeholder}
-            maxLength={adult ? 1600 : 1000}
-            disabled={composerDisabled}
-            findMaterial={findState}
-            footer={footer}
-            pinned={pinned}
-            showPinned={inSession}
-            onRunPinned={mode => runMode(mode)}
-            onSend={text => chat.send({ text, mode: 'ASK', context: activeContext })}
-            onFind={() => void runFind()}
-            onUpsell={() => setFind({ state: 'upsell', proposals: [], added: {} })}
-          />
-        ) : null}
-      </main>
+        <TutorComposer
+          coName={coName}
+          placeholder={placeholder}
+          maxLength={adult ? 1600 : 1000}
+          disabled={composerDisabled}
+          findMaterial={findState}
+          footer={footer}
+          pinned={pinned}
+          showPinned={inSession}
+          onRunPinned={mode => runMode(mode)}
+          onSend={text => {
+            followLatest.current = true
+            chat.send({ text, mode: 'ASK', context: activeContext })
+          }}
+          onFind={() => void runFind()}
+          onUpsell={() => setFind({ state: 'upsell', proposals: [], added: {} })}
+        />
+      </div>
 
       {panelOpen && (
         <SourceNotesPanel

@@ -169,7 +169,7 @@ export function CameFromBar({
   coIcon: Icon
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2.5">
+    <div className="col-start-1 row-start-1 flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-4 py-2.5">
       {fromLabel && fromHref ? (
         <>
           <span className="text-sm">
@@ -248,7 +248,7 @@ export function TutorComposer({
     setDraft('')
   }
   return (
-    <div className="border-t border-border bg-background px-4 py-3">
+    <div className="col-start-1 row-start-3 shrink-0 border-t border-border bg-background px-4 py-3">
       <div className="mx-auto flex max-w-3xl flex-col gap-2">
         {showPinned && (
           <div className="flex flex-wrap gap-2">
@@ -353,7 +353,7 @@ export function SourceNotesPanel({
 }) {
   const [tab, setTab] = useState<'source' | 'notes'>('source')
   return (
-    <aside aria-label="Source and notes" className="flex w-full shrink-0 flex-col gap-3 border-t border-border bg-background p-4 lg:w-[300px] lg:border-s lg:border-t-0">
+    <aside aria-label="Source and notes" className="col-start-1 row-start-2 z-10 flex min-h-0 w-full shrink-0 flex-col gap-3 overflow-y-auto overscroll-contain bg-background p-4 lg:w-[300px] lg:border-s lg:border-border">
       <div className="flex flex-col gap-1 text-sm">
         <b>This session</b>
         <span>

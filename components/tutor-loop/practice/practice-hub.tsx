@@ -133,7 +133,7 @@ export function PracticeHub({ initialTab = 'today', initialTopicId = null }: { i
       <section aria-label="Recent"><h2 className="text-sm font-black">Recent</h2>
         {data.recentSessions.length === 0 && <p className="text-sm text-muted-foreground">Nothing yet. Your sessions will show here.</p>}
         <ul className="mt-2 space-y-2">{data.recentSessions.map((s) => <li key={s.sessionId} className="flex justify-between rounded-2xl border p-3 text-sm">
-          <span><b>{s.kind === 'MOCK' ? 'Mock exam' : 'Practice'}</b> · {formatTutorDate(s.startedAt.slice(0, 10))}</span>
+          <span><b>{s.kind === 'MOCK' ? 'Mock exam' : data.topics.find((topic) => topic.id === s.topicId)?.title ?? 'Practice'}</b> · {formatTutorDate(s.startedAt.slice(0, 10))}</span>
           {s.kind === 'MOCK' && s.completedAt ? <Link className="font-bold underline" href={`/learn/practice/mock/${encodeURIComponent(s.sessionId)}/result`}>Result</Link> : <span>{s.itemCount} questions</span>}
         </li>)}</ul>
       </section>

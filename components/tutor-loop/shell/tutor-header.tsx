@@ -23,7 +23,7 @@ export function TutorHeader({ homeHref, initial, accountActions }: { homeHref: s
   const onMe = pathname.startsWith('/learn/me')
   return <>
     <TutorAccessibilityApplier />
-    <header data-testid="top-header" data-tutor-shell="true" className="sticky top-0 z-40 border-b border-border bg-background">
+    <header data-testid="top-header" data-tutor-shell="true" className="sticky top-0 z-40 shrink-0 border-b border-border bg-background">
       <div className="mx-auto flex w-full max-w-[1320px] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6">
         <Link href={homeHref} aria-label="CoLearner home" className={cn('inline-flex min-h-[var(--ds-target,44px)] shrink-0 items-center rounded-lg', focus)}><BrandMark className="max-[430px]:[&>span:last-child>span]:hidden" /></Link>
         <nav aria-label="Main" data-testid="top-navigation" className="hidden min-w-0 flex-1 justify-center lg:flex">
@@ -62,9 +62,9 @@ export function TutorHeader({ homeHref, initial, accountActions }: { homeHref: s
 }
 
 /** Phone bottom navigation (below 1024px). */
-export function TutorBottomNav() {
+export function TutorBottomNav({ inFlow = false }: { inFlow?: boolean }) {
   const pathname = usePathname()
-  return <nav aria-label="Quick navigation" data-testid="phone-nav" className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] lg:hidden">
+  return <nav aria-label="Quick navigation" data-testid="phone-nav" className={cn('z-30 flex shrink-0 border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] lg:hidden', !inFlow && 'fixed inset-x-0 bottom-0')}>
     {tutorNavItems.map((item) => {
       const active = item.match(pathname)
       const Icon = item.icon

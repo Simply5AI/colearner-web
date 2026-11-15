@@ -66,7 +66,7 @@ export function TutorSessionTree({
     <nav
       aria-label="My subjects"
       data-testid="tutor-session-tree"
-      className="flex w-full shrink-0 flex-col gap-3 border-b border-border bg-background p-4 lg:w-[280px] lg:border-b-0 lg:border-e"
+      className="col-start-1 row-start-2 z-10 flex min-h-0 w-full shrink-0 flex-col gap-3 overflow-y-auto overscroll-contain bg-background p-4 lg:w-[280px] lg:border-e lg:border-border"
     >
       <button
         type="button"

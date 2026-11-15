@@ -75,7 +75,7 @@ export async function selectLearnerSchool(schoolId: string): Promise<{ href?: st
         if (workspace.role !== 'STUDENT' || workspace.status !== 'ACTIVE') break
         ;(await cookies()).set('colearner-school-membership', workspace.membershipId, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 7 })
         const entry = await readTutorEntry({ token: session.accessToken, membership: workspace.membershipId, name: null }, 'school')
-        return { href: entry.state === 'ready' ? '/learn/start' : '/learn/home' }
+        return { href: entry.state === 'ready' ? (entry.entry.needsOnboarding ? '/learn/start' : '/learn/today') : '/learn/home' }
       }
       if (!list.nextCursor) break
       cursor = list.nextCursor

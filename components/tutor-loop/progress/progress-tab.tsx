@@ -111,7 +111,8 @@ export function ProgressTab({ onOpenSchedule }: { onOpenSchedule: () => void }) 
   const maxMinutes = Math.max(dailyTarget ?? 0, ...bars.map((b) => b.minutes ?? 0), 10)
   const counts = countTopicsByState(data.topics)
   const totalTopics = data.topics.filter((t) => !t.archived).length
-  const runs = splitTrendByBlueprint(data.trend.slice(-8))
+  const trend = data.trend.slice(-8).filter((point) => point.percent !== null)
+  const runs = splitTrendByBlueprint(trend)
   const pace = schedule.data?.pace
   const emptyWeek = !limited && bars.every((b) => !b.minutes)
 
@@ -141,10 +142,10 @@ export function ProgressTab({ onOpenSchedule }: { onOpenSchedule: () => void }) 
           className="grid h-28 w-28 shrink-0 place-items-center rounded-full"
           style={{ background: enough ? `conic-gradient(var(--color-accent, var(--primary)) ${readiness!.percent}%, var(--color-neutral-300, #d4d4d8) 0)` : 'var(--color-neutral-300, #d4d4d8)' }}
         >
-          <span className="grid h-20 w-20 place-items-center rounded-full bg-card text-2xl font-black">{enough ? `${readiness!.percent}%` : 'Not yet'}</span>
+          <span className="grid h-20 w-20 place-items-center rounded-full bg-card text-center text-lg font-black leading-tight sm:text-xl">{enough ? `${readiness!.percent}%` : 'Not yet'}</span>
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <span className="w-fit rounded-full px-2 py-0.5 text-xs font-bold ring-1 ring-border">Measured</span>
+          <span className="w-fit rounded-full px-2 py-0.5 text-xs font-bold ring-1 ring-border">{enough ? 'Measured' : 'Practice evidence'}</span>
           <b className="text-lg">{enough ? `Ready for ${examTitle}` : 'Not enough practice yet'}</b>
           <span className="text-sm text-muted-foreground" data-testid="readiness-line">{formatReadinessBadgeText(readiness)}</span>
           {pace && pace.state !== 'UNAVAILABLE' && (
@@ -153,7 +154,7 @@ export function ProgressTab({ onOpenSchedule }: { onOpenSchedule: () => void }) 
             </span>
           )}
           {runs.length > 0 && (
-            <div role="img" aria-label={`Readiness over ${data.trend.slice(-8).length} measurements`} className="mt-2 flex h-24 items-end gap-2" data-testid="readiness-trend">
+            <div role="img" aria-label={`Readiness over ${trend.length} measurements`} className="mt-2 flex h-24 items-end gap-2" data-testid="readiness-trend">
               {runs.map((run, i) => (
                 <div key={run[0]!.date + i} className={`flex items-end gap-1.5 ${i > 0 ? 'border-l-2 border-dashed border-border pl-2' : ''}`} title={i > 0 ? 'Topic weights changed here' : undefined}>
                   {run.map((point) => (
@@ -182,7 +183,7 @@ export function ProgressTab({ onOpenSchedule }: { onOpenSchedule: () => void }) 
             <p className="text-sm text-muted-foreground">Daily minutes will appear here soon.</p>
           ) : (
             <>
-              <div role="img" aria-label="Minutes per day this week" className="relative flex items-end gap-2" style={{ height: CHART_HEIGHT }}>
+              <div role="img" aria-label="Minutes per day this week" className="relative mt-3 flex items-end gap-2" style={{ height: CHART_HEIGHT }}>
                 {dailyTarget !== null && (
                   <span aria-hidden="true" className="absolute inset-x-0 border-t-2 border-dashed border-border text-[11px] text-muted-foreground" style={{ bottom: Math.round((dailyTarget / maxMinutes) * CHART_HEIGHT) }}>
                     <span className="bg-card pr-1">Goal {dailyTarget} min</span>
