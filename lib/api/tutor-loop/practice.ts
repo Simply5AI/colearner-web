@@ -59,7 +59,7 @@ export type TutorPractice = z.infer<typeof practiceSchema>
 
 export const practiceTopicSchema = z.object({
   topic: tutorPlanTopicSchema,
-  materials: z.array(z.object({ id: z.string(), title: z.string() }).passthrough()).default([]),
+  materials: z.array(z.object({ id: z.string(), title: z.string(), studyLessonId: z.string().nullish() }).passthrough()).default([]),
   inShort: z
     .object({
       text: z.string(),

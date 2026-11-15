@@ -73,6 +73,14 @@ export function TopicSheet({ topicId, goalId, onClose }: { topicId: string; goal
           {data.example && <p className="mt-2"><b>Example:</b> {data.example.text}</p>}
           <p className="mt-2 text-xs font-bold text-muted-foreground">{data.inShort.source === 'MATERIAL' ? (data.inShort.citation?.label ?? 'From your material') : 'Not from your material'}</p>
         </section>}
+        {data.materials.length > 0 && <section className="mt-5 space-y-2" aria-label="Study materials">
+          <h3 className="text-sm font-black">Study materials</h3>
+          <ul className="space-y-2">{data.materials.map((source) => <li key={source.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border p-3 text-sm">
+            <span className="min-w-0 flex-1 font-semibold">{source.title}</span>
+            <Link className="font-bold underline" href={`/learn/library/${encodeURIComponent(source.id)}`}>Open material<span className="sr-only">: {source.title}</span></Link>
+            {source.studyLessonId && <Link className="font-bold underline" href={`/learn/lesson/${encodeURIComponent(source.studyLessonId)}`}>Study lesson<span className="sr-only">: {source.title}</span></Link>}
+          </li>)}</ul>
+        </section>}
         <h3 className="mt-5 text-sm font-black">How do you want to learn this?</h3>
         <div className="mt-2 grid gap-2 sm:grid-cols-3">
           {shell.canUseTutor
