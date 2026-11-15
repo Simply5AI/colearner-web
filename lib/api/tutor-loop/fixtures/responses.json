@@ -1,0 +1,1598 @@
+{
+  "fixtureVersion": 1,
+  "responses": {
+    "entry": {
+      "band": "14-17",
+      "scope": "SCHOOL",
+      "needsOnboarding": true,
+      "needsConsent": false,
+      "capabilities": {
+        "canCreatePersonalPlan": true,
+        "canUseTutor": true,
+        "canUseMock": true,
+        "canUseMemory": true,
+        "findMaterial": "HIDDEN"
+      },
+      "tutorIdentity": {
+        "name": "Co",
+        "icon": "SPROUT"
+      }
+    },
+    "adultConsent": {
+      "state": "ACTIVE",
+      "revision": 1,
+      "policyVersion": "tutor-personal-1",
+      "processorRef": null,
+      "scopes": [
+        "LEARN"
+      ],
+      "grantedAt": "2026-11-13T09:00:00Z"
+    },
+    "revoked": {
+      "state": "REVOKED",
+      "revokedAt": "2026-11-13T09:00:00Z",
+      "revision": 2
+    },
+    "goals": {
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-000000000001",
+          "title": "Board exams",
+          "kind": "EXAM",
+          "dueDate": null,
+          "status": "ACTIVE",
+          "position": 0,
+          "source": "LEARNER",
+          "revision": 1,
+          "exam": {
+            "id": "10000000-0000-4000-8000-000000000002",
+            "goalId": "10000000-0000-4000-8000-000000000001",
+            "title": "Board exams",
+            "date": "2027-03-02",
+            "passMarkPercent": null,
+            "revision": 1
+          },
+          "topics": [
+            {
+              "topicId": "10000000-0000-4000-8000-000000000004",
+              "weightBps": 10000
+            }
+          ]
+        }
+      ],
+      "nextCursor": null
+    },
+    "goal": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "title": "Board exams",
+      "kind": "EXAM",
+      "dueDate": null,
+      "status": "ACTIVE",
+      "position": 0,
+      "source": "LEARNER",
+      "revision": 1,
+      "exam": {
+        "id": "10000000-0000-4000-8000-000000000002",
+        "goalId": "10000000-0000-4000-8000-000000000001",
+        "title": "Board exams",
+        "date": "2027-03-02",
+        "passMarkPercent": null,
+        "revision": 1
+      },
+      "topics": [
+        {
+          "topicId": "10000000-0000-4000-8000-000000000004",
+          "weightBps": 10000
+        }
+      ]
+    },
+    "archived": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "status": "ARCHIVED",
+      "revision": 2
+    },
+    "exams": {
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-000000000002",
+          "goalId": "10000000-0000-4000-8000-000000000001",
+          "title": "Board exams",
+          "date": "2027-03-02",
+          "passMarkPercent": null,
+          "revision": 1
+        }
+      ],
+      "nextCursor": null
+    },
+    "exam": {
+      "id": "10000000-0000-4000-8000-000000000002",
+      "goalId": "10000000-0000-4000-8000-000000000001",
+      "title": "Board exams",
+      "date": "2027-03-02",
+      "passMarkPercent": null,
+      "revision": 1
+    },
+    "plans": {
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-000000000003",
+          "title": "My board exam plan",
+          "ownership": "OWN",
+          "state": "ACTIVE",
+          "revision": 1,
+          "goalIds": [
+            "10000000-0000-4000-8000-000000000001"
+          ],
+          "phases": [
+            {
+              "id": "10000000-0000-4000-8000-000000000017",
+              "title": "Chemistry",
+              "topics": [
+                {
+                  "id": "10000000-0000-4000-8000-000000000004",
+                  "title": "Acids, bases and salts",
+                  "estimateMin": 20,
+                  "priority": 4,
+                  "basis": "MATERIAL",
+                  "materialIds": [
+                    "10000000-0000-4000-8000-000000000005"
+                  ],
+                  "state": "PRACTICING",
+                  "dueDate": null,
+                  "alreadyKnown": false,
+                  "archived": false,
+                  "subjectId": "10000000-0000-4000-8000-000000000011",
+                  "subjectTitle": "Chemistry"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "nextCursor": null
+    },
+    "plan": {
+      "id": "10000000-0000-4000-8000-000000000003",
+      "title": "My board exam plan",
+      "ownership": "OWN",
+      "state": "ACTIVE",
+      "revision": 1,
+      "goalIds": [
+        "10000000-0000-4000-8000-000000000001"
+      ],
+      "phases": [
+        {
+          "id": "10000000-0000-4000-8000-000000000017",
+          "title": "Chemistry",
+          "topics": [
+            {
+              "id": "10000000-0000-4000-8000-000000000004",
+              "title": "Acids, bases and salts",
+              "estimateMin": 20,
+              "priority": 4,
+              "basis": "MATERIAL",
+              "materialIds": [
+                "10000000-0000-4000-8000-000000000005"
+              ],
+              "state": "PRACTICING",
+              "dueDate": null,
+              "alreadyKnown": false,
+              "archived": false,
+              "subjectId": "10000000-0000-4000-8000-000000000011",
+              "subjectTitle": "Chemistry"
+            }
+          ]
+        }
+      ]
+    },
+    "topicMaterial": {
+      "planId": "10000000-0000-4000-8000-000000000003",
+      "topicId": "10000000-0000-4000-8000-000000000004",
+      "materialId": "10000000-0000-4000-8000-000000000005",
+      "attached": true
+    },
+    "removed": {
+      "removed": true
+    },
+    "planDraftQueued": {
+      "id": "10000000-0000-4000-8000-000000000007",
+      "lineageId": "10000000-0000-4000-8000-000000000007",
+      "version": 1,
+      "status": "QUEUED",
+      "draft": null,
+      "reasonCode": null,
+      "retryable": false
+    },
+    "planDraftReady": {
+      "id": "10000000-0000-4000-8000-000000000007",
+      "lineageId": "10000000-0000-4000-8000-000000000007",
+      "version": 1,
+      "status": "READY",
+      "draft": {
+        "title": "My board exam plan",
+        "phases": [
+          {
+            "title": "Chemistry",
+            "topics": [
+              {
+                "title": "Acids, bases and salts",
+                "estimateMin": 20,
+                "priority": 4,
+                "basis": "MATERIAL",
+                "materialIds": [
+                  "10000000-0000-4000-8000-000000000005"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "reasonCode": null,
+      "retryable": false
+    },
+    "planDraftCancelled": {
+      "id": "10000000-0000-4000-8000-000000000007",
+      "lineageId": "10000000-0000-4000-8000-000000000007",
+      "version": 1,
+      "status": "CANCELLED",
+      "draft": null,
+      "reasonCode": null,
+      "retryable": false
+    },
+    "profile": {
+      "revision": 1,
+      "name": "Co",
+      "icon": "SPROUT",
+      "style": "FRIENDLY",
+      "presence": "AVAILABLE",
+      "nudgesEnabled": true,
+      "pinnedActions": [
+        "EXPLAIN",
+        "QUIZ",
+        "BRIEF"
+      ],
+      "memoryOptIn": true,
+      "generalOptOut": true,
+      "accessibility": {
+        "textScale": "NORMAL",
+        "easyRead": false,
+        "reducedMotion": false,
+        "readAloud": false
+      }
+    },
+    "preferences": {
+      "revision": 1,
+      "timeZone": "Asia/Dubai",
+      "studyDays": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "minutesPerDay": 40
+    },
+    "today": {
+      "date": "2026-11-13",
+      "timeZone": "Asia/Dubai",
+      "goal": {
+        "id": "10000000-0000-4000-8000-000000000001",
+        "title": "Board exams"
+      },
+      "countdown": {
+        "examId": "10000000-0000-4000-8000-000000000002",
+        "date": "2027-03-02",
+        "daysLeft": 109,
+        "state": "UPCOMING"
+      },
+      "readiness": {
+        "examId": "10000000-0000-4000-8000-000000000002",
+        "blueprintRevision": "exam-v1",
+        "percent": 60,
+        "topicsCovered": 1,
+        "topicsTotal": 1,
+        "evidence": "ENOUGH",
+        "asOf": "2026-11-13T09:00:00Z"
+      },
+      "streakDays": 2,
+      "weeklyMinutes": 30,
+      "weeklyTargetMinutes": 200,
+      "briefing": {
+        "action": {
+          "kind": "PRACTICE",
+          "targetId": "10000000-0000-4000-8000-000000000004",
+          "label": "Practise acids and bases",
+          "minutes": 10,
+          "reasonCodes": [
+            "DUE_REVIEW"
+          ]
+        },
+        "alternative": {
+          "kind": "DONE_FOR_TODAY",
+          "targetId": null,
+          "label": "Done for today",
+          "minutes": 0,
+          "reasonCodes": []
+        },
+        "wording": "A short review will help neutralisation stick."
+      },
+      "later": [
+        {
+          "id": "10000000-0000-4000-8000-000000000016",
+          "goalId": "10000000-0000-4000-8000-000000000001",
+          "topicId": "10000000-0000-4000-8000-000000000004",
+          "kind": "PRACTICE",
+          "sourceRef": "10000000-0000-4000-8000-000000000004",
+          "originDate": "2026-11-13",
+          "date": "2026-11-13",
+          "estimatedMinutes": 10,
+          "status": "PLANNED",
+          "placement": "AUTO",
+          "title": "Acids, bases and salts"
+        }
+      ],
+      "weakConcepts": [
+        {
+          "conceptId": "10000000-0000-4000-8000-000000000004",
+          "topicId": "10000000-0000-4000-8000-000000000004",
+          "label": "Acids and bases",
+          "state": "PRACTICING",
+          "qualifyingAttempts": 4,
+          "rate": 0.5
+        }
+      ]
+    },
+    "schedule": {
+      "from": "2026-11-13",
+      "to": "2026-11-19",
+      "timeZone": "Asia/Dubai",
+      "revision": 2,
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-000000000016",
+          "goalId": "10000000-0000-4000-8000-000000000001",
+          "topicId": "10000000-0000-4000-8000-000000000004",
+          "kind": "PRACTICE",
+          "sourceRef": "10000000-0000-4000-8000-000000000004",
+          "originDate": "2026-11-13",
+          "date": "2026-11-13",
+          "estimatedMinutes": 10,
+          "status": "PLANNED",
+          "placement": "AUTO",
+          "title": "Acids, bases and salts"
+        }
+      ],
+      "daysOff": [],
+      "pace": {
+        "state": "ON_TRACK",
+        "requiredMinutes": 100,
+        "availableMinutes": 160,
+        "shortfallMinutes": 0
+      }
+    },
+    "schedulePreview": {
+      "id": "10000000-0000-4000-8000-000000000014",
+      "baseRevision": 2,
+      "expiresAt": "2026-11-13T09:15:00Z",
+      "canApply": true,
+      "changes": [
+        {
+          "itemId": "10000000-0000-4000-8000-000000000016",
+          "from": "2026-11-13",
+          "to": "2026-11-15",
+          "reasonCode": "USER_MOVED"
+        }
+      ],
+      "conflicts": [],
+      "unplacedMinutes": 0
+    },
+    "scheduleApplied": {
+      "previewId": "10000000-0000-4000-8000-000000000014",
+      "revision": 3,
+      "appliedAt": "2026-11-13T09:00:00Z"
+    },
+    "calendarIcs": {
+      "contentType": "text/calendar; charset=utf-8",
+      "fileName": "colearner-schedule.ics",
+      "body": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//CoLearner//Tutor Schedule//EN\r\nBEGIN:VEVENT\r\nUID:fixture-event@colearner\r\nDTSTAMP:20261113T090000Z\r\nDTSTART;VALUE=DATE:20261113\r\nDTEND;VALUE=DATE:20261114\r\nSUMMARY:Practise acids and bases\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"
+    },
+    "progress": {
+      "week": [
+        {
+          "date": "2026-11-13",
+          "minutes": 10,
+          "completedActivities": 1
+        }
+      ],
+      "weeklyTargetMinutes": 200,
+      "streakDays": 2,
+      "readiness": {
+        "examId": "10000000-0000-4000-8000-000000000002",
+        "blueprintRevision": "exam-v1",
+        "percent": 60,
+        "topicsCovered": 1,
+        "topicsTotal": 1,
+        "evidence": "ENOUGH",
+        "asOf": "2026-11-13T09:00:00Z"
+      },
+      "trend": [
+        {
+          "date": "2026-11-13",
+          "blueprintRevision": "exam-v1",
+          "percent": 60,
+          "topicsCovered": 1,
+          "topicsTotal": 1
+        }
+      ],
+      "topics": [
+        {
+          "id": "10000000-0000-4000-8000-000000000004",
+          "title": "Acids, bases and salts",
+          "estimateMin": 20,
+          "priority": 4,
+          "basis": "MATERIAL",
+          "materialIds": [
+            "10000000-0000-4000-8000-000000000005"
+          ],
+          "state": "PRACTICING",
+          "dueDate": null,
+          "alreadyKnown": false,
+          "archived": false,
+          "subjectId": "10000000-0000-4000-8000-000000000011",
+          "subjectTitle": "Chemistry"
+        }
+      ],
+      "weakConcepts": [
+        {
+          "conceptId": "10000000-0000-4000-8000-000000000004",
+          "topicId": "10000000-0000-4000-8000-000000000004",
+          "label": "Acids and bases",
+          "state": "PRACTICING",
+          "qualifyingAttempts": 4,
+          "rate": 0.5
+        }
+      ]
+    },
+    "progressCsv": {
+      "contentType": "text/csv; charset=utf-8",
+      "fileName": "progress.csv",
+      "body": "date,minutes,completedActivities\r\n2026-11-13,10,1\r\n"
+    },
+    "progressPdf": {
+      "contentType": "application/pdf",
+      "fileName": "progress.pdf",
+      "bodyEncoding": "base64",
+      "body": "JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCAzMDAgMjAwXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA0IDAgUiA+PiA+PiAvQ29udGVudHMgNSAwIFIgPj4KZW5kb2JqCjQgMCBvYmoKPDwgL1R5cGUgL0ZvbnQgL1N1YnR5cGUgL1R5cGUxIC9CYXNlRm9udCAvSGVsdmV0aWNhID4+CmVuZG9iago1IDAgb2JqCjw8IC9MZW5ndGggNjMgPj4Kc3RyZWFtCkJUIC9GMSAxMiBUZiAzNiAxNTYgVGQgKENvTGVhcm5lciBQcm9ncmVzcyAtIDEzIE5vdiAyMDI2KSBUaiBFVAplbmRzdHJlYW0KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMTUgMDAwMDAgbiAKMDAwMDAwMDI0MSAwMDAwMCBuIAowMDAwMDAwMzExIDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNiAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKNDI0CiUlRU9GCg=="
+    },
+    "nextStep": {
+      "activityKind": "LESSON",
+      "activityId": "10000000-0000-4000-8000-000000000018",
+      "measured": {
+        "itemsDone": 1
+      },
+      "briefing": {
+        "action": {
+          "kind": "PRACTICE",
+          "targetId": "10000000-0000-4000-8000-000000000004",
+          "label": "Practise acids and bases",
+          "minutes": 10,
+          "reasonCodes": [
+            "DUE_REVIEW"
+          ]
+        },
+        "alternative": {
+          "kind": "DONE_FOR_TODAY",
+          "targetId": null,
+          "label": "Done for today",
+          "minutes": 0,
+          "reasonCodes": []
+        },
+        "wording": "A short review will help neutralisation stick."
+      }
+    },
+    "search": {
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-000000000004",
+          "kind": "TOPIC",
+          "title": "Acids, bases and salts",
+          "subtitle": "Chemistry",
+          "target": {
+            "kind": "PLAN_TOPIC",
+            "planId": "10000000-0000-4000-8000-000000000003",
+            "topicId": "10000000-0000-4000-8000-000000000004"
+          }
+        }
+      ],
+      "nextCursor": null
+    },
+    "library": {
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-000000000005",
+          "title": "Class notes · Acids and bases",
+          "subjectId": "10000000-0000-4000-8000-000000000011",
+          "subjectTitle": "Chemistry",
+          "topicIds": [
+            "10000000-0000-4000-8000-000000000004"
+          ],
+          "sourceType": "pdf",
+          "status": "ready",
+          "sourceVersionRef": "source-v1",
+          "addedViaTutor": false,
+          "externalAttribution": null,
+          "createdAt": "2026-11-13T09:00:00Z"
+        }
+      ],
+      "nextCursor": null,
+      "total": 1
+    },
+    "notes": {
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-000000000015",
+          "kind": "NOTE",
+          "title": "Strong versus concentrated",
+          "body": "Strength and concentration describe different properties.",
+          "materialId": "10000000-0000-4000-8000-000000000005",
+          "topicId": "10000000-0000-4000-8000-000000000004",
+          "createdAt": "2026-11-13T09:00:00Z",
+          "updatedAt": "2026-11-13T09:00:00Z"
+        }
+      ],
+      "nextCursor": null
+    },
+    "practice": {
+      "goalCards": [
+        {
+          "id": "10000000-0000-4000-8000-000000000001",
+          "title": "Board exams",
+          "kind": "EXAM",
+          "dueDate": null,
+          "status": "ACTIVE",
+          "position": 0,
+          "source": "LEARNER",
+          "revision": 1,
+          "exam": {
+            "id": "10000000-0000-4000-8000-000000000002",
+            "goalId": "10000000-0000-4000-8000-000000000001",
+            "title": "Board exams",
+            "date": "2027-03-02",
+            "passMarkPercent": null,
+            "revision": 1
+          },
+          "topics": [
+            {
+              "topicId": "10000000-0000-4000-8000-000000000004",
+              "weightBps": 10000
+            }
+          ]
+        }
+      ],
+      "dueReview": {
+        "itemCount": 2,
+        "estimatedMinutes": 10
+      },
+      "topics": [
+        {
+          "id": "10000000-0000-4000-8000-000000000004",
+          "title": "Acids, bases and salts",
+          "estimateMin": 20,
+          "priority": 4,
+          "basis": "MATERIAL",
+          "materialIds": [
+            "10000000-0000-4000-8000-000000000005"
+          ],
+          "state": "PRACTICING",
+          "dueDate": null,
+          "alreadyKnown": false,
+          "archived": false,
+          "subjectId": "10000000-0000-4000-8000-000000000011",
+          "subjectTitle": "Chemistry"
+        }
+      ],
+      "recentSessions": [],
+      "weakConcepts": [
+        {
+          "conceptId": "10000000-0000-4000-8000-000000000004",
+          "topicId": "10000000-0000-4000-8000-000000000004",
+          "label": "Acids and bases",
+          "state": "PRACTICING",
+          "qualifyingAttempts": 4,
+          "rate": 0.5
+        }
+      ]
+    },
+    "practiceTopic": {
+      "topic": {
+        "id": "10000000-0000-4000-8000-000000000004",
+        "title": "Acids, bases and salts",
+        "estimateMin": 20,
+        "priority": 4,
+        "basis": "MATERIAL",
+        "materialIds": [
+          "10000000-0000-4000-8000-000000000005"
+        ],
+        "state": "PRACTICING",
+        "dueDate": null,
+        "alreadyKnown": false,
+        "archived": false,
+        "subjectId": "10000000-0000-4000-8000-000000000011",
+        "subjectTitle": "Chemistry"
+      },
+      "materials": [
+        {
+          "id": "10000000-0000-4000-8000-000000000005",
+          "title": "Class notes · Acids and bases",
+          "subjectId": "10000000-0000-4000-8000-000000000011",
+          "subjectTitle": "Chemistry",
+          "topicIds": [
+            "10000000-0000-4000-8000-000000000004"
+          ],
+          "sourceType": "pdf",
+          "status": "ready",
+          "sourceVersionRef": "source-v1",
+          "addedViaTutor": false,
+          "externalAttribution": null,
+          "createdAt": "2026-11-13T09:00:00Z"
+        }
+      ],
+      "inShort": {
+        "text": "Acids turn blue litmus red.",
+        "source": "MATERIAL",
+        "citation": {
+          "materialId": "10000000-0000-4000-8000-000000000005",
+          "sourceVersionRef": "source-v1",
+          "passageRef": "passage-1",
+          "quote": "Acids turn blue litmus red.",
+          "label": "Class notes · p. 4"
+        }
+      },
+      "example": null,
+      "actions": [
+        {
+          "kind": "PRACTICE",
+          "targetId": "10000000-0000-4000-8000-000000000004",
+          "label": "Practise acids and bases",
+          "minutes": 10,
+          "reasonCodes": [
+            "DUE_REVIEW"
+          ]
+        }
+      ]
+    },
+    "questionSet": {
+      "id": "10000000-0000-4000-8000-000000000019",
+      "status": "QUEUED",
+      "topicId": "10000000-0000-4000-8000-000000000004",
+      "questionCount": null,
+      "reasonCode": null,
+      "retryable": false
+    },
+    "practiceAnswer": {
+      "sessionId": "10000000-0000-4000-8000-000000000006",
+      "itemId": "10000000-0000-4000-8000-000000000016",
+      "attemptId": "10000000-0000-4000-8000-000000000020",
+      "attemptNo": 1,
+      "gradingStatus": "NOT_NEEDED",
+      "score": 1,
+      "correct": true,
+      "confidence": "SURE",
+      "replay": false
+    },
+    "examPrep": {
+      "exams": [
+        {
+          "id": "10000000-0000-4000-8000-000000000002",
+          "goalId": "10000000-0000-4000-8000-000000000001",
+          "title": "Board exams",
+          "date": "2027-03-02",
+          "passMarkPercent": null,
+          "revision": 1
+        }
+      ],
+      "readiness": {
+        "examId": "10000000-0000-4000-8000-000000000002",
+        "blueprintRevision": "exam-v1",
+        "percent": 60,
+        "topicsCovered": 1,
+        "topicsTotal": 1,
+        "evidence": "ENOUGH",
+        "asOf": "2026-11-13T09:00:00Z"
+      },
+      "weakConcepts": [
+        {
+          "conceptId": "10000000-0000-4000-8000-000000000004",
+          "topicId": "10000000-0000-4000-8000-000000000004",
+          "label": "Acids and bases",
+          "state": "PRACTICING",
+          "qualifyingAttempts": 4,
+          "rate": 0.5
+        }
+      ],
+      "pastMocks": []
+    },
+    "readiness": {
+      "examId": "10000000-0000-4000-8000-000000000002",
+      "blueprintRevision": "exam-v1",
+      "percent": 60,
+      "topicsCovered": 1,
+      "topicsTotal": 1,
+      "evidence": "ENOUGH",
+      "asOf": "2026-11-13T09:00:00Z",
+      "trend": [
+        {
+          "date": "2026-11-13",
+          "blueprintRevision": "exam-v1",
+          "percent": 60,
+          "topicsCovered": 1,
+          "topicsTotal": 1
+        }
+      ]
+    },
+    "mockBuildQueued": {
+      "id": "10000000-0000-4000-8000-000000000008",
+      "examId": "10000000-0000-4000-8000-000000000002",
+      "status": "QUEUED",
+      "preset": "QUICK",
+      "scope": "WHOLE_EXAM",
+      "conditions": true,
+      "requestedCount": 10,
+      "availableCount": 0,
+      "minimumCount": 5,
+      "timeLimitSeconds": 900,
+      "shorterTimeLimitSeconds": null,
+      "alternatives": [],
+      "reasonCode": null,
+      "retryable": false
+    },
+    "mockBuildReady": {
+      "id": "10000000-0000-4000-8000-000000000008",
+      "examId": "10000000-0000-4000-8000-000000000002",
+      "status": "READY",
+      "preset": "QUICK",
+      "scope": "WHOLE_EXAM",
+      "conditions": true,
+      "requestedCount": 10,
+      "availableCount": 10,
+      "minimumCount": 5,
+      "timeLimitSeconds": 900,
+      "shorterTimeLimitSeconds": null,
+      "alternatives": [],
+      "reasonCode": null,
+      "retryable": false
+    },
+    "mockBuildShortfall": {
+      "id": "10000000-0000-4000-8000-000000000008",
+      "examId": "10000000-0000-4000-8000-000000000002",
+      "status": "SHORTFALL",
+      "preset": "QUICK",
+      "scope": "WHOLE_EXAM",
+      "conditions": true,
+      "requestedCount": 10,
+      "availableCount": 7,
+      "minimumCount": 5,
+      "timeLimitSeconds": 900,
+      "shorterTimeLimitSeconds": 630,
+      "alternatives": [
+        "START_SHORTER",
+        "ADD_MATERIAL"
+      ],
+      "reasonCode": "INSUFFICIENT_MATERIAL",
+      "retryable": false
+    },
+    "mockBuildCancelled": {
+      "id": "10000000-0000-4000-8000-000000000008",
+      "examId": "10000000-0000-4000-8000-000000000002",
+      "status": "CANCELLED",
+      "preset": "QUICK",
+      "scope": "WHOLE_EXAM",
+      "conditions": true,
+      "requestedCount": 10,
+      "availableCount": 0,
+      "minimumCount": 5,
+      "timeLimitSeconds": 900,
+      "shorterTimeLimitSeconds": null,
+      "alternatives": [],
+      "reasonCode": null,
+      "retryable": false
+    },
+    "mockSitting": {
+      "sessionId": "10000000-0000-4000-8000-000000000006",
+      "buildId": "10000000-0000-4000-8000-000000000008",
+      "examId": "10000000-0000-4000-8000-000000000002",
+      "status": "IN_PROGRESS",
+      "conditions": true,
+      "deadlineAt": "2026-11-13T09:15:00Z",
+      "serverNow": "2026-11-13T09:00:00Z",
+      "extraTimePercent": 0,
+      "itemCount": 10,
+      "navigator": [
+        {
+          "index": 0,
+          "answered": false,
+          "flagged": false
+        },
+        {
+          "index": 1,
+          "answered": false,
+          "flagged": false
+        },
+        {
+          "index": 2,
+          "answered": false,
+          "flagged": false
+        },
+        {
+          "index": 3,
+          "answered": false,
+          "flagged": false
+        },
+        {
+          "index": 4,
+          "answered": false,
+          "flagged": false
+        },
+        {
+          "index": 5,
+          "answered": false,
+          "flagged": false
+        },
+        {
+          "index": 6,
+          "answered": false,
+          "flagged": false
+        },
+        {
+          "index": 7,
+          "answered": false,
+          "flagged": false
+        },
+        {
+          "index": 8,
+          "answered": false,
+          "flagged": false
+        },
+        {
+          "index": 9,
+          "answered": false,
+          "flagged": false
+        }
+      ]
+    },
+    "mockItem": {
+      "index": 0,
+      "itemId": "10000000-0000-4000-8000-000000000016",
+      "topicId": "10000000-0000-4000-8000-000000000004",
+      "question": {
+        "kind": "MCQ",
+        "prompt": "What colour does blue litmus turn in an acid?",
+        "options": [
+          {
+            "id": "o1",
+            "text": "Blue"
+          },
+          {
+            "id": "o2",
+            "text": "Red"
+          }
+        ]
+      },
+      "draft": {
+        "answer": null,
+        "flagged": false,
+        "revision": 0,
+        "savedAt": null
+      }
+    },
+    "mockSave": {
+      "index": 0,
+      "itemId": "10000000-0000-4000-8000-000000000016",
+      "answer": {
+        "kind": "MCQ",
+        "optionId": "o2"
+      },
+      "flagged": true,
+      "revision": 1,
+      "savedAt": "2026-11-13T09:00:00Z"
+    },
+    "mockResult": {
+      "sessionId": "10000000-0000-4000-8000-000000000006",
+      "examId": "10000000-0000-4000-8000-000000000002",
+      "status": "FULLY_MARKED",
+      "submittedAt": "2026-11-13T09:15:00Z",
+      "scorePercent": 60,
+      "gradedItemCount": 10,
+      "itemCount": 10,
+      "ungradedItemCount": 0,
+      "passMarkPercent": null,
+      "passStatus": null,
+      "priorMockPercent": null,
+      "readinessDeltaPercent": null,
+      "byTopic": [
+        {
+          "topicId": "10000000-0000-4000-8000-000000000004",
+          "label": "Acids, bases and salts",
+          "scorePoints": 6,
+          "itemCount": 10,
+          "ungradedCount": 0
+        }
+      ],
+      "byKind": [
+        {
+          "kind": "MCQ",
+          "scorePoints": 6,
+          "itemCount": 10,
+          "ungradedCount": 0
+        }
+      ],
+      "findings": [],
+      "suggestedActions": [
+        {
+          "kind": "PRACTICE",
+          "targetId": "10000000-0000-4000-8000-000000000004",
+          "label": "Practise acids and bases",
+          "minutes": 10,
+          "reasonCodes": [
+            "DUE_REVIEW"
+          ]
+        }
+      ],
+      "revision": 1
+    },
+    "mockReview": {
+      "sessionId": "10000000-0000-4000-8000-000000000006",
+      "items": [
+        {
+          "index": 0,
+          "itemId": "10000000-0000-4000-8000-000000000016",
+          "question": {
+            "kind": "MCQ",
+            "prompt": "What colour does blue litmus turn in an acid?",
+            "options": [
+              {
+                "id": "o1",
+                "text": "Blue"
+              },
+              {
+                "id": "o2",
+                "text": "Red"
+              }
+            ]
+          },
+          "answer": {
+            "kind": "MCQ",
+            "optionId": "o2"
+          },
+          "correctAnswer": {
+            "kind": "MCQ",
+            "optionId": "o2"
+          },
+          "score": 1,
+          "gradingStatus": "NOT_NEEDED",
+          "citations": [
+            {
+              "materialId": "10000000-0000-4000-8000-000000000005",
+              "sourceVersionRef": "source-v1",
+              "passageRef": "passage-1",
+              "quote": "Acids turn blue litmus red.",
+              "label": "Class notes · p. 4"
+            }
+          ]
+        }
+      ]
+    },
+    "tutorContext": {
+      "context": {
+        "kind": "PLAN_TOPIC",
+        "planId": "10000000-0000-4000-8000-000000000003",
+        "topicId": "10000000-0000-4000-8000-000000000004"
+      },
+      "available": true,
+      "reasonCode": null,
+      "subjectRef": "10000000-0000-4000-8000-000000000011",
+      "topicRef": "10000000-0000-4000-8000-000000000004",
+      "source": {
+        "materialId": "10000000-0000-4000-8000-000000000005",
+        "title": "Class notes · Acids and bases"
+      },
+      "suggestions": [
+        "Explain a topic"
+      ],
+      "returnTo": {
+        "kind": "PLAN_TOPIC",
+        "planId": "10000000-0000-4000-8000-000000000003",
+        "topicId": "10000000-0000-4000-8000-000000000004"
+      },
+      "groundingMode": "MATERIAL_ONLY"
+    },
+    "tutorSessions": {
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-000000000009",
+          "title": "Acids, bases and salts",
+          "subjectRef": "10000000-0000-4000-8000-000000000011",
+          "topicRef": "10000000-0000-4000-8000-000000000004",
+          "status": "OPEN",
+          "mode": "ASK",
+          "lastTurnAt": "2026-11-13T09:00:00Z",
+          "expiresAt": "2027-02-11T09:00:00Z"
+        }
+      ],
+      "nextCursor": null
+    },
+    "tutorSession": {
+      "id": "10000000-0000-4000-8000-000000000009",
+      "title": "Acids, bases and salts",
+      "subjectRef": "10000000-0000-4000-8000-000000000011",
+      "topicRef": "10000000-0000-4000-8000-000000000004",
+      "status": "OPEN",
+      "mode": "ASK",
+      "lastTurnAt": "2026-11-13T09:00:00Z",
+      "expiresAt": "2027-02-11T09:00:00Z",
+      "turns": [],
+      "nextCursor": null
+    },
+    "tutorSessionClosed": {
+      "id": "10000000-0000-4000-8000-000000000009",
+      "title": "Acids, bases and salts",
+      "subjectRef": "10000000-0000-4000-8000-000000000011",
+      "topicRef": "10000000-0000-4000-8000-000000000004",
+      "status": "CLOSED",
+      "mode": "ASK",
+      "lastTurnAt": "2026-11-13T09:00:00Z",
+      "expiresAt": "2027-02-11T09:00:00Z",
+      "turns": [],
+      "nextCursor": null
+    },
+    "tutorTurnQueued": {
+      "id": "10000000-0000-4000-8000-000000000010",
+      "sessionId": "10000000-0000-4000-8000-000000000009",
+      "status": "QUEUED",
+      "result": null,
+      "reasonCode": null,
+      "retryable": false,
+      "createdAt": "2026-11-13T09:00:00Z"
+    },
+    "tutorTurnReady": {
+      "id": "10000000-0000-4000-8000-000000000010",
+      "sessionId": "10000000-0000-4000-8000-000000000009",
+      "status": "READY",
+      "result": {
+        "move": "DIAGNOSE",
+        "segments": [
+          {
+            "source": "CO",
+            "text": "What do you think happens to blue litmus in an acid?"
+          }
+        ],
+        "question": null,
+        "brief": null,
+        "proposals": [],
+        "reasonCodes": [
+          "LEARNER_ASKED"
+        ],
+        "disposition": "CLARIFY"
+      },
+      "reasonCode": null,
+      "retryable": false,
+      "createdAt": "2026-11-13T09:00:00Z"
+    },
+    "tutorTurnCancelled": {
+      "id": "10000000-0000-4000-8000-000000000010",
+      "sessionId": "10000000-0000-4000-8000-000000000009",
+      "status": "CANCELLED",
+      "result": null,
+      "reasonCode": null,
+      "retryable": false,
+      "createdAt": "2026-11-13T09:00:00Z"
+    },
+    "proposalAccepted": {
+      "id": "10000000-0000-4000-8000-000000000013",
+      "kind": "START_PRACTICE",
+      "target": {
+        "kind": "PRACTICE",
+        "targetId": "10000000-0000-4000-8000-000000000004",
+        "label": "Practise acids and bases",
+        "minutes": 10,
+        "reasonCodes": [
+          "DUE_REVIEW"
+        ]
+      },
+      "acceptedAt": "2026-11-13T09:00:00Z"
+    },
+    "memory": {
+      "enabled": true,
+      "visibleToLinkedParent": true,
+      "facts": [
+        {
+          "id": "10000000-0000-4000-8000-000000000012",
+          "kind": "PREFERENCE",
+          "statement": "Short explanations with one example help.",
+          "confidence": "HIGH",
+          "source": "LEARNER_EDITED",
+          "conceptRef": null,
+          "subjectRef": null,
+          "evidence": [
+            {
+              "kind": "SESSION",
+              "id": "10000000-0000-4000-8000-000000000009"
+            }
+          ],
+          "lastConfirmedAt": "2026-11-13T09:00:00Z",
+          "expiresAt": null,
+          "revision": 2
+        }
+      ]
+    },
+    "memoryFact": {
+      "id": "10000000-0000-4000-8000-000000000012",
+      "kind": "PREFERENCE",
+      "statement": "Short explanations with one example help.",
+      "confidence": "HIGH",
+      "source": "LEARNER_EDITED",
+      "conceptRef": null,
+      "subjectRef": null,
+      "evidence": [
+        {
+          "kind": "SESSION",
+          "id": "10000000-0000-4000-8000-000000000009"
+        }
+      ],
+      "lastConfirmedAt": "2026-11-13T09:00:00Z",
+      "expiresAt": null,
+      "revision": 2
+    },
+    "forgotten": {
+      "forgotten": true,
+      "epoch": 3
+    },
+    "parentMemory": {
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-000000000012",
+          "kind": "PREFERENCE",
+          "statement": "Short explanations with one example help."
+        }
+      ]
+    },
+    "tutorIdentity": {
+      "name": "Co",
+      "icon": "SPROUT"
+    },
+    "nudges": {
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-000000000021",
+          "kind": "FIRST_WRONG",
+          "text": "Want to try a smaller step?",
+          "reasonCodes": [
+            "RECENT_MISTAKE"
+          ],
+          "action": {
+            "kind": "PRACTICE",
+            "targetId": "10000000-0000-4000-8000-000000000004",
+            "label": "Practise acids and bases",
+            "minutes": 10,
+            "reasonCodes": [
+              "DUE_REVIEW"
+            ]
+          },
+          "alternative": {
+            "kind": "DONE_FOR_TODAY",
+            "targetId": null,
+            "label": "Done for today",
+            "minutes": 0,
+            "reasonCodes": []
+          },
+          "expiresAt": "2026-11-13T09:15:00Z"
+        }
+      ]
+    },
+    "dismissed": {
+      "dismissed": true
+    },
+    "nudgeMute": {
+      "kind": "FIRST_WRONG",
+      "muted": true
+    },
+    "materialProposals": {
+      "items": [
+        {
+          "id": "10000000-0000-4000-8000-000000000013",
+          "title": "IAM documentation",
+          "publisher": "AWS",
+          "host": "docs.aws.amazon.com",
+          "expiresAt": "2026-11-13T09:15:00Z"
+        }
+      ]
+    },
+    "materialAdded": {
+      "materialId": "10000000-0000-4000-8000-000000000005",
+      "jobId": "10000000-0000-4000-8000-000000000007",
+      "status": "queued",
+      "attribution": {
+        "publisher": "AWS",
+        "host": "docs.aws.amazon.com",
+        "addedByTutor": true
+      }
+    },
+    "entitlement": {
+      "principalId": "10000000-0000-4000-8000-000000000022",
+      "findMaterialEnabled": true,
+      "revision": 2
+    },
+    "tutorTurnFailed": {
+      "id": "10000000-0000-4000-8000-000000000010",
+      "sessionId": "10000000-0000-4000-8000-000000000009",
+      "status": "FAILED",
+      "result": null,
+      "reasonCode": "TUTOR_RESTING",
+      "retryable": true,
+      "createdAt": "2026-11-13T09:00:00Z"
+    },
+    "tutorTurnChecking": {
+      "id": "10000000-0000-4000-8000-000000000010",
+      "sessionId": "10000000-0000-4000-8000-000000000009",
+      "status": "CHECKING",
+      "result": null,
+      "reasonCode": null,
+      "retryable": false,
+      "createdAt": "2026-11-13T09:00:00Z"
+    },
+    "planDraftFailed": {
+      "id": "10000000-0000-4000-8000-000000000007",
+      "lineageId": "10000000-0000-4000-8000-000000000007",
+      "version": 1,
+      "status": "FAILED",
+      "draft": null,
+      "reasonCode": "AI_UNAVAILABLE",
+      "retryable": true
+    },
+    "mockBuildFailed": {
+      "id": "10000000-0000-4000-8000-000000000008",
+      "examId": "10000000-0000-4000-8000-000000000002",
+      "status": "FAILED",
+      "preset": "QUICK",
+      "scope": "WHOLE_EXAM",
+      "conditions": true,
+      "requestedCount": 10,
+      "availableCount": 0,
+      "minimumCount": 5,
+      "timeLimitSeconds": 900,
+      "shorterTimeLimitSeconds": null,
+      "alternatives": [],
+      "reasonCode": "AI_UNAVAILABLE",
+      "retryable": true
+    },
+    "mockResultPending": {
+      "sessionId": "10000000-0000-4000-8000-000000000006",
+      "examId": "10000000-0000-4000-8000-000000000002",
+      "status": "PARTLY_MARKED",
+      "submittedAt": "2026-11-13T09:15:00Z",
+      "scorePercent": null,
+      "gradedItemCount": 9,
+      "itemCount": 10,
+      "ungradedItemCount": 1,
+      "passMarkPercent": null,
+      "passStatus": null,
+      "priorMockPercent": null,
+      "readinessDeltaPercent": null,
+      "byTopic": [
+        {
+          "topicId": "10000000-0000-4000-8000-000000000004",
+          "label": "Acids, bases and salts",
+          "scorePoints": 6,
+          "itemCount": 10,
+          "ungradedCount": 1
+        }
+      ],
+      "byKind": [
+        {
+          "kind": "MCQ",
+          "scorePoints": 6,
+          "itemCount": 9,
+          "ungradedCount": 0
+        },
+        {
+          "kind": "SHORT_ANSWER",
+          "scorePoints": 0,
+          "itemCount": 1,
+          "ungradedCount": 1
+        }
+      ],
+      "findings": [],
+      "suggestedActions": [
+        {
+          "kind": "PRACTICE",
+          "targetId": "10000000-0000-4000-8000-000000000004",
+          "label": "Practise acids and bases",
+          "minutes": 10,
+          "reasonCodes": [
+            "DUE_REVIEW"
+          ]
+        }
+      ],
+      "revision": 1
+    },
+    "mockResultAwaiting": {
+      "sessionId": "10000000-0000-4000-8000-000000000006",
+      "examId": "10000000-0000-4000-8000-000000000002",
+      "status": "MARKING_PENDING",
+      "submittedAt": "2026-11-13T09:15:00Z",
+      "scorePercent": null,
+      "gradedItemCount": 9,
+      "itemCount": 10,
+      "ungradedItemCount": 1,
+      "passMarkPercent": null,
+      "passStatus": null,
+      "priorMockPercent": null,
+      "readinessDeltaPercent": null,
+      "byTopic": [
+        {
+          "topicId": "10000000-0000-4000-8000-000000000004",
+          "label": "Acids, bases and salts",
+          "scorePoints": 6,
+          "itemCount": 10,
+          "ungradedCount": 1
+        }
+      ],
+      "byKind": [
+        {
+          "kind": "MCQ",
+          "scorePoints": 6,
+          "itemCount": 9,
+          "ungradedCount": 0
+        },
+        {
+          "kind": "SHORT_ANSWER",
+          "scorePoints": 0,
+          "itemCount": 1,
+          "ungradedCount": 1
+        }
+      ],
+      "findings": [],
+      "suggestedActions": [
+        {
+          "kind": "PRACTICE",
+          "targetId": "10000000-0000-4000-8000-000000000004",
+          "label": "Practise acids and bases",
+          "minutes": 10,
+          "reasonCodes": [
+            "DUE_REVIEW"
+          ]
+        }
+      ],
+      "revision": 1
+    },
+    "error": {
+      "code": "DAILY_TUTOR_LIMIT",
+      "message": "Your tutor is available again tomorrow.",
+      "retryAfterSeconds": 54000
+    },
+    "empty": {
+      "items": [],
+      "nextCursor": null
+    },
+    "memoryOff": {
+      "enabled": false,
+      "visibleToLinkedParent": false,
+      "facts": []
+    },
+    "readinessInsufficient": {
+      "examId": "10000000-0000-4000-8000-000000000002",
+      "blueprintRevision": "exam-v1",
+      "percent": null,
+      "topicsCovered": 0,
+      "topicsTotal": 1,
+      "evidence": "INSUFFICIENT",
+      "asOf": "2026-11-13T09:00:00Z",
+      "trend": []
+    },
+    "entryAdultConsentRequired": {
+      "band": "18+",
+      "scope": "PERSONAL",
+      "needsOnboarding": true,
+      "needsConsent": true,
+      "capabilities": {
+        "canCreatePersonalPlan": false,
+        "canUseTutor": false,
+        "canUseMock": false,
+        "canUseMemory": false,
+        "findMaterial": "HIDDEN"
+      },
+      "tutorIdentity": null
+    },
+    "entryAdultReady": {
+      "band": "18+",
+      "scope": "PERSONAL",
+      "needsOnboarding": true,
+      "needsConsent": false,
+      "capabilities": {
+        "canCreatePersonalPlan": true,
+        "canUseTutor": true,
+        "canUseMock": true,
+        "canUseMemory": true,
+        "findMaterial": "LOCKED"
+      },
+      "tutorIdentity": {
+        "name": "Co",
+        "icon": "BUDDY"
+      }
+    },
+    "entryAdultPlusUnavailable": {
+      "band": "18+",
+      "scope": "PERSONAL",
+      "needsOnboarding": true,
+      "needsConsent": false,
+      "capabilities": {
+        "canCreatePersonalPlan": true,
+        "canUseTutor": true,
+        "canUseMock": true,
+        "canUseMemory": true,
+        "findMaterial": "UNAVAILABLE"
+      },
+      "tutorIdentity": {
+        "name": "Co",
+        "icon": "BUDDY"
+      }
+    },
+    "entryAdultPlusReady": {
+      "band": "18+",
+      "scope": "PERSONAL",
+      "needsOnboarding": true,
+      "needsConsent": false,
+      "capabilities": {
+        "canCreatePersonalPlan": true,
+        "canUseTutor": true,
+        "canUseMock": true,
+        "canUseMemory": true,
+        "findMaterial": "AVAILABLE"
+      },
+      "tutorIdentity": {
+        "name": "Co",
+        "icon": "BUDDY"
+      }
+    },
+    "tutorContextResting": {
+      "context": {
+        "kind": "PLAN_TOPIC",
+        "planId": "10000000-0000-4000-8000-000000000003",
+        "topicId": "10000000-0000-4000-8000-000000000004"
+      },
+      "available": false,
+      "reasonCode": "TUTOR_RESTING",
+      "subjectRef": "10000000-0000-4000-8000-000000000011",
+      "topicRef": "10000000-0000-4000-8000-000000000004",
+      "source": {
+        "materialId": "10000000-0000-4000-8000-000000000005",
+        "title": "Class notes · Acids and bases"
+      },
+      "suggestions": [
+        "Explain a topic"
+      ],
+      "returnTo": {
+        "kind": "PLAN_TOPIC",
+        "planId": "10000000-0000-4000-8000-000000000003",
+        "topicId": "10000000-0000-4000-8000-000000000004"
+      },
+      "groundingMode": "MATERIAL_ONLY"
+    },
+    "schedulePreviewConflict": {
+      "id": "10000000-0000-4000-8000-000000000014",
+      "baseRevision": 2,
+      "expiresAt": "2026-11-13T09:15:00Z",
+      "canApply": false,
+      "changes": [],
+      "conflicts": [
+        {
+          "itemId": "10000000-0000-4000-8000-000000000016",
+          "reasonCode": "DAY_OFF"
+        }
+      ],
+      "unplacedMinutes": 0
+    },
+    "shortLessonQueued": {
+      "id": "10000000-0000-4000-8000-000000000018",
+      "formatVersion": "TUTOR_4",
+      "status": "QUEUED",
+      "title": null,
+      "cards": [],
+      "reasonCode": null,
+      "retryable": false
+    },
+    "shortLessonReady": {
+      "id": "10000000-0000-4000-8000-000000000018",
+      "formatVersion": "TUTOR_4",
+      "status": "READY",
+      "title": "Acids and litmus",
+      "cards": [
+        {
+          "kind": "IDEA",
+          "text": "Acids turn blue litmus red.",
+          "citation": {
+            "materialId": "10000000-0000-4000-8000-000000000005",
+            "sourceVersionRef": "source-v1",
+            "passageRef": "passage-1",
+            "quote": "Acids turn blue litmus red.",
+            "label": "Class notes · p. 4"
+          }
+        },
+        {
+          "kind": "EXAMPLE",
+          "text": "Acids turn blue litmus red.",
+          "citation": {
+            "materialId": "10000000-0000-4000-8000-000000000005",
+            "sourceVersionRef": "source-v1",
+            "passageRef": "passage-1",
+            "quote": "Acids turn blue litmus red.",
+            "label": "Class notes · p. 4"
+          }
+        },
+        {
+          "kind": "WATCH_OUT",
+          "text": "Acids turn blue litmus red.",
+          "citation": {
+            "materialId": "10000000-0000-4000-8000-000000000005",
+            "sourceVersionRef": "source-v1",
+            "passageRef": "passage-1",
+            "quote": "Acids turn blue litmus red.",
+            "label": "Class notes · p. 4"
+          }
+        },
+        {
+          "kind": "CHECK",
+          "questionRef": "check-ref",
+          "prompt": "What happens to blue litmus in acid?",
+          "options": [
+            {
+              "id": "blue",
+              "text": "It stays blue."
+            },
+            {
+              "id": "red",
+              "text": "It turns red."
+            }
+          ]
+        }
+      ],
+      "reasonCode": null,
+      "retryable": false
+    },
+    "shortLessonFailed": {
+      "id": "10000000-0000-4000-8000-000000000018",
+      "formatVersion": "TUTOR_4",
+      "status": "FAILED",
+      "title": null,
+      "cards": [],
+      "reasonCode": "AI_UNAVAILABLE",
+      "retryable": true
+    },
+    "errorsByCode": {
+      "RESOURCE_NOT_FOUND": {
+        "code": "RESOURCE_NOT_FOUND",
+        "message": "We could not find this item."
+      },
+      "EXAM_CONDITIONS_ACTIVE": {
+        "code": "EXAM_CONDITIONS_ACTIVE",
+        "message": "Your tutor is available after the exam."
+      },
+      "PREVIEW_STALE": {
+        "code": "PREVIEW_STALE",
+        "message": "Your schedule has changed. Preview the move again."
+      },
+      "TUTOR_RESTING": {
+        "code": "TUTOR_RESTING",
+        "message": "Your tutor is resting. Try again soon."
+      },
+      "FIND_MATERIAL_NOT_ENTITLED": {
+        "code": "FIND_MATERIAL_NOT_ENTITLED",
+        "message": "Finding material is available with Plus."
+      },
+      "GENERAL_DISABLED": {
+        "code": "GENERAL_DISABLED",
+        "message": "Your tutor can answer from your material."
+      }
+    }
+  }
+}

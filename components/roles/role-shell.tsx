@@ -11,6 +11,8 @@ import { BrandMark, CoCharacter, FoundationErrorBoundary, ThemeToggle } from '@/
 import type { AgeBand } from '@/components/design-system'
 import styles from './student-shell.module.css'
 import { CoWorkspaceAssistant } from '@/components/co/co-workspace-assistant'
+import { TutorShellProvider, useTutorShell } from '@/components/tutor-loop/shell/tutor-shell-context'
+import { TutorBottomNav, TutorHeader } from '@/components/tutor-loop/shell/tutor-header'
 import { cn } from '@/lib/utils'
 import { matchesNavItem, workspaceLabels } from './role-config'
 import type { RoleNavGroup, RoleNavItem, WorkspaceRole } from './role-config'
@@ -124,7 +126,16 @@ export function TopNavigation({ groups, pathname, band = 'adults', moreFooter, c
 }
 
 /** A presentation boundary, never a substitute for server role/resource guards. */
-export function RoleShell({ role, children, navigation, homeHref, band = 'adults', identity, accountActions, sidebarFooter, bottomNavigation, workspaceName, navigationStyle }: RoleShellProps) {
+export function RoleShell(props: RoleShellProps) {
+  // Only learner shells ask whether Tutor Loop is on; a 403 or error keeps the legacy shell untouched.
+  if (props.role !== 'student') return <RoleShellInner {...props} />
+  return <TutorShellProvider><RoleShellInner {...props} /></TutorShellProvider>
+}
+
+function RoleShellInner({ role, children, navigation, homeHref, band: bandProp = 'adults', identity, accountActions, sidebarFooter, bottomNavigation, workspaceName, navigationStyle }: RoleShellProps) {
+  const tutor = useTutorShell()
+  const tutorOn = role === 'student' && tutor.state === 'enabled' && bandProp !== 'kids' && bandProp !== 'tweens'
+  const band: AgeBand = tutorOn ? tutor.band : bandProp
   const pathname = usePathname()
   const id = useId().replace(/:/g, '')
   const mainId = `workspace-main-${id}`
@@ -134,7 +145,7 @@ export function RoleShell({ role, children, navigation, homeHref, band = 'adults
   const workspaceLabel = workspaceName || workspaceLabels[role]
   const kids = band === 'kids'
   const coAssistant = role === 'student' ? <CoWorkspaceAssistant band={band === 'adults' ? 'teens' : band} pathname={pathname} /> : null
-  const sidebar = (navigationStyle ?? (role === 'platform-admin' || role === 'school-admin' ? 'sidebar' : 'header')) === 'sidebar'
+  const sidebar = !tutorOn && (navigationStyle ?? (role === 'platform-admin' || role === 'school-admin' ? 'sidebar' : 'header')) === 'sidebar'
   // Design: parent keeps a bottom tab bar on phones; learner/teacher scroll the top bar; sidebar roles keep their quick bar.
   const bottomItems = sidebar || role === 'parent' ? (bottomNavigation ?? navigation[0]?.items.slice(0, 5) ?? []) : []
 
@@ -201,7 +212,7 @@ export function RoleShell({ role, children, navigation, homeHref, band = 'adults
           <div className="min-w-0 flex-1"><p className="break-words text-sm font-semibold">{workspaceLabel}</p>{identity && <p className="break-words text-xs text-muted-foreground">{identity}</p>}</div>
           {coAssistant}{role === 'student' && <ThemeToggle />}
           {accountActions && <div className="flex shrink-0 items-center gap-2">{accountActions}</div>}
-        </header> : <header data-testid="top-header" className="sticky top-0 z-40 border-b border-border bg-background">
+        </header> : tutorOn ? <TutorHeader homeHref="/learn/today" initial={(identity || tutor.tutorName).trim().charAt(0).toUpperCase() || 'M'} accountActions={accountActions} /> : <header data-testid="top-header" className="sticky top-0 z-40 border-b border-border bg-background">
           <div className={cn('mx-auto flex w-full max-w-[1320px] flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 sm:px-6 lg:flex-nowrap lg:gap-x-5', styles.headerRow)}>
             <Link href={homeHref} aria-label="CoLearner home" className={cn('inline-flex min-h-[var(--ds-target,44px)] shrink-0 items-center gap-2.5 rounded-lg', focusClasses)}>
               <BrandMark compact={kids} />
@@ -216,9 +227,10 @@ export function RoleShell({ role, children, navigation, homeHref, band = 'adults
             <TopNavigation groups={navigation} pathname={pathname} band={band} moreFooter={sidebarFooter} className="order-last w-full basis-full lg:order-none lg:w-auto lg:basis-0 lg:flex-1" />
           </div>
         </header>}
-        <main id={mainId} tabIndex={-1} className={cn('mx-auto min-w-0 outline-none', !sidebar && 'w-full max-w-[1320px]', bottomItems.length > 0 && 'pb-[var(--role-quick-nav-inset,calc(6rem+env(safe-area-inset-bottom)))] lg:pb-0')}><FoundationErrorBoundary>{children}</FoundationErrorBoundary></main>
+        <main id={mainId} tabIndex={-1} className={cn('mx-auto min-w-0 outline-none', !sidebar && 'w-full max-w-[1320px]', (bottomItems.length > 0 || tutorOn) && 'pb-[var(--role-quick-nav-inset,calc(6rem+env(safe-area-inset-bottom)))] lg:pb-0')}><FoundationErrorBoundary>{children}</FoundationErrorBoundary></main>
       </div>
     </div>
+    {tutorOn && <TutorBottomNav />}
     {bottomItems.length > 0 && <nav ref={quickNavigationRef} aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-card px-1 pb-[env(safe-area-inset-bottom)] lg:hidden">
       {bottomItems.map((item) => {
         const active = matchesNavItem(pathname, item)

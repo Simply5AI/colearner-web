@@ -244,6 +244,13 @@
 [data-age-band='tweens'] { --ds-body: 18px; --ds-small: 15px; --ds-caption: 13px; --ds-display: 56px; --ds-h1: 40px; --ds-h2: 27px; --ds-h3: 21px; --ds-target: 48px; --radius: 22px; --ds-gap: 24px; --ds-body-font: var(--font-display); }
 [data-age-band='teens'] { --ds-body: 16px; --ds-small: 14px; --ds-caption: 12px; --ds-display: 52px; --ds-h1: 36px; --ds-h2: 24px; --ds-h3: 19px; --ds-target: 44px; --radius: 18px; --ds-gap: 22px; --ds-body-font: var(--font-geist, 'Geist'), system-ui, sans-serif; }
 [data-age-band='adults'] { --ds-body: 15px; --ds-small: 13px; --ds-caption: 12px; --ds-display: 48px; --ds-h1: 32px; --ds-h2: 22px; --ds-h3: 18px; --ds-target: 44px; --radius: 14px; --ds-gap: 20px; --ds-body-font: var(--font-geist, 'Geist'), system-ui, sans-serif; }
+/* Adult band (TUTOR W5): its own density and tone, never the Teens scale. Colours stay on the shared tokens so light and dark both work. */
+[data-age-band='adults'] { --ds-radius-sm: 8px; --ds-card-pad: 16px; --ds-line-height: 1.5; }
+[data-age-band='adults'] .ds-card { padding: var(--ds-card-pad); border-radius: 12px; box-shadow: none; }
+[data-age-band='adults'] .ds-button { padding: 8px 16px; font-weight: 600; border-radius: var(--ds-radius-sm); }
+[data-age-band='adults'] .ds-input { border-radius: var(--ds-radius-sm); }
+[data-age-band='adults'] h1, [data-age-band='adults'] h2, [data-age-band='adults'] h3 { font-weight: 700; letter-spacing: -.01em; }
+[data-age-band='adults'] .ds-brand-mark { inline-size: 30px; block-size: 30px; }
 .ds-age-scope, [data-age-band] { --ds-tap: var(--ds-target); --ds-radius: var(--radius); font-family: var(--ds-body-font); font-size: var(--ds-body); line-height: 1.5; }
 h1, h2, h3, h4, h5, h6 { font-family: var(--font-display); }
 .ds-age-scope h1, [data-age-band] h1 { font-size: clamp(28px, 5vw, var(--ds-h1)); line-height: 1.15; }

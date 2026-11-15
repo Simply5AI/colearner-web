@@ -1,4 +1,6 @@
-import { render, screen, within, waitFor } from '@testing-library/react'
+import { render as rtlRender, screen, within, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactElement } from 'react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RoleShell } from '@/components/roles/role-shell'
@@ -6,6 +8,10 @@ import { ageBandFromDateOfBirth, matchesNavItem, studentNavigation, teacherNavig
 import type { WorkspaceRole } from '@/components/roles/role-config'
 import { StudentShell } from '@/components/shared/AppSidebar'
 import { TeacherShell } from '@/components/teacher/teacher-shell'
+
+// The student shell reads the Tutor Loop entry with React Query; the app supplies the provider in lib/providers.
+const render = (ui: ReactElement) =>
+  rtlRender(ui, { wrapper: ({ children }) => <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{children}</QueryClientProvider> })
 
 const pathnameMock = vi.hoisted(() => vi.fn(() => '/teacher/plans/plan-1'))
 const profileMock = vi.hoisted(() => ({ dateOfBirth: null as string | null, name: 'Learner' }))

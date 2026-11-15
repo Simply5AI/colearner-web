@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth/config'
 import { cookies } from 'next/headers'
 import { schoolRequest, type Workspace } from '@/lib/api/school'
 import { familyRequest } from '@/lib/api/family'
+import { readTutorEntry } from '@/lib/api/tutor-loop/entry'
 
 export async function selectSchoolWorkspace(
   membershipId: string,
@@ -73,7 +74,8 @@ export async function selectLearnerSchool(schoolId: string): Promise<{ href?: st
         const workspace = await schoolRequest<Workspace>(session.accessToken, `/school-identity/workspaces/${encodeURIComponent(match.membershipId)}/selection`, 'POST')
         if (workspace.role !== 'STUDENT' || workspace.status !== 'ACTIVE') break
         ;(await cookies()).set('colearner-school-membership', workspace.membershipId, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 7 })
-        return { href: '/learn/home' }
+        const entry = await readTutorEntry({ token: session.accessToken, membership: workspace.membershipId, name: null }, 'school')
+        return { href: entry.state === 'ready' ? '/learn/start' : '/learn/home' }
       }
       if (!list.nextCursor) break
       cursor = list.nextCursor

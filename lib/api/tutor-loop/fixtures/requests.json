@@ -1,0 +1,768 @@
+{
+  "fixtureVersion": 1,
+  "basePath": "/api/v1/learn/tutor-loop",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/entry",
+      "query": {}
+    },
+    {
+      "method": "POST",
+      "path": "/adult-consent",
+      "query": {},
+      "body": {
+        "policyVersion": "tutor-personal-1",
+        "processorRef": null,
+        "scopes": [
+          "LEARN"
+        ],
+        "clientRequestId": "10000000-0000-4000-8000-000000000040"
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/adult-consent",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "/goals",
+      "query": {
+        "includeArchived": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/goals",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040",
+        "title": "Board exams",
+        "kind": "EXAM",
+        "exam": {
+          "date": "2027-03-02",
+          "passMarkPercent": null
+        },
+        "topics": [
+          {
+            "topicId": "10000000-0000-4000-8000-000000000004",
+            "weightBps": 10000
+          }
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/goals/10000000-0000-4000-8000-000000000001",
+      "query": {}
+    },
+    {
+      "method": "PATCH",
+      "path": "/goals/10000000-0000-4000-8000-000000000001",
+      "query": {},
+      "body": {
+        "revision": 1,
+        "title": "Board exam study",
+        "topics": [
+          {
+            "topicId": "10000000-0000-4000-8000-000000000004",
+            "weightBps": 10000
+          }
+        ]
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/goals/10000000-0000-4000-8000-000000000001",
+      "query": {
+        "revision": 1
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/goals/order",
+      "query": {},
+      "body": {
+        "ordered": [
+          {
+            "id": "10000000-0000-4000-8000-000000000001",
+            "revision": 1
+          }
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/exams",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "/exams/10000000-0000-4000-8000-000000000002",
+      "query": {}
+    },
+    {
+      "method": "POST",
+      "path": "/exams",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040",
+        "title": "AWS certification",
+        "date": "2027-01-18",
+        "passMarkPercent": 72,
+        "topics": [
+          {
+            "topicId": "10000000-0000-4000-8000-000000000004",
+            "weightBps": 10000
+          }
+        ]
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/exams/10000000-0000-4000-8000-000000000002",
+      "query": {},
+      "body": {
+        "revision": 1,
+        "date": "2027-03-02",
+        "passMarkPercent": null
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/exams/10000000-0000-4000-8000-000000000002",
+      "query": {
+        "revision": 1
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/plans",
+      "query": {
+        "goalId": "10000000-0000-4000-8000-000000000001",
+        "ownership": "OWN",
+        "query": "acid",
+        "groupBy": "SUBJECT",
+        "limit": 20
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/plans/10000000-0000-4000-8000-000000000003",
+      "query": {
+        "goalId": "10000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/plans",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040",
+        "goalId": "10000000-0000-4000-8000-000000000001",
+        "title": "My board exam plan",
+        "phases": [
+          {
+            "title": "Chemistry",
+            "topics": [
+              {
+                "title": "Acids and bases",
+                "estimateMin": 20,
+                "priority": 4,
+                "basis": "MANUAL",
+                "materialIds": [
+                  "10000000-0000-4000-8000-000000000005"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/plans/10000000-0000-4000-8000-000000000003",
+      "query": {},
+      "body": {
+        "revision": 1,
+        "operations": [
+          {
+            "kind": "REORDER",
+            "phaseId": "10000000-0000-4000-8000-000000000017",
+            "topicIds": [
+              "10000000-0000-4000-8000-000000000004"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/plans/10000000-0000-4000-8000-000000000003/topics/10000000-0000-4000-8000-000000000004/materials/10000000-0000-4000-8000-000000000005",
+      "query": {}
+    },
+    {
+      "method": "DELETE",
+      "path": "/plans/10000000-0000-4000-8000-000000000003/topics/10000000-0000-4000-8000-000000000004/materials/10000000-0000-4000-8000-000000000005",
+      "query": {}
+    },
+    {
+      "method": "POST",
+      "path": "/plan-drafts",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040",
+        "goalId": "10000000-0000-4000-8000-000000000001",
+        "planId": "10000000-0000-4000-8000-000000000003",
+        "syllabusText": "Acids, bases and salts",
+        "materialIds": [
+          "10000000-0000-4000-8000-000000000005"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/plan-drafts/10000000-0000-4000-8000-000000000007",
+      "query": {}
+    },
+    {
+      "method": "POST",
+      "path": "/plan-drafts/10000000-0000-4000-8000-000000000007/cancel",
+      "query": {}
+    },
+    {
+      "method": "POST",
+      "path": "/plan-drafts/10000000-0000-4000-8000-000000000007/regenerate",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040",
+        "note": "Prioritize neutralisation."
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/plan-drafts/10000000-0000-4000-8000-000000000007/accept",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040",
+        "goalRevision": 1,
+        "planRevision": 1
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/profile",
+      "query": {}
+    },
+    {
+      "method": "PATCH",
+      "path": "/profile",
+      "query": {},
+      "body": {
+        "revision": 1,
+        "name": "Co",
+        "icon": "CLOUD",
+        "style": "TO_THE_POINT",
+        "pinnedActions": [
+          "QUIZ",
+          "BRIEF"
+        ],
+        "accessibility": {
+          "textScale": "LARGE"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/study-preferences",
+      "query": {}
+    },
+    {
+      "method": "POST",
+      "path": "/study-preferences/preview",
+      "query": {},
+      "body": {
+        "revision": 1,
+        "timeZone": "Asia/Dubai",
+        "studyDays": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "minutesPerDay": 30
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/today",
+      "query": {
+        "goalId": "10000000-0000-4000-8000-000000000001",
+        "availableMinutes": 10
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/schedule",
+      "query": {
+        "goalId": "10000000-0000-4000-8000-000000000001",
+        "from": "2026-11-13",
+        "to": "2026-11-19"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/schedule/move-preview",
+      "query": {},
+      "body": {
+        "itemId": "10000000-0000-4000-8000-000000000016",
+        "date": "2026-11-16",
+        "baseRevision": 2
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/schedule/replan-preview",
+      "query": {},
+      "body": {
+        "baseRevision": 2,
+        "reason": "BEHIND",
+        "goalId": "10000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/schedule/day-off-preview",
+      "query": {},
+      "body": {
+        "baseRevision": 2,
+        "startDate": "2026-11-16",
+        "endDate": "2026-11-16",
+        "dayOff": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/schedule/previews/10000000-0000-4000-8000-000000000014/apply",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040",
+        "baseRevision": 2
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/schedule/calendar.ics",
+      "query": {
+        "goalId": "10000000-0000-4000-8000-000000000001",
+        "from": "2026-11-13",
+        "to": "2026-11-19"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/progress",
+      "query": {
+        "goalId": "10000000-0000-4000-8000-000000000001",
+        "examId": "10000000-0000-4000-8000-000000000002"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/progress/export.csv",
+      "query": {
+        "goalId": "10000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/progress/export.pdf",
+      "query": {
+        "examId": "10000000-0000-4000-8000-000000000002"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/activities/LESSON/10000000-0000-4000-8000-000000000018/next",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "/search",
+      "query": {
+        "q": "acid",
+        "kind": "TOPIC",
+        "goalId": "10000000-0000-4000-8000-000000000001",
+        "limit": 20
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/library",
+      "query": {
+        "goalId": "10000000-0000-4000-8000-000000000001",
+        "topicId": "10000000-0000-4000-8000-000000000004",
+        "sourceType": "pdf",
+        "status": "ready",
+        "query": "acid",
+        "recentDays": 7,
+        "sort": "NEWEST",
+        "groupBy": "TOPIC",
+        "limit": 20
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/notes",
+      "query": {
+        "goalId": "10000000-0000-4000-8000-000000000001",
+        "materialId": "10000000-0000-4000-8000-000000000005",
+        "topicId": "10000000-0000-4000-8000-000000000004",
+        "query": "acid",
+        "kind": "NOTE",
+        "limit": 20
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/practice",
+      "query": {
+        "goalId": "10000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/practice/topics/10000000-0000-4000-8000-000000000004",
+      "query": {
+        "goalId": "10000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/lessons",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040",
+        "topicId": "10000000-0000-4000-8000-000000000004",
+        "materialId": "10000000-0000-4000-8000-000000000005"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/lessons/10000000-0000-4000-8000-000000000018",
+      "query": {}
+    },
+    {
+      "method": "POST",
+      "path": "/practice/question-sets",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040",
+        "goalId": "10000000-0000-4000-8000-000000000001",
+        "topicId": "10000000-0000-4000-8000-000000000004",
+        "kinds": [
+          "MCQ",
+          "ORDERING"
+        ],
+        "count": 6
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/practice/sessions/10000000-0000-4000-8000-000000000006/items/0/answer",
+      "query": {},
+      "body": {
+        "clientAttemptId": "10000000-0000-4000-8000-000000000040",
+        "answer": {
+          "kind": "MCQ",
+          "optionId": "o2"
+        },
+        "confidence": "SURE"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/exam-prep",
+      "query": {
+        "goalId": "10000000-0000-4000-8000-000000000001",
+        "examId": "10000000-0000-4000-8000-000000000002"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/exams/10000000-0000-4000-8000-000000000002/readiness",
+      "query": {
+        "from": "2026-11-13",
+        "to": "2026-11-19"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/mock-builds",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040",
+        "examId": "10000000-0000-4000-8000-000000000002",
+        "preset": "QUICK",
+        "scope": "TOPICS",
+        "conditions": true,
+        "topicIds": [
+          "10000000-0000-4000-8000-000000000004"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/mock-builds/10000000-0000-4000-8000-000000000008",
+      "query": {}
+    },
+    {
+      "method": "POST",
+      "path": "/mock-builds/10000000-0000-4000-8000-000000000008/cancel",
+      "query": {}
+    },
+    {
+      "method": "POST",
+      "path": "/mock-builds/10000000-0000-4000-8000-000000000008/start",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040",
+        "acceptShorter": false,
+        "extraTimePercent": 0
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/mock-sittings/10000000-0000-4000-8000-000000000006",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "/mock-sittings/10000000-0000-4000-8000-000000000006/items/0",
+      "query": {}
+    },
+    {
+      "method": "PUT",
+      "path": "/mock-sittings/10000000-0000-4000-8000-000000000006/items/0",
+      "query": {},
+      "body": {
+        "revision": 0,
+        "answer": {
+          "kind": "MCQ",
+          "optionId": "o2"
+        },
+        "flagged": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/mock-sittings/10000000-0000-4000-8000-000000000006/submit",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/mock-sittings/10000000-0000-4000-8000-000000000006/result",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "/mock-sittings/10000000-0000-4000-8000-000000000006/review",
+      "query": {}
+    },
+    {
+      "method": "POST",
+      "path": "/mock-sittings/10000000-0000-4000-8000-000000000006/revision-preview",
+      "query": {},
+      "body": {
+        "baseRevision": 2
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/co/context",
+      "query": {
+        "kind": "PLAN_TOPIC",
+        "planId": "10000000-0000-4000-8000-000000000003",
+        "topicId": "10000000-0000-4000-8000-000000000004"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/co/sessions",
+      "query": {
+        "topicRef": "10000000-0000-4000-8000-000000000004",
+        "planId": "10000000-0000-4000-8000-000000000003",
+        "limit": 20
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/co/sessions",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040",
+        "context": {
+          "kind": "PLAN_TOPIC",
+          "planId": "10000000-0000-4000-8000-000000000003",
+          "topicId": "10000000-0000-4000-8000-000000000004"
+        },
+        "mode": "CLARIFY"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/co/sessions/10000000-0000-4000-8000-000000000009",
+      "query": {
+        "limit": 20
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/co/sessions/10000000-0000-4000-8000-000000000009/close",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040"
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/co/sessions/10000000-0000-4000-8000-000000000009",
+      "query": {}
+    },
+    {
+      "method": "POST",
+      "path": "/co/sessions/10000000-0000-4000-8000-000000000009/turns",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040",
+        "text": "I mix up acid strength and concentration.",
+        "mode": "CLARIFY"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/co/sessions/10000000-0000-4000-8000-000000000009/turns/10000000-0000-4000-8000-000000000010",
+      "query": {}
+    },
+    {
+      "method": "POST",
+      "path": "/co/sessions/10000000-0000-4000-8000-000000000009/turns/10000000-0000-4000-8000-000000000010/retry",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/co/sessions/10000000-0000-4000-8000-000000000009/turns/10000000-0000-4000-8000-000000000010/cancel",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/co/proposals/10000000-0000-4000-8000-000000000013/accept",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/co/memory",
+      "query": {}
+    },
+    {
+      "method": "PATCH",
+      "path": "/co/memory/10000000-0000-4000-8000-000000000012",
+      "query": {},
+      "body": {
+        "revision": 1,
+        "statement": "Short explanations with one example help."
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/co/memory/10000000-0000-4000-8000-000000000012",
+      "query": {
+        "revision": 2
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/co/memory/forget",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/family/children/10000000-0000-4000-8000-000000000041/tutor-memory",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/family/children/10000000-0000-4000-8000-000000000041/tutor-identity",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/schools/10000000-0000-4000-8000-000000000042/students/10000000-0000-4000-8000-000000000043/tutor-identity",
+      "query": {}
+    },
+    {
+      "method": "GET",
+      "path": "/co/nudges",
+      "query": {
+        "screen": "PRACTICE_RESULT"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/co/nudges/10000000-0000-4000-8000-000000000021/dismiss",
+      "query": {}
+    },
+    {
+      "method": "PUT",
+      "path": "/co/nudges/mutes/FIRST_WRONG",
+      "query": {},
+      "body": {
+        "muted": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/co/find-material",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040",
+        "topicId": "10000000-0000-4000-8000-000000000004",
+        "query": "IAM policies"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/co/find-material/10000000-0000-4000-8000-000000000013/add",
+      "query": {},
+      "body": {
+        "clientRequestId": "10000000-0000-4000-8000-000000000040"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/admin/tutor-loop/adults/10000000-0000-4000-8000-000000000022/find-material",
+      "query": {},
+      "body": {
+        "enabled": true,
+        "revision": 1
+      }
+    }
+  ]
+}
