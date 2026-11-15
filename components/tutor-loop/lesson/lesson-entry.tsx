@@ -12,10 +12,10 @@ import { ShortLessonScreen } from './short-lesson'
 /** Version select: a four-card TUTOR lesson opens the short lesson; anything else (404, flag off) keeps the five-card lesson unchanged. */
 export function LessonVersionSwitch({ lessonId }: { lessonId: string }) {
   const probe = useQuery({ queryKey: ['tutor-lesson', 'probe', lessonId], queryFn: () => tutorPracticeApi.shortLesson(lessonId), retry: false, staleTime: 30_000 })
-  if (probe.isPending) return <div className="mx-auto max-w-2xl p-6" aria-busy="true"><Skeleton className="h-48" /></div>
+  if (probe.isPending) return <div className="tutor-frame py-6" aria-busy="true"><Skeleton className="h-48" /></div>
   if (probe.data) return <ShortLessonScreen lessonId={lessonId} />
   if (isTutorLoopApiError(probe.error) && (probe.error.status === 404 || probe.error.status === 400 || isTutorNotEnabled(probe.error))) return <LessonWorkspace lessonId={lessonId} />
-  return <div className="mx-auto max-w-2xl p-6"><ErrorState title="This lesson did not load" description="Try again." action={<Button onClick={() => probe.refetch()}>Try again</Button>} /></div>
+  return <div className="tutor-frame py-6"><ErrorState title="This lesson did not load" description="Try again." action={<Button onClick={() => probe.refetch()}>Try again</Button>} /></div>
 }
 
 /** `/learn/lesson/new?format=short&materialId&topicId`: makes the four-card lesson once, then opens it. */
@@ -32,6 +32,6 @@ export function ShortLessonStarter({ materialId, topicId }: { materialId: string
   }, [m.isError, m.error, router, materialId])
   const started = useRef(false)
   useEffect(() => { if (!started.current) { started.current = true; m.mutate() } }, [m])
-  if (m.isError && !isTutorResting(m.error)) return <div className="mx-auto max-w-2xl p-6"><ErrorState title="Your tutor is resting" description={generationFailureCopy('AI_UNAVAILABLE')} action={<Button onClick={() => m.mutate()}>Try again</Button>} /></div>
-  return <div role="status" className="mx-auto max-w-2xl p-6">Getting your short lesson ready…</div>
+  if (m.isError && !isTutorResting(m.error)) return <div className="tutor-frame py-6"><ErrorState title="Your tutor is resting" description={generationFailureCopy('AI_UNAVAILABLE')} action={<Button onClick={() => m.mutate()}>Try again</Button>} /></div>
+  return <div role="status" className="tutor-frame py-6">Getting your short lesson ready…</div>
 }

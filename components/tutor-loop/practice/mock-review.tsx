@@ -35,14 +35,14 @@ const status = (row: Row) =>
 /** TL12 review: each question with your answer, the right answer and the passage it came from (hidden when access has changed). */
 export function MockReviewScreen({ sessionId }: { sessionId: string }) {
   const q = useQuery({ queryKey: ['tutor-practice', 'mock-review', sessionId], queryFn: () => tutorPracticeApi.mockReview(sessionId), retry: false })
-  if (q.isPending) return <div className="mx-auto max-w-2xl p-6" aria-busy="true"><Skeleton className="h-40" /></div>
+  if (q.isPending) return <div className="tutor-frame py-6" aria-busy="true"><Skeleton className="h-40" /></div>
   if (q.isError) {
     const code = (q.error as { code?: string }).code
-    return <div className="mx-auto max-w-2xl p-6"><ErrorState title={code === 'MOCK_NOT_SUBMITTED' ? 'Finish the mock first' : 'Your review did not load'}
+    return <div className="tutor-frame py-6"><ErrorState title={code === 'MOCK_NOT_SUBMITTED' ? 'Finish the mock first' : 'Your review did not load'}
       description={code === 'MOCK_NOT_SUBMITTED' ? 'Answers show after you submit.' : 'Try again.'}
       action={code === 'MOCK_NOT_SUBMITTED' ? undefined : <Button onClick={() => q.refetch()}>Try again</Button>} /></div>
   }
-  return <div className="mx-auto w-full max-w-2xl space-y-3 px-4 pb-24 pt-6">
+  return <div className="tutor-frame space-y-3 pb-24 pt-6">
     <h1 className="text-2xl font-black">Review your mock</h1>
     <ol className="space-y-3">{q.data.items.map((row) => <li key={row.itemId} className="rounded-2xl border p-4 text-sm" aria-label={`Question ${row.index + 1}`}>
       <p className="font-black">{row.index + 1}. {row.question.prompt}</p>

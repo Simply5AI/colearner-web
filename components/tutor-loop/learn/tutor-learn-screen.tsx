@@ -20,7 +20,7 @@ function Body() {
   const shell = useTutorShell()
   const filter = useGoalFilter()
   const tab = tabOf(params.get('tab'))
-  return <AgeBandScope band={shell.band} className="mx-auto w-full max-w-[1000px] space-y-4 px-4 pb-24 pt-6 sm:px-6">
+  return <AgeBandScope band={shell.band} className="tutor-frame space-y-4 pb-24 pt-6">
     <GoalRow goals={shell.goals} selectedGoalId={filter.goalId} onSelectGoal={filter.setGoalId} />
     <div role="tablist" aria-label="Learn" className="inline-flex gap-0.5 rounded-full bg-muted p-1">
       {learnSubTabs().map((t) => <Link key={t.id} role="tab" aria-selected={tab === t.id} href={buildHrefWithGoal(t.href, filter.goalId)} scroll={false}

@@ -154,7 +154,7 @@ export function GoalSetup({ adult, icon, workspace, requestId, entryUrl }: {
   if (planning && goal) {
     return (
       <TutorStartFrame adult={adult} close={entryUrl}>
-        <main className="mx-auto w-full max-w-[640px] flex-1 px-5 pb-20 pt-9">
+        <main className="tutor-frame flex-1 pb-20 pt-9">
           <PlanStage
             goal={goal} workspace={workspace} icon={shownIcon} tutorName={shownName}
             materialIds={materials.length ? materials : undefined} syllabusText={syllabus}
@@ -171,7 +171,7 @@ export function GoalSetup({ adult, icon, workspace, requestId, entryUrl }: {
   const busy = saveGoal.isPending || saveTutor.isPending
   return (
     <TutorStartFrame adult={adult} step={step} close={entryUrl}>
-      <main className="mx-auto flex w-full max-w-[640px] flex-1 flex-col gap-[22px] px-5 pb-20 pt-9">
+      <main className="tutor-frame flex flex-1 flex-col gap-[22px] pb-20 pt-9">
         <div className="flex items-start gap-3.5">
           <TutorArt icon={shownIcon} size={64} state="speaking" />
           <h1 data-step-heading tabIndex={-1} className="rounded-[24px] rounded-ss-md bg-[var(--co-surface)] px-5 py-4 text-[length:var(--ds-h2)] font-extrabold leading-tight">{heading}</h1>

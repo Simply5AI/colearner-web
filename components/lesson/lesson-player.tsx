@@ -1,5 +1,6 @@
 'use client'
 
+import { useTutorShell } from '@/components/tutor-loop/shell/tutor-shell-context'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import { ArrowLeft, ArrowRight, Check, Mic, X } from 'lucide-react'
@@ -57,6 +58,7 @@ export interface LessonPlayerProps {
  * embedded CHECK, citations on every sourced step, on-device read-aloud, notes for 10 to 17, and a disabled Ask Co.
  */
 export function LessonPlayer({ detail, content, band, onExit, review = false, timing, tabs }: LessonPlayerProps) {
+  const tutor = useTutorShell()
   const lessonId = detail.lesson.id
   const refresh = useRefreshLesson(lessonId)
   const adopt = useAdoptLessonDetail(lessonId)
@@ -158,7 +160,7 @@ export function LessonPlayer({ detail, content, band, onExit, review = false, ti
 
   return <LessonFocusFrame band={band} label={`Lesson: ${content.title}`}>
     <SpeechProvider active={speech.activeWordIndex} starts={script.starts}>
-      <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-5 px-4 pb-6 pt-3 sm:px-7" data-band={band} data-step={step.kind}>
+      <div className={cn('flex min-h-dvh flex-col gap-5 pb-6 pt-3', tutor.state === 'enabled' ? 'tutor-frame' : 'mx-auto w-full max-w-6xl px-4 sm:px-7')} data-band={band} data-step={step.kind}>
         <header className="flex flex-wrap items-center gap-3">
           <Button variant="ghost" aria-label="Close lesson" onClick={requestExit}><X size={22} aria-hidden="true" /></Button>
           <div className="min-w-0 flex-1 basis-56">

@@ -24,7 +24,7 @@ export function TutorHeader({ homeHref, initial, accountActions }: { homeHref: s
   return <>
     <TutorAccessibilityApplier />
     <header data-testid="top-header" data-tutor-shell="true" className="sticky top-0 z-40 shrink-0 border-b border-border bg-background">
-      <div className="mx-auto flex w-full max-w-[1320px] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6">
+      <div className="tutor-frame flex items-center gap-2 py-2 sm:gap-3">
         <Link href={homeHref} aria-label="CoLearner home" className={cn('inline-flex min-h-[var(--ds-target,44px)] shrink-0 items-center rounded-lg', focus)}><BrandMark className="max-[430px]:[&>span:last-child>span]:hidden" /></Link>
         <nav aria-label="Main" data-testid="top-navigation" className="hidden min-w-0 flex-1 justify-center lg:flex">
           <ul className="flex items-stretch gap-1">

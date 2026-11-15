@@ -398,7 +398,7 @@ export function AskCoPage({ initialSessionId = null, initialContext, initialMode
   }`
 
   return (
-    <div className="grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden lg:flex" data-testid="ask-co-page">
+    <div className="tutor-frame grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden lg:flex" data-testid="ask-co-page">
       {treeOpen && (
         <TutorSessionTree
           groups={groups}

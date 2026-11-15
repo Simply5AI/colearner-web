@@ -46,7 +46,7 @@ export function TodayArea({ initialTab = 'today' }: { initialTab?: TodayTabId })
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-[960px] flex-col gap-4 px-4 pb-32 pt-5 sm:px-5" data-screen-label="Today" data-tab={tab}>
+    <div className="tutor-frame flex flex-col gap-4 pb-32 pt-5" data-screen-label="Today" data-tab={tab}>
       <div role="tablist" aria-label="Today" className="flex gap-1 overflow-x-auto border-b border-border">
         {TODAY_TABS.map((item, index) => (
           <button
@@ -70,6 +70,6 @@ export function TodayArea({ initialTab = 'today' }: { initialTab?: TodayTabId })
         {tab === 'week' && <ScheduleTab />}
         {tab === 'progress' && <ProgressTab onOpenSchedule={() => select('week')} />}
       </div>
-    </main>
+    </div>
   )
 }

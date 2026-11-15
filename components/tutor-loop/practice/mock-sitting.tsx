@@ -54,11 +54,11 @@ export function MockSittingScreen({ sessionId }: { sessionId: string }) {
   useEffect(() => { if (left === 0 && sitting?.status === 'IN_PROGRESS') void submit() }, [left, sitting?.status, submit])
   useEffect(() => { void qc })
 
-  if (sittingQ.isPending) return <div className="mx-auto max-w-2xl p-6" aria-busy="true"><Skeleton className="h-40" /></div>
-  if (sittingQ.isError || !sitting) return <div className="mx-auto max-w-2xl p-6"><ErrorState title="This mock did not load" description="Your clock keeps running on our side. Try again." action={<Button onClick={() => sittingQ.refetch()}>Try again</Button>} /></div>
+  if (sittingQ.isPending) return <div className="tutor-frame py-6" aria-busy="true"><Skeleton className="h-40" /></div>
+  if (sittingQ.isError || !sitting) return <div className="tutor-frame py-6"><ErrorState title="This mock did not load" description="Your clock keeps running on our side. Try again." action={<Button onClick={() => sittingQ.refetch()}>Try again</Button>} /></div>
   const answered = nav.filter((n) => n.answered).length
   const low = left != null && left <= 60
-  return <div className="mx-auto w-full max-w-3xl px-4 pb-28 pt-4" data-testid="mock-sitting">
+  return <div className="tutor-frame pb-8 pt-4" data-testid="mock-sitting">
     <header className="sticky top-0 z-30 flex items-center gap-3 border-b bg-background py-3">
       <div className="flex-1 text-sm font-bold">Question {index + 1} of {sitting.itemCount} · {answered} answered</div>
       <span className="inline-flex items-center gap-1 text-xs font-bold text-muted-foreground">
@@ -76,7 +76,7 @@ export function MockSittingScreen({ sessionId }: { sessionId: string }) {
         className={cn('relative min-h-10 min-w-10 rounded-lg border text-sm font-bold', n.index === index && 'ring-2 ring-[var(--color-accent)]', n.answered && 'bg-[var(--color-accent-100)]')}>
         {n.index + 1}{n.flagged && <span aria-hidden="true" className="absolute -end-1 -top-1 text-xs">⚑</span>}</button>)}
     </nav>
-    <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background p-3"><div className="mx-auto flex max-w-3xl justify-between gap-2">
+    <div className="mt-5 border-t bg-background py-3"><div className="flex flex-wrap justify-between gap-2">
       <Button variant="ghost" disabled={index === 0} onClick={() => setIndex(index - 1)}>Back</Button>
       {index < sitting.itemCount - 1 ? <Button onClick={() => setIndex(index + 1)}>Next</Button> : <Button onClick={() => setConfirm(true)}>Finish</Button>}
       <Button variant="secondary" onClick={() => setConfirm(true)}>Submit mock</Button></div></div>

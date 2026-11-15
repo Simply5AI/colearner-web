@@ -23,11 +23,11 @@ export function MockResultScreen({ sessionId }: { sessionId: string }) {
   const [open, setOpen] = useState(false)
   const preview = useMutation({ mutationFn: () => tutorPracticeApi.revisionPreview(sessionId, q.data?.revision ?? 0), onSuccess: () => setOpen(true) })
   const apply = useMutation({ mutationFn: (id: string) => tutorPracticeApi.applySchedulePreview(id), onSuccess: () => setOpen(false) })
-  if (q.isPending) return <div className="mx-auto max-w-2xl p-6" aria-busy="true"><Skeleton className="h-40" /></div>
-  if (q.isError) return <div className="mx-auto max-w-2xl p-6"><ErrorState title="Your result did not load" description="Your answers are saved. Try again." action={<Button onClick={() => q.refetch()}>Try again</Button>} /></div>
+  if (q.isPending) return <div className="tutor-frame py-6" aria-busy="true"><Skeleton className="h-40" /></div>
+  if (q.isError) return <div className="tutor-frame py-6"><ErrorState title="Your result did not load" description="Your answers are saved. Try again." action={<Button onClick={() => q.refetch()}>Try again</Button>} /></div>
   const r = q.data
   const pending = r.status !== 'FULLY_MARKED'
-  return <div className="mx-auto w-full max-w-2xl space-y-4 px-4 pb-24 pt-6">
+  return <div className="tutor-frame space-y-4 pb-24 pt-6">
     <section className="rounded-3xl border p-5 text-center" aria-label="Result">
       <h1 className="text-2xl font-black">{pending ? 'Partly marked' : 'Mock done'}</h1>
       {r.scorePercent != null ? <p className="mt-1 text-4xl font-black">{r.scorePercent}%</p>

@@ -27,17 +27,17 @@ export function ShortLessonScreen({ lessonId }: { lessonId: string }) {
   const next = useQuery({ queryKey: ['tutor-lesson', 'next', lessonId], enabled: q.data?.status === 'READY' && i >= (q.data?.cards.length ?? 99), queryFn: () => tutorPracticeApi.nextStep('LESSON', lessonId), retry: false })
   const done = useMutation({ mutationFn: () => tutorPracticeApi.completeLesson(lessonId) })
 
-  if (q.isPending) return <div className="mx-auto max-w-2xl p-6" aria-busy="true"><Skeleton className="h-48" /></div>
-  if (q.isError) return <div className="mx-auto max-w-2xl p-6"><ErrorState title="This lesson did not load" description="Try again." action={<Button onClick={() => q.refetch()}>Try again</Button>} /></div>
+  if (q.isPending) return <div className="tutor-frame py-6" aria-busy="true"><Skeleton className="h-48" /></div>
+  if (q.isError) return <div className="tutor-frame py-6"><ErrorState title="This lesson did not load" description="Try again." action={<Button onClick={() => q.refetch()}>Try again</Button>} /></div>
   const l = q.data
-  if (l.status === 'QUEUED' || l.status === 'RUNNING') return <div role="status" className="mx-auto max-w-2xl p-6">{shell.tutorName} is writing your lesson…</div>
-  if (l.status !== 'READY') return <div className="mx-auto max-w-2xl p-6"><ErrorState title={`${shell.tutorName} is resting`} description={generationFailureCopy(l.reasonCode)} action={<Link className="font-bold underline" href="/learn/practice">Back to Practice</Link>} /></div>
+  if (l.status === 'QUEUED' || l.status === 'RUNNING') return <div role="status" className="tutor-frame py-6">{shell.tutorName} is writing your lesson…</div>
+  if (l.status !== 'READY') return <div className="tutor-frame py-6"><ErrorState title={`${shell.tutorName} is resting`} description={generationFailureCopy(l.reasonCode)} action={<Link className="font-bold underline" href="/learn/practice">Back to Practice</Link>} /></div>
   const cards: ShortLessonCard[] = l.cards
   const n = cards.length
   const end = i >= n
   if (end) {
     const a = next.data?.briefing.action
-    return <div className="mx-auto w-full max-w-xl space-y-4 px-4 pb-24 pt-8 text-center">
+    return <div className="tutor-frame space-y-4 pb-24 pt-8 text-center">
       <h1 className="text-3xl font-black">Lesson done</h1>
       <ul className="text-start text-sm">{cards.filter((c) => c.kind !== 'CHECK').map((c, k) => <li key={k}>✓ {'text' in c ? c.text : ''}</li>)}</ul>
       <section className="rounded-2xl bg-[var(--color-accent-100)] p-4 text-start"><p className="font-black">{a?.label ?? 'Practise this topic'}</p>
@@ -53,11 +53,11 @@ export function ShortLessonScreen({ lessonId }: { lessonId: string }) {
     if (i === n - 1) { done.mutate(undefined, { onSuccess: () => { setPick(null); setI(i + 1) } }); return }
     setPick(null); setI(i + 1)
   }
-  return <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-5 pb-32 pt-6">
+  return <div className="tutor-frame flex flex-col pb-8 pt-6">
     <div className="flex items-center gap-3"><Link aria-label="Close lesson" href="/learn/practice" className="grid h-10 w-10 place-items-center rounded-full border">×</Link>
       <div role="progressbar" aria-valuemin={1} aria-valuemax={n} aria-valuenow={i + 1} aria-label={`${i + 1} of ${n}`} className="flex flex-1 gap-1.5">{cards.map((_, k) => <span key={k} className={cn('h-2 flex-1 rounded-full', k <= i ? 'bg-[var(--color-accent)]' : 'bg-muted')} />)}</div>
       <b className="text-sm">{i + 1} of {n}</b></div>
-    <main className="mt-6 space-y-3">
+    <section className="mt-6 space-y-3" aria-label="Lesson card">
       <span className="rounded-full bg-muted px-3 py-1 text-xs font-black">{tag[c.kind]}</span>
       {c.kind === 'CHECK' ? <>
         <h1 className="text-2xl font-black">{c.prompt}</h1>
@@ -69,8 +69,8 @@ export function ShortLessonScreen({ lessonId }: { lessonId: string }) {
         <p className="text-xl leading-relaxed">{c.text}</p>
         {c.citation && <span className="inline-flex rounded-full border px-3 py-1 text-xs font-bold">{c.citation.label}</span>}
       </>}
-    </main>
-    <div className="fixed inset-x-0 bottom-0 border-t bg-background p-3"><div className="mx-auto flex max-w-2xl justify-between gap-2">
+    </section>
+    <div className="mt-5 border-t bg-background py-3"><div className="flex flex-wrap justify-between gap-2">
       <Button variant="ghost" disabled={i === 0} onClick={() => { setPick(null); setI(i - 1) }}>Back</Button>
       {shell.canUseTutor && <Link className="inline-flex min-h-11 items-center rounded-xl border px-4 text-sm font-bold" href={buildTutorHref({ kind: 'LESSON', lessonId, stepIndex: i }, { mode: 'EXPLAIN_DIFFERENTLY' })}>I don’t get it</Link>}
       <Button disabled={locked} loading={done.isPending} onClick={goNext}>{i === n - 1 ? 'Finish' : 'Next'}</Button></div></div>

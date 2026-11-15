@@ -21,7 +21,7 @@ export function PracticeSetScreen({ sessionId, total: knownTotal = null }: { ses
   const [done, setDone] = useState(false)
   const finish = useMutation({ mutationFn: () => tutorPracticeApi.finish(sessionId), onSuccess: () => setDone(true) })
   if (done) return <Summary sessionId={sessionId} results={results} />
-  return <div className="mx-auto w-full max-w-2xl space-y-3 px-4 pb-24 pt-6">
+  return <div className="tutor-frame space-y-3 pb-24 pt-6">
     <p className="text-sm font-bold" role="status">Question {index + 1}</p>
     <PracticeItem key={index} sessionId={sessionId} index={index}
       onNext={(correct, last) => { setResults((r) => [...r, correct]); if (last) finish.mutate(); else setIndex(index + 1) }} onMissing={() => finish.mutate()} limit={knownTotal} />
@@ -89,7 +89,7 @@ function Summary({ sessionId, results }: { sessionId: string; results: boolean[]
   const next = useQuery({ queryKey: ['tutor-practice', 'next', sessionId], queryFn: () => tutorPracticeApi.nextStep('PRACTICE', sessionId), retry: false })
   const right = results.filter(Boolean).length
   const a = next.data?.briefing.action
-  return <div className="mx-auto w-full max-w-xl space-y-4 px-4 pb-24 pt-8 text-center">
+  return <div className="tutor-frame space-y-4 pb-24 pt-8 text-center">
     <h1 className="text-2xl font-black">Set done</h1>
     <p className="text-lg font-bold">{right} of {results.length} right first time</p>
     <section className="rounded-2xl border p-4 text-start" aria-label="Next">

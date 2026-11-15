@@ -109,7 +109,7 @@ export function PracticeHub({ initialTab = 'today', initialTopicId = null }: { i
   const q = useQuery({ queryKey: ['tutor-practice', 'hub', filter.goalId], queryFn: () => tutorPracticeApi.practice(filter.goalId), retry: false })
   const data = q.data
   const goal = data?.goalCards.find((g) => g.id === filter.goalId) ?? null
-  return <AgeBandScope band={shell.band} className="mx-auto w-full max-w-[1000px] space-y-4 px-4 pb-24 pt-6 sm:px-6">
+  return <AgeBandScope band={shell.band} className="tutor-frame space-y-4 pb-24 pt-6">
     <h1 className="text-2xl font-black">Practice</h1>
     <GoalRow goals={shell.goals} selectedGoalId={filter.goalId} onSelectGoal={filter.setGoalId} />
     <div role="tablist" aria-label="Practice" className="inline-flex gap-0.5 rounded-full bg-muted p-1">

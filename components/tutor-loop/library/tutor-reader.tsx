@@ -26,7 +26,7 @@ export function TutorReader({ id }: { id: string }) {
     refetchInterval: (q) => (q.state.data && q.state.data.status !== 'ready' && q.state.data.status !== 'failed' && q.state.data.status !== 'cancelled' ? 3000 : false) })
   const material = detail.data
   const { band } = useTutorShell()
-  return <AgeBandScope band={band} className="mx-auto w-full max-w-6xl space-y-4 px-4 pb-28 pt-5 sm:px-6">
+  return <AgeBandScope band={band} className="tutor-frame space-y-4 pb-28 pt-5">
     <MaterialLoadState loading={config.isPending || (!!config.data && detail.isPending)} error={config.error ?? detail.error} retry={() => { void config.refetch(); void detail.refetch() }} />
     {!config.error && !detail.error && material && <ReaderBody material={material} />}
   </AgeBandScope>

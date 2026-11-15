@@ -4,6 +4,24 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Tutor Loop pages and navigation use the same outer edges. */
+@layer components {
+  .tutor-width,
+  .tutor-frame {
+    width: 100%;
+    max-width: 1320px;
+    margin-inline: auto;
+  }
+
+  .tutor-frame {
+    padding-inline: 0.75rem;
+
+    @media (width >= 40rem) {
+      padding-inline: 1.5rem;
+    }
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

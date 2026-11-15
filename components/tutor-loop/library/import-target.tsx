@@ -54,13 +54,13 @@ export function ImportTarget() {
   }, [ids.join(','), target])
 
   if (ids.length > 0) {
-    return <div role="status" className="mx-auto w-full max-w-6xl px-4 sm:px-7">
+    return <div role="status" className="tutor-frame">
       {status === 'working' && <p>Adding it to your topic…</p>}
       {status === 'done' && <p className="font-bold text-primary">Added to your topic.</p>}
       {status === 'failed' && <p role="alert">It was saved to your library but could not be added to the topic. <button type="button" className="font-bold underline" onClick={() => setStatus('idle')}>Try again</button></p>}
     </div>
   }
-  return <section aria-label="Where this goes" className="mx-auto grid w-full max-w-6xl gap-3 px-4 pt-4 sm:grid-cols-2 sm:px-7">
+  return <section aria-label="Where this goes" className="tutor-frame grid gap-3 pt-4 sm:grid-cols-2">
     {shell.goals.length > 0 && <label className="grid gap-1 text-sm font-bold">Goal
       <select value={goalId ?? ''} onChange={(e) => { setGoalId(e.target.value || null); pick('') }} className="min-h-11 rounded-lg border border-border bg-background px-3 font-normal">
         <option value="">All goals</option>{shell.goals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}</select></label>}

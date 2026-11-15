@@ -12,6 +12,8 @@ import { conceptLessonHref } from '@/lib/materials/concept-lesson'
 import { MaterialPartialNotice } from './material-partial'
 import { needsLinkHelp } from '@/lib/api/learn-link'
 import { SeeWhatsNeededLink } from '@/components/learn/see-whats-needed'
+import { useTutorShell } from '@/components/tutor-loop/shell/tutor-shell-context'
+import { cn } from '@/lib/utils'
 
 /** "Learn this": starts a lesson about ONE key idea (the main "Start lesson" stays for the whole material). Hidden when lessons are off. */
 export function LearnThis({ lessonRoute, conceptId, label }: { lessonRoute: string | null; conceptId: string; label: string }) {
@@ -35,7 +37,8 @@ export function useMaterialConfig() {
   return { ...query, actor }
 }
 export function MaterialFrame({ title, description, config, children }: { title: string; description: string; config?: MaterialConfig; children: ReactNode }) {
-  return <AgeBandScope band={config?.band ?? 'teens'} className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-7">
+  const tutor = useTutorShell()
+  return <AgeBandScope band={config?.band ?? 'teens'} className={cn('space-y-6', tutor.state === 'enabled' ? 'tutor-frame py-6' : 'mx-auto w-full max-w-6xl p-4 sm:p-7')}>
     <nav aria-label="Material tools" className="flex flex-wrap gap-3 text-sm font-semibold"><Link className="ds-button ds-button-ghost" href="/learn/library"><BookOpen size={18} aria-hidden="true" />Library</Link><Link className="ds-button ds-button-ghost" href="/learn/import"><Upload size={18} aria-hidden="true" />Import</Link><Link className="ds-button ds-button-ghost" href="/learn/snap"><Camera size={18} aria-hidden="true" />Snap a page</Link></nav>
     <header className="space-y-2"><p className="text-xs font-bold uppercase tracking-widest text-primary">Your learning material</p><h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h1><p className="max-w-2xl text-muted-foreground">{description}</p></header>
     {children}

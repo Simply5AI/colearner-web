@@ -17,9 +17,9 @@ export function TutorPlanScreen({ planId }: { planId: string }) {
   const shell = useTutorShell()
   const workspace = getTutorWorkspaceScope()
   const query = useQuery({ queryKey: ['tutor-plan', workspace, planId], queryFn: () => tutorLoopClient.plan(planId, null, { workspace }), retry: false })
-  if (query.isPending) return <div role="status" aria-label="Loading your plan" className="mx-auto max-w-[1000px] space-y-3 p-6"><div className="h-28 animate-pulse rounded-2xl bg-muted" /><div className="h-48 animate-pulse rounded-2xl bg-muted" /></div>
+  if (query.isPending) return <div role="status" aria-label="Loading your plan" className="tutor-frame space-y-3 py-6"><div className="h-28 animate-pulse rounded-2xl bg-muted" /><div className="h-48 animate-pulse rounded-2xl bg-muted" /></div>
   if (query.isError || query.data.ownership !== 'OWN') return <LearnPlanScreen planId={planId} />
-  return <AgeBandScope band={shell.band} className="mx-auto w-full max-w-[1000px] space-y-4 px-4 pb-24 pt-6 sm:px-6">
+  return <AgeBandScope band={shell.band} className="tutor-frame space-y-4 pb-24 pt-6">
     <Link href="/learn?tab=plan" className="inline-flex min-h-11 items-center gap-2 font-bold"><ArrowLeft aria-hidden="true" className="size-4 rtl:rotate-180" />Back to Learn</Link>
     <MyPlan goalId={null} planId={planId} />
   </AgeBandScope>

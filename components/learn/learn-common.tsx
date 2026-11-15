@@ -11,6 +11,7 @@ import { learnApi, linkHref, type Actionable, type LearnBand, type OverviewFilte
 import { LearnApiError, LearnSessionError } from '@/lib/api/learn-request'
 import { needsLinkHelp } from '@/lib/api/learn-link'
 import { SeeWhatsNeededLink } from './see-whats-needed'
+import { useTutorShell } from '@/components/tutor-loop/shell/tutor-shell-context'
 
 /* ---------- cache identity and data hooks ---------- */
 
@@ -56,7 +57,8 @@ export function useLearnPlan(planId: string) {
 /* ---------- layout ---------- */
 
 export function LearnFrame({ band, label, children, className }: { band: LearnBand; label?: string; children: ReactNode; className?: string }) {
-  return <AgeBandScope band={band} aria-label={label} className={cn('mx-auto w-full max-w-6xl space-y-6 p-4 sm:p-7 [&_h1]:font-extrabold [&_h1]:tracking-tight [&_h2]:font-bold [&_h3]:font-bold', className)}>{children}</AgeBandScope>
+  const tutor = useTutorShell()
+  return <AgeBandScope band={band} aria-label={label} className={cn('space-y-6 [&_h1]:font-extrabold [&_h1]:tracking-tight [&_h2]:font-bold [&_h3]:font-bold', tutor.state === 'enabled' ? 'tutor-frame py-6' : 'mx-auto w-full max-w-6xl p-4 sm:p-7', className)}>{children}</AgeBandScope>
 }
 
 /** Loading, empty and error states keep the page layout; Co thinks while the server answers. */

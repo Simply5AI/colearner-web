@@ -61,7 +61,7 @@ export function MeArea({ initialSection = 'tutor' }: { initialSection?: MeSectio
   else body = <AccessSection workspace={workspace} profile={profile.data} />
 
   return (
-    <div className="mx-auto grid w-full max-w-[1000px] gap-6 px-4 py-6 md:grid-cols-[240px_1fr]">
+    <div className="tutor-frame grid gap-6 py-6 md:grid-cols-[240px_minmax(0,1fr)]">
       <TutorAccessibilityApplier />
       <nav aria-label="Me" className="flex flex-col gap-1">
         {ME_SECTIONS.map((item) => (

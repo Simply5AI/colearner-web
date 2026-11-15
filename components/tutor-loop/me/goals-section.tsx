@@ -7,6 +7,7 @@ import {
   archiveGoal, createGoal, GOAL_KIND_OPTIONS, getGoal, listGoals, updateExam, updateGoal,
   type LearnerGoalItem, type LearnerGoalKind,
 } from '@/lib/api/tutor-loop/goals'
+import { tutorLoopClient } from '@/lib/api/tutor-loop/client'
 import { formatTutorDate, todayCalendarDate } from '@/lib/tutor-loop/date'
 import { friendlyError } from '@/components/tutor-loop/start/errors'
 import { PlanStage } from '@/components/tutor-loop/start/plan-draft'
@@ -101,7 +102,7 @@ function GoalForm({ workspace, adult, goal, onDone, onCancel }: {
   )
 }
 
-type Mode = { kind: 'list' } | { kind: 'add' } | { kind: 'edit'; goal: LearnerGoalItem } | { kind: 'plan'; goal: LearnerGoalItem }
+type Mode = { kind: 'list' } | { kind: 'add' } | { kind: 'edit'; goal: LearnerGoalItem } | { kind: 'plan'; goal: LearnerGoalItem; existing: boolean }
 
 export function GoalsSection({ workspace, adult, tutorIcon, tutorName }: { workspace: MeWorkspace; adult: boolean; tutorIcon: string; tutorName: string }) {
   const client = useQueryClient()
@@ -112,12 +113,30 @@ export function GoalsSection({ workspace, adult, tutorIcon, tutorName }: { works
     mutationFn: (goal: LearnerGoalItem) => archiveGoal(goal.id, goal.revision, { workspace }),
     onSuccess: refresh,
   })
+  const draftGoalId = mode.kind === 'plan' && mode.existing ? mode.goal.id : null
+  const sources = useQuery({
+    queryKey: ['tutor-plan-draft-sources', workspace, draftGoalId],
+    queryFn: () => tutorLoopClient.plans({ goalId: draftGoalId, ownership: 'OWN' }, { workspace }),
+    enabled: draftGoalId !== null,
+    retry: false,
+  })
   if (mode.kind === 'plan') {
-    return <PlanStage goal={mode.goal} workspace={workspace} icon={tutorIcon} tutorName={tutorName} onAccepted={() => { setMode({ kind: 'list' }); void refresh() }} onSkip={() => setMode({ kind: 'list' })} />
+    const back = () => setMode({ kind: 'list' })
+    if (draftGoalId && sources.isPending) return <p role="status">Getting your study materials…</p>
+    if (draftGoalId && sources.isError) return <div role="alert" className="space-y-3">
+      <p>Your study materials could not load.</p>
+      <button type="button" className="ds-button ds-button-secondary" onClick={() => void sources.refetch()}>Try again</button>
+      <button type="button" className="ds-button ds-button-ghost" onClick={back}>Back to goals</button>
+    </div>
+    const materialIds = [...new Set((sources.data?.items ?? []).flatMap((plan) =>
+      plan.phases.flatMap((phase) => phase.topics.filter((topic) => !topic.archived).flatMap((topic) => topic.materialIds)),
+    ))].slice(0, 6)
+    return <PlanStage goal={mode.goal} workspace={workspace} icon={tutorIcon} tutorName={tutorName} materialIds={materialIds}
+      onAccepted={() => { back(); void refresh() }} onSkip={back} />
   }
   if (mode.kind === 'add' || mode.kind === 'edit') {
     return <GoalForm workspace={workspace} adult={adult} goal={mode.kind === 'edit' ? mode.goal : undefined}
-      onDone={(saved) => { void refresh(); setMode(mode.kind === 'add' ? { kind: 'plan', goal: saved } : { kind: 'list' }) }} onCancel={() => setMode({ kind: 'list' })} />
+      onDone={(saved) => { void refresh(); setMode(mode.kind === 'add' ? { kind: 'plan', goal: saved, existing: false } : { kind: 'list' }) }} onCancel={() => setMode({ kind: 'list' })} />
   }
   return (
     <div className="flex flex-col gap-4">
@@ -141,7 +160,7 @@ export function GoalsSection({ workspace, adult, tutorIcon, tutorName }: { works
               {!locked && (
                 <div className="flex flex-wrap gap-2">
                   <button type="button" className="ds-button ds-button-secondary" onClick={() => setMode({ kind: 'edit', goal })}>Change my goal</button>
-                  <button type="button" className="ds-button ds-button-secondary" onClick={() => setMode({ kind: 'plan', goal })}>Ask {tutorName} to redo my plan</button>
+                  <button type="button" className="ds-button ds-button-secondary" onClick={() => setMode({ kind: 'plan', goal, existing: true })}>Ask {tutorName} to redo my plan</button>
                   <button type="button" className="ds-button ds-button-ghost" disabled={remove.isPending} onClick={() => remove.mutate(goal)}>Remove</button>
                 </div>
               )}

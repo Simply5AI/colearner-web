@@ -228,7 +228,7 @@ function RoleShellInner({ role, children, navigation, homeHref, band: bandProp =
             <TopNavigation groups={navigation} pathname={pathname} band={band} moreFooter={sidebarFooter} className="order-last w-full basis-full lg:order-none lg:w-auto lg:basis-0 lg:flex-1" />
           </div>
         </header>}
-        <main id={mainId} tabIndex={-1} className={cn('mx-auto min-w-0 outline-none', !sidebar && 'w-full max-w-[1320px]', fullHeightChat ? 'flex min-h-0 flex-1 flex-col' : (bottomItems.length > 0 || tutorOn) && 'pb-[var(--role-quick-nav-inset,calc(6rem+env(safe-area-inset-bottom)))] lg:pb-0')}><FoundationErrorBoundary>{children}</FoundationErrorBoundary></main>
+        <main id={mainId} tabIndex={-1} className={cn('mx-auto min-w-0 outline-none', !sidebar && (tutorOn ? 'tutor-width' : 'w-full max-w-[1320px]'), fullHeightChat ? 'flex min-h-0 flex-1 flex-col' : (bottomItems.length > 0 || tutorOn) && 'pb-[var(--role-quick-nav-inset,calc(6rem+env(safe-area-inset-bottom)))] lg:pb-0')}><FoundationErrorBoundary>{children}</FoundationErrorBoundary></main>
       </div>
     </div>
     {tutorOn && <TutorBottomNav inFlow={fullHeightChat} />}
